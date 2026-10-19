@@ -1,0 +1,61 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 5 0 R >> >> /Contents 4 0 R >>
+endobj
+4 0 obj
+<< /Length 1548 >>
+stream
+BT /F1 10 Tf 50 760 Td 14 TL
+(OppRadar - Software Requirements Specification \(SRS\)) Tj T*
+() Tj T*
+(Status: placeholder. Replace with the real SRS export.) Tj T*
+() Tj T*
+(1. Overview) Tj T*
+(   OppRadar ingests opportunities \(internships, jobs, scholarships,) Tj T*
+(   competitions, bootcamps\), checks them for scams, matches them to user) Tj T*
+(   CVs, and answers questions about them through a chat assistant.) Tj T*
+() Tj T*
+(2. Actors) Tj T*
+(   - Visitor: browses and searches opportunities.) Tj T*
+(   - Registered user: uploads a CV, gets matches, chats with the assistant.) Tj T*
+(   - Admin: manages sources, reviews flagged \(scam\) entries.) Tj T*
+() Tj T*
+(3. Functional requirements) Tj T*
+(   FR1 Ingest opportunities from configured sources on a schedule.) Tj T*
+(   FR2 Extract structured fields \(title, org, deadline, type...\).) Tj T*
+(   FR3 De-duplicate and score scam risk for every opportunity.) Tj T*
+(   FR4 Parse an uploaded CV into a structured profile.) Tj T*
+(   FR5 Rank opportunities per profile with explanations.) Tj T*
+(   FR6 Answer user questions grounded in real, indexed opportunities.) Tj T*
+(   FR7 Real-time progress updates over WebSocket.) Tj T*
+() Tj T*
+(4. Non-functional requirements) Tj T*
+(   NFR1 Answers must cite only indexed opportunities \(no hallucination\).) Tj T*
+(   NFR2 Secrets live only in environment variables, never in the repo.) Tj T*
+(   NFR3 Users see only their own data \(Postgres row-level security\).) Tj T*
+(   NFR4 Ingestion failures are isolated per source.) Tj T*
+ET
+endstream
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+xref
+0 6
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000241 00000 n 
+0000001841 00000 n 
+trailer
+<< /Size 6 /Root 1 0 R >>
+startxref
+1911
+%%EOF

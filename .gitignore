@@ -1,0 +1,56 @@
+# --- Secrets / local config ---
+.env
+.env.*
+!.env.example
+
+# --- CVs & private user data (never commit) ---
+*.pdf
+!docs/*.pdf
+uploads/
+data/private/
+ai/data/private/
+backend/app/private/
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# --- Notebooks ---
+.ipynb_checkpoints/
+
+# --- AI artifacts / caches ---
+ai/data/vectorstore/
+*.faiss
+models/
+.cache/
+
+# --- Node / Next.js ---
+node_modules/
+.next/
+out/
+.vercel
+npm-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# --- Supabase ---
+supabase/.temp/
+supabase/.branches/
+
+# --- Editors / OS ---
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db

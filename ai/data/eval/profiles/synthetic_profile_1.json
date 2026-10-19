@@ -1,0 +1,51 @@
+{
+  "id": "profile-1",
+  "full_name": "Amine K.",
+  "headline": "MSc Data Science student",
+  "skills": [
+    "python",
+    "machine learning",
+    "pandas",
+    "sql",
+    "pytorch",
+    "deep learning"
+  ],
+  "languages": [
+    "arabic",
+    "french",
+    "english"
+  ],
+  "interests": [
+    "artificial intelligence",
+    "nlp",
+    "research"
+  ],
+  "education": [
+    {
+      "institution": "USTHB",
+      "degree": "MSc",
+      "field": "Data Science",
+      "end_date": "2027"
+    }
+  ],
+  "experience": [
+    {
+      "organization": "Freelance",
+      "title": "Data analyst",
+      "description": "Dashboarding for SMEs"
+    }
+  ],
+  "preferences": {
+    "modes": [
+      "remote",
+      "hybrid"
+    ],
+    "countries": [],
+    "types": [
+      "internship",
+      "research",
+      "scholarship"
+    ]
+  },
+  "summary": "Data science master's student in Algiers, ML research enthusiast, seeks remote internships."
+}

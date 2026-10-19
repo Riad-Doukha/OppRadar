@@ -1,0 +1,58 @@
+# OppRadar ingestion sources.
+#
+# Each entry:
+#   name      unique id, used as Opportunity.source (prefix with kind, e.g. "rss:...")
+#   kind      rss | api | html
+#   url       feed / endpoint / list page
+#   enabled   set false to skip without deleting
+#   selector  (html only) CSS selectors for the list items — add as needed
+#
+# ⚠️ Keep this file factual: only sources we are allowed to read, with polite
+# fetching (real User-Agent, rate limits in fetchers.py).
+
+sources:
+  # --- Tech jobs / internships -------------------------------------------
+  - name: "rss:remoteok"
+    kind: rss
+    url: "https://remoteok.com/api"
+    enabled: true
+
+  - name: "rss:remotive"
+    kind: rss
+    url: "https://remotive.com/api/remote-jobs?limit=50"
+    enabled: true
+
+  - name: "rss:weworkremotely"
+    kind: rss
+    url: "https://weworkremotely.com/categories/remote-programming-jobs.rss"
+    enabled: true
+
+  # --- Scholarships --------------------------------------------------------
+  - name: "rss:daad-scholarships"
+    kind: rss
+    url: "https://www.daad.de/en/study-and-research-in-germany/scholarships/"
+    kind_note: "switch to api/html once a stable feed URL is confirmed"
+    enabled: false   # enable once the feed is verified
+
+  # --- Competitions / hackathons ------------------------------------------
+  - name: "api:devpost"
+    kind: api
+    url: "https://devpost.com/api/hackathons"
+    enabled: false   # enable once API access is confirmed
+
+  # --- Local market (Algeria / Maghreb) ------------------------------------
+  - name: "html:example-board"
+    kind: html
+    url: "https://example.org/opportunities"
+    enabled: false   # placeholder — add a real, permitted source here
+    selector:
+      item: ".opportunity-card"
+      title: ".title"
+      link: "a"
+      description: ".summary"
+
+# Defaults applied to every source by fetchers.py:
+defaults:
+  timeout_seconds: 20
+  rate_limit_seconds: 2      # minimum gap between hits to the same host
+  user_agent: "OppRadarBot/0.1 (+https://github.com/Riad-Doukha/OppRadar)"

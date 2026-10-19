@@ -1,0 +1,35 @@
+# CODEOWNERS — auto-request the right reviewer per area.
+# Syntax: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+#
+# TODO: replace @ikbel-khemiri below with Ikbel's actual GitHub handle.
+
+# Default: the backend/repo owner reviews anything unlisted.
+*                               @Riad-Doukha
+
+# Riad's areas
+/frontend/                      @Riad-Doukha
+/backend/                       @Riad-Doukha
+/supabase/                      @Riad-Doukha
+/.github/                       @Riad-Doukha
+/docs/                          @Riad-Doukha
+
+# Shared AI files — BOTH AI owners + backend owner must approve.
+/ai/oppradar_ai/schemas.py      @AhlemToubrinet @ikbel-khemiri @Riad-Doukha
+/ai/oppradar_ai/llm.py          @AhlemToubrinet @ikbel-khemiri @Riad-Doukha
+
+# Ahlem: ingestion + CV parsing
+/ai/oppradar_ai/ingestion/      @AhlemToubrinet
+/ai/oppradar_ai/profile/        @AhlemToubrinet
+/ai/notebooks/you_*             @AhlemToubrinet
+
+# Ikbel: matching + chat
+/ai/oppradar_ai/matching/       @ikbel-khemiri
+/ai/oppradar_ai/chat/           @ikbel-khemiri
+/ai/notebooks/ikbel_*           @ikbel-khemiri
+
+# AI data & tests — the owning side reviews.
+/ai/data/fixtures/              @AhlemToubrinet @ikbel-khemiri
+/ai/data/eval/                  @AhlemToubrinet @ikbel-khemiri
+/ai/tests/ingestion/            @AhlemToubrinet
+/ai/tests/matching/             @ikbel-khemiri
+/ai/tests/chat/                 @ikbel-khemiri

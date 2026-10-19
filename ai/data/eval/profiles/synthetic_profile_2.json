@@ -1,0 +1,49 @@
+{
+  "id": "profile-2",
+  "full_name": "Sara B.",
+  "headline": "Frontend developer, 2 years of experience",
+  "skills": [
+    "react",
+    "typescript",
+    "next.js",
+    "css",
+    "javascript"
+  ],
+  "languages": [
+    "french",
+    "english"
+  ],
+  "interests": [
+    "web development",
+    "ui design"
+  ],
+  "education": [
+    {
+      "institution": "ENSMAD",
+      "degree": "BSc",
+      "field": "Web Development",
+      "end_date": "2024"
+    }
+  ],
+  "experience": [
+    {
+      "organization": "Startup studio",
+      "title": "Frontend developer",
+      "description": "React apps for clients"
+    }
+  ],
+  "preferences": {
+    "modes": [
+      "hybrid",
+      "remote"
+    ],
+    "countries": [
+      "Algeria"
+    ],
+    "types": [
+      "job",
+      "internship"
+    ]
+  },
+  "summary": "Frontend developer in Algiers, React/TypeScript, looking for hybrid roles locally."
+}
