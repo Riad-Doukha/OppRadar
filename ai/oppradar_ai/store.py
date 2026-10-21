@@ -26,6 +26,19 @@ from oppradar_ai.schemas import (
 logger = logging.getLogger(__name__)
 
 
+def _parse_timestamp(value: str) -> datetime:
+    """Parse an ISO timestamp, tolerating the 'Z' UTC suffix.
+
+    Pydantic v2 serializes UTC datetimes as '...Z'; datetime.fromisoformat only
+    accepts that suffix from Python 3.11, so normalise it for 3.10 compatibility.
+
+    Example:
+        >>> _parse_timestamp("2026-10-21T15:20:00Z").date().isoformat()
+        '2026-10-21'
+    """
+    return datetime.fromisoformat(value.replace("Z", "+00:00"))
+
+
 class StoreError(RuntimeError):
     """Unexpected storage failure (unreadable/corrupt store file)."""
 
@@ -180,7 +193,7 @@ class JsonStore:
             for r in rows
             if r.get("profile_id") == profile_id
             and r.get("status") == "sent"
-            and datetime.fromisoformat(r["created_at"]).date() == today
+            and _parse_timestamp(r["created_at"]).date() == today
         )
 
     # -- chat --------------------------------------------------------------------- #

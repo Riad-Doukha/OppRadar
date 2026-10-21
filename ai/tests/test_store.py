@@ -1,4 +1,4 @@
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from oppradar_ai.schemas import (
     ChatTurn,
@@ -39,12 +39,12 @@ def test_matches_replaced_per_profile(tmp_store, sample_match):
 
 def test_notification_history_and_daily_cap(tmp_store, sample_notification):
     sent = sample_notification.model_copy(
-        update={"status": NotificationStatus.SENT, "created_at": datetime.now(UTC)}
+        update={"status": NotificationStatus.SENT, "created_at": datetime.now(timezone.utc)}
     )
     old = sample_notification.model_copy(
         update={
             "status": NotificationStatus.SENT,
-            "created_at": datetime.now(UTC) - timedelta(days=2),
+            "created_at": datetime.now(timezone.utc) - timedelta(days=2),
             "opportunity_id": "opp-old",
         }
     )

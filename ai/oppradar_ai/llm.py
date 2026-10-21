@@ -20,7 +20,7 @@ import httpx
 from pydantic import BaseModel
 from tenacity import Retrying, stop_after_attempt, wait_exponential
 
-from oppradar_ai.config import get_settings
+from oppradar_ai.config import Settings, get_settings
 
 logger = logging.getLogger(__name__)
 
@@ -216,9 +216,9 @@ class GeminiProvider(LLM):
 
     name = "gemini"
 
-    def __init__(self) -> None:
+    def __init__(self, settings: Settings | None = None) -> None:
         super().__init__()
-        settings = get_settings()
+        settings = settings or get_settings()
         if not settings.gemini_key_value:
             raise LLMError("GEMINI_API_KEY is empty — set it in ai/.env or use LLM_PROVIDER=fake")
         try:

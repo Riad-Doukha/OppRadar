@@ -76,8 +76,13 @@ def test_long_input_is_truncated():
 
 
 def test_gemini_requires_key():
+    # Build a keyless config directly so the test passes even when the developer
+    # has a real GEMINI_API_KEY in ai/.env.
+    from oppradar_ai.config import Settings
+
+    keyless = Settings(_env_file=None, gemini_api_key="")
     with pytest.raises(LLMError, match="GEMINI_API_KEY"):
-        llm.GeminiProvider()
+        llm.GeminiProvider(settings=keyless)
 
 
 def test_disk_cache_put_get_roundtrip():

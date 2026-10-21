@@ -21,6 +21,10 @@ pytest                      # test suite (offline, uses the fake provider)
 jupyter lab notebooks/00_setup.ipynb
 ```
 
+The package supports Python **3.10+**. In VS Code / Jupyter, pick an interpreter that
+has it installed — e.g. the `DM_ENV_310` conda env (`E:\anaconda\envs\DM_ENV_310\python.exe`),
+also registered as the kernel **"DM_ENV_310 (Python 3.10)"**.
+
 ## Layout
 
 ```

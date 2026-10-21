@@ -7,7 +7,9 @@ name = "oppradar-ai"
 version = "0.2.0"
 description = "AI layer of OppRadar: documents, ingestion, matching, notifications, chat."
 readme = "README.md"
-requires-python = ">=3.11"
+# Floor is 3.10 so the project runs inside the DM_ENV_310 conda env (Python 3.10);
+# the code itself remains forward-compatible with 3.11+ (spec target).
+requires-python = ">=3.10"
 license = { text = "MIT" }
 dependencies = [
     # core
@@ -57,7 +59,7 @@ addopts = "-q"
 
 [tool.ruff]
 line-length = 100
-target-version = "py311"
+target-version = "py310"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM"]

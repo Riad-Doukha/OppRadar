@@ -3,8 +3,8 @@
 
 from __future__ import annotations
 
-from datetime import UTC, date, datetime
-from enum import StrEnum
+from datetime import date, datetime, timezone
+from enum import Enum
 from typing import Any, Literal
 
 from pydantic import BaseModel, Field, field_validator
@@ -13,7 +13,7 @@ from pydantic import BaseModel, Field, field_validator
 # --------------------------------------------------------------------------- #
 # Enums
 # --------------------------------------------------------------------------- #
-class OpportunityType(StrEnum):
+class OpportunityType(str, Enum):
     SCHOLARSHIP = "scholarship"
     JOB = "job"
     INTERNSHIP = "internship"
@@ -27,7 +27,7 @@ class OpportunityType(StrEnum):
     OTHER = "other"
 
 
-class TrustLevel(StrEnum):
+class TrustLevel(str, Enum):
     VERIFIED = "verified"  # submitted by a known organisation via the structured form
     LIKELY_SAFE = "likely_safe"
     UNKNOWN = "unknown"
@@ -35,7 +35,7 @@ class TrustLevel(StrEnum):
     SCAM = "scam"
 
 
-class ScamFlag(StrEnum):
+class ScamFlag(str, Enum):
     APPLICATION_FEE = "application_fee"
     BANK_OR_ID_REQUEST = "bank_or_id_request"
     FREE_EMAIL_ORGANIZER = "free_email_organizer"
@@ -45,18 +45,18 @@ class ScamFlag(StrEnum):
     TOO_GOOD_TO_BE_TRUE = "too_good_to_be_true"
 
 
-class CriteriaStatus(StrEnum):
+class CriteriaStatus(str, Enum):
     MET = "met"
     MISSED = "missed"
     UNKNOWN = "unknown"
 
 
-class NotificationMode(StrEnum):
+class NotificationMode(str, Enum):
     INSTANT = "instant"
     DIGEST = "digest"
 
 
-class NotificationStatus(StrEnum):
+class NotificationStatus(str, Enum):
     SENT = "sent"
     PENDING = "pending"
     SUPPRESSED = "suppressed"
@@ -290,7 +290,7 @@ class Notification(BaseModel):
     mode: NotificationMode = NotificationMode.INSTANT
     status: NotificationStatus = NotificationStatus.PENDING
     suppressed_reason: str | None = None
-    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 # --------------------------------------------------------------------------- #
@@ -316,7 +316,7 @@ class EligibilityAssessment(BaseModel):
 class ChatTurn(BaseModel):
     role: Literal["user", "assistant"]
     content: str
-    at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 class ChatAnswer(BaseModel):
