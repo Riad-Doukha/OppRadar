@@ -27,7 +27,7 @@ class Settings(BaseSettings):
     # --- LLM providers ------------------------------------------------------
     llm_provider: Literal["gemini", "ollama", "fake"] = "fake"
     gemini_api_key: SecretStr = SecretStr("")
-    gemini_model: str = "gemini-2.5-flash"
+    gemini_model: str = "gemini-3.8-flash"
     ollama_base_url: str = "http://localhost:11434"
     ollama_model: str = "llama3.2"
 
