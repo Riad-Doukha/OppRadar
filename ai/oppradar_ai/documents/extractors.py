@@ -83,9 +83,15 @@ def extract_portfolio(text: str, source_file: str = "") -> PortfolioExtraction:
 
 def _backfill(cv: CVExtraction, text: str) -> None:
     """Fill fields the LLM left empty from the cheap regex rules."""
+    filled: list[str] = []
     if not cv.email and (emails := find_emails(text)):
         cv.email = emails[0]
+        filled.append("email")
     if not cv.phone and (phones := find_phones(text)):
         cv.phone = phones[0]
+        filled.append("phone")
     if not cv.links:
         cv.links = find_urls(text)
+        filled.append("links")
+    if filled:
+        logger.info("regex backfill filled %s for %s", ", ".join(filled), cv.source_file)
