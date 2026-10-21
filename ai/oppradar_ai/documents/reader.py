@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 import base64
+import hashlib
 import logging
 from functools import lru_cache
 from pathlib import Path
@@ -13,6 +14,7 @@ import numpy as np
 import pymupdf
 
 from oppradar_ai.config import get_settings
+from oppradar_ai.llm import DiskCache
 from oppradar_ai.schemas import DocumentContent
 
 logger = logging.getLogger(__name__)
@@ -23,10 +25,16 @@ MIN_CHARS_PER_PAGE = 80
 
 @lru_cache(maxsize=1)
 def _engine():
-    """Lazy, cached rapidocr engine (loading models takes ~1s)."""
+    """Lazy, cached rapidocr engine (loading models takes ~1s).
+
+    `ocr_text_score` filters low-confidence lines (rapidocr's default 0.5 drops
+    whole lines on hard-to-read scans); RapidOCR's own INFO chatter is silenced.
+    """
     from rapidocr import RapidOCR
 
-    return RapidOCR()
+    settings = get_settings()
+    logging.getLogger("RapidOCR").setLevel(logging.WARNING)
+    return RapidOCR(params={"Global.text_score": settings.ocr_text_score})
 
 
 def read_document(path: str | Path) -> DocumentContent:
@@ -60,7 +68,7 @@ def _read_pdf(path: Path) -> DocumentContent:
     warnings: list[str] = []
     if len(text.strip()) < MIN_CHARS_PER_PAGE * pages:
         logger.info("%s: text layer too small (%d chars) — running OCR", path.name, len(text))
-        text = _ocr_pdf(doc)
+        text = _cached_ocr_pdf(path)
         method = "pdf_ocr"
         warnings.append("text layer missing or too small; OCR was used (verify names/dates)")
         if len(text.strip()) < MIN_CHARS_PER_PAGE * pages:
@@ -94,12 +102,11 @@ def _read_docx(path: Path) -> DocumentContent:
 
 def _read_image(path: Path) -> DocumentContent:
     """Image file: OCR, with Gemini vision only if OCR finds nothing."""
-    image_bytes = path.read_bytes()
-    text = _ocr_image(image_bytes)
+    text = _cached_ocr_image(path)
     warnings: list[str] = ["OCR result — verify names, dates and links"] if text else []
     method = "image_ocr"
     if not text:
-        text = _vision_text(image_bytes, "Transcribe every word of this document image.")
+        text = _vision_text(path.read_bytes(), "Transcribe every word of this document image.")
         if text:
             method = "gemini_vision"
             warnings = ["OCR found nothing; Gemini vision was used (costs quota)"]
@@ -108,17 +115,53 @@ def _read_image(path: Path) -> DocumentContent:
     )
 
 
-def _ocr_pdf(doc: pymupdf.Document) -> str:
-    """Render every page of a PDF at 150 dpi and OCR the page images."""
-    return "\n".join(_ocr_image(page.get_pixmap(dpi=150).tobytes("png")) for page in doc)
+@lru_cache(maxsize=1)
+def _ocr_cache() -> DiskCache:
+    """OCR results cache (data/cache/ocr/), same content-addressed store as the LLM."""
+    return DiskCache(directory=get_settings().cache_dir / "ocr")
+
+
+def _ocr_key(image_bytes: bytes, dpi: int) -> str:
+    """Cache key = sha256(file bytes) + render dpi (via the LLM cache helper)."""
+    return DiskCache.key("ocr", str(dpi), hashlib.sha256(image_bytes).hexdigest())
+
+
+def _cached_ocr_pdf(path: Path) -> str:
+    """OCR every page of a PDF; cached on disk by (file bytes, dpi)."""
+    dpi = get_settings().ocr_dpi
+    key = _ocr_key(path.read_bytes(), dpi)
+    if (hit := _ocr_cache().get(key)) is not None:
+        logger.info("OCR cache hit for %s", path.name)
+        return hit["text"]
+    doc = pymupdf.open(path)
+    text = "\n".join(_ocr_image(_page_png(page, dpi)) for page in doc)
+    doc.close()
+    _ocr_cache().put(key, {"text": text})
+    return text
+
+
+def _cached_ocr_image(path: Path) -> str:
+    """OCR an image file; cached on disk by (file bytes, dpi)."""
+    image_bytes = path.read_bytes()
+    key = _ocr_key(image_bytes, get_settings().ocr_dpi)
+    if (hit := _ocr_cache().get(key)) is not None:
+        logger.info("OCR cache hit for %s", path.name)
+        return hit["text"]
+    text = _ocr_image(image_bytes)
+    _ocr_cache().put(key, {"text": text})
+    return text
+
+
+def _page_png(page: pymupdf.Page, dpi: int) -> bytes:
+    """Render one PDF page to PNG bytes at the configured OCR resolution."""
+    return page.get_pixmap(dpi=dpi).tobytes("png")
 
 
 def _vision_pdf(doc: pymupdf.Document) -> str:
     """Ask Gemini to transcribe every page of a PDF (last resort, costs quota)."""
     question = "Transcribe every word of this document page."
-    return "\n".join(
-        _vision_text(page.get_pixmap(dpi=150).tobytes("png"), question) for page in doc
-    )
+    dpi = get_settings().ocr_dpi
+    return "\n".join(_vision_text(_page_png(page, dpi), question) for page in doc)
 
 
 def _ocr_image(image_bytes: bytes) -> str:

@@ -47,6 +47,10 @@ class Settings(BaseSettings):
     embedding_fallback_model: str = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
     embedding_batch_size: int = 32
 
+    # --- OCR (documents/reader.py) -------------------------------------------
+    ocr_dpi: int = 220  # page render resolution for rapidocr (higher = better, slower)
+    ocr_text_score: float = 0.3  # drop OCR lines below this confidence (rapidocr default 0.5)
+
     # --- Thresholds ---------------------------------------------------------
     confidence_threshold: float = 0.65
     notify_threshold: float = 70.0
@@ -137,8 +141,11 @@ def get_settings() -> Settings:
     return Settings()
 
 
-def setup_logging(level: str | None = None) -> None:
+def setup_logging(level: str | None = None, rapidocr_level: str = "WARNING") -> None:
     """Configure a readable root logger for scripts and notebooks.
+
+    Third-party OCR chatter stays quiet by default; pass `rapidocr_level` to
+    see it (e.g. when debugging the OCR pipeline).
 
     Example:
         >>> setup_logging("INFO")
@@ -151,3 +158,4 @@ def setup_logging(level: str | None = None) -> None:
         datefmt="%H:%M:%S",
         force=True,
     )
+    logging.getLogger("RapidOCR").setLevel(rapidocr_level)
