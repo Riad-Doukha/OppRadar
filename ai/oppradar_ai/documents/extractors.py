@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 _EMAIL_RE = re.compile(r"[\w.+-]+@[\w-]+\.[\w.-]+")
 _URL_RE = re.compile(r"https?://[^\s<>()\"']+")
 _PHONE_RE = re.compile(r"(?<!\d)(?:\+?\d[\d\s().-]{7,}\d)(?!\d)")
+_YEAR_RANGE_RE = re.compile(r"(?:19|20)\d{2}\s*-\s*(?:19|20)\d{2}")
 
 
 def find_emails(text: str) -> list[str]:
@@ -33,8 +34,17 @@ def find_urls(text: str) -> list[str]:
 
 
 def find_phones(text: str) -> list[str]:
-    """Every plausible phone number in `text`, deduplicated, in order."""
-    return list(dict.fromkeys(m.group(0).strip() for m in _PHONE_RE.finditer(text)))
+    """Every plausible phone number in `text`, deduplicated, in order.
+
+    Four-digit year ranges such as "2021 - 2024" are rejected: in CVs,
+    digits around a hyphen are dates, never phone numbers.
+
+    Example:
+        >>> find_phones("call +213 555 000 111 or start 2021 - 2024")
+        ['+213 555 000 111']
+    """
+    cands = (m.group(0).strip() for m in _PHONE_RE.finditer(text))
+    return list(dict.fromkeys(c for c in cands if not _YEAR_RANGE_RE.fullmatch(c)))
 
 
 def _load_prompt(name: str) -> str:
@@ -51,8 +61,8 @@ def extract_cv(text: str, source_file: str = "") -> CVExtraction:
         True
     """
     cv = get_llm().structured(text, CVExtraction, system=_load_prompt("extract_cv.md"))
+    cv.source_file = source_file  # set first so backfill logs can name the file
     _backfill(cv, text)
-    cv.source_file = source_file
     logger.info("extracted CV %r (%d skills, source=%s)", cv.full_name, len(cv.skills), source_file)
     return cv
 
