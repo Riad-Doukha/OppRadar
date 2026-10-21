@@ -4,12 +4,19 @@
 
 from __future__ import annotations
 
+import os
 from functools import lru_cache
 from pathlib import Path
 from typing import Literal
 
 from pydantic import SecretStr, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# We only ever use PyTorch. When tensorflow is installed (for other projects),
+# sentence-transformers would otherwise load transformers' TF backend, which is
+# slow to start and clashes with Keras 3. Setting USE_TF=no disables it cleanly.
+# Must run before transformers is imported anywhere.
+os.environ.setdefault("USE_TF", "no")
 
 # ai/ directory — data/, notebooks/ and tests/ live next to the package.
 AI_ROOT = Path(__file__).resolve().parents[1]
