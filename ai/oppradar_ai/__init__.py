@@ -1,9 +1,11 @@
-"""OppRadar AI core.
+"""OppRadar AI layer.
 
-Import the submodules directly, e.g.:
+Import submodules directly, e.g.:
 
-    from oppradar_ai.schemas import Opportunity, Profile
-    from oppradar_ai.matching import score_matches
+    from oppradar_ai.config import get_settings, setup_logging
+    from oppradar_ai.schemas import Profile, Opportunity
+    from oppradar_ai.llm import get_llm
+    from oppradar_ai.store import JsonStore
 """
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"

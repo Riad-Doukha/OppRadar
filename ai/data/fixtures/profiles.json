@@ -1,0 +1,261 @@
+[
+  {
+    "user_id": "u-amine",
+    "full_name": "Amine Kaddour",
+    "headline": "Data Science Master's student",
+    "country": "Algeria",
+    "skills": [
+      "python",
+      "sql",
+      "pandas",
+      "numpy",
+      "pytorch",
+      "scikit-learn",
+      "machine learning",
+      "deep learning",
+      "git",
+      "linux"
+    ],
+    "languages": [
+      "arabic",
+      "french",
+      "english"
+    ],
+    "interests": [
+      "nlp",
+      "computer vision",
+      "ai research"
+    ],
+    "education": [
+      {
+        "institution": "USTHB",
+        "degree": "MSc",
+        "field": "Data Science",
+        "end_date": "2027"
+      }
+    ],
+    "experience": [
+      {
+        "organization": "NAMOCO Analytics",
+        "title": "Machine Learning Intern",
+        "start_date": "2025-06",
+        "end_date": "2025-09"
+      }
+    ],
+    "preferences": {
+      "types": [
+        "internship",
+        "research",
+        "scholarship"
+      ],
+      "modes": [
+        "remote",
+        "hybrid"
+      ],
+      "countries": [],
+      "needs_funding": true
+    },
+    "summary": "Data science master's student in Algiers, ML and NLP, seeking remote ML internships and research positions."
+  },
+  {
+    "user_id": "u-sara",
+    "full_name": "Sara Belkacem",
+    "headline": "Frontend Developer",
+    "country": "Algeria",
+    "skills": [
+      "react",
+      "typescript",
+      "next.js",
+      "css",
+      "figma",
+      "react native"
+    ],
+    "languages": [
+      "french",
+      "english"
+    ],
+    "interests": [
+      "web development",
+      "ui design"
+    ],
+    "education": [
+      {
+        "institution": "ENSMAD",
+        "degree": "BSc",
+        "field": "Web Development",
+        "end_date": "2024"
+      }
+    ],
+    "experience": [
+      {
+        "organization": "Startup Studio Oran",
+        "title": "Frontend Developer",
+        "start_date": "2024"
+      }
+    ],
+    "preferences": {
+      "types": [
+        "job",
+        "internship"
+      ],
+      "modes": [
+        "hybrid",
+        "remote"
+      ],
+      "countries": [
+        "Algeria"
+      ],
+      "needs_funding": false
+    },
+    "summary": "Frontend developer in Oran, React and TypeScript, looking for hybrid roles in Algeria."
+  },
+  {
+    "user_id": "u-youcef",
+    "full_name": "Youcef Merabet",
+    "headline": "Backend and DevOps engineer",
+    "country": "Algeria",
+    "skills": [
+      "python",
+      "fastapi",
+      "postgresql",
+      "docker",
+      "kubernetes",
+      "terraform",
+      "linux"
+    ],
+    "languages": [
+      "arabic",
+      "french",
+      "english"
+    ],
+    "interests": [
+      "cloud",
+      "infrastructure"
+    ],
+    "education": [
+      {
+        "institution": "ENP Oran",
+        "degree": "MSc",
+        "field": "Software Engineering",
+        "end_date": "2023"
+      }
+    ],
+    "experience": [
+      {
+        "organization": "Freelance",
+        "title": "Backend Engineer",
+        "start_date": "2023"
+      }
+    ],
+    "preferences": {
+      "types": [
+        "job"
+      ],
+      "modes": [
+        "remote"
+      ],
+      "countries": [],
+      "needs_funding": false
+    },
+    "summary": "Backend and DevOps engineer with FastAPI, Docker and Kubernetes, seeking remote roles worldwide."
+  },
+  {
+    "user_id": "u-lina",
+    "full_name": "Lina Haddad",
+    "headline": "Humanities master's student",
+    "country": "Algeria",
+    "skills": [
+      "research",
+      "writing",
+      "english",
+      "french"
+    ],
+    "languages": [
+      "arabic",
+      "french",
+      "english"
+    ],
+    "interests": [
+      "human rights",
+      "public policy",
+      "migration studies"
+    ],
+    "education": [
+      {
+        "institution": "USTHB",
+        "degree": "MA",
+        "field": "Humanities",
+        "end_date": "2026"
+      }
+    ],
+    "experience": [],
+    "preferences": {
+      "types": [
+        "scholarship",
+        "grant",
+        "fellowship"
+      ],
+      "modes": [
+        "onsite"
+      ],
+      "countries": [
+        "France"
+      ],
+      "needs_funding": true
+    },
+    "summary": "Humanities master's student seeking funded scholarships and fellowships in France for 2027."
+  },
+  {
+    "user_id": "u-karim",
+    "full_name": "Karim Ziani",
+    "headline": "Product designer and hackathon player",
+    "country": "Morocco",
+    "skills": [
+      "figma",
+      "ui design",
+      "javascript",
+      "html",
+      "css",
+      "prototyping"
+    ],
+    "languages": [
+      "arabic",
+      "french",
+      "english"
+    ],
+    "interests": [
+      "hackathons",
+      "product design",
+      "startups"
+    ],
+    "education": [
+      {
+        "institution": "ENSA",
+        "degree": "BSc",
+        "field": "Design",
+        "end_date": "2023"
+      }
+    ],
+    "experience": [
+      {
+        "organization": "Freelance",
+        "title": "Product Designer",
+        "start_date": "2023"
+      }
+    ],
+    "preferences": {
+      "types": [
+        "hackathon",
+        "bootcamp",
+        "internship"
+      ],
+      "modes": [
+        "remote",
+        "hybrid"
+      ],
+      "countries": [],
+      "needs_funding": false
+    },
+    "summary": "Product designer who joins hackathons and bootcamps, remote or hybrid, based in Morocco."
+  }
+]

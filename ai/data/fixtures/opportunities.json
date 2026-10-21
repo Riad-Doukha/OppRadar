@@ -2,568 +2,749 @@
   {
     "id": "opp-01",
     "title": "AI Research Intern",
-    "organization": "NVIDIA",
+    "organizer": "NVIDIA",
     "type": "internship",
     "mode": "remote",
     "location": "Remote",
     "country": "USA",
-    "deadline": "2026-12-03",
-    "salary": "$5,000/mo",
-    "description": "Work with the NVIDIA research team on efficient training of large models. Open to master's students.",
-    "tags": [
-      "python",
-      "pytorch",
-      "deep learning",
-      "cuda"
+    "language": "en",
+    "deadline": "2026-12-05",
+    "funding": "$5,000/mo",
+    "eligibility": [
+      "Master's students in ML or CS",
+      "PyTorch experience"
     ],
+    "benefits": [
+      "Mentorship",
+      "Publication track"
+    ],
+    "summary": "Work with the NVIDIA research team on efficient training of large models.",
+    "url": "https://example.org/opportunities/01",
     "source": "fixture",
-    "source_url": "https://example.org/opportunities/01"
+    "trust_level": "unknown",
+    "added_via": "pipeline"
   },
   {
     "id": "opp-02",
     "title": "Machine Learning Intern",
-    "organization": "Ooredoo Algérie",
+    "organizer": "Ooredoo Algerie",
     "type": "internship",
     "mode": "hybrid",
     "location": "Algiers",
     "country": "Algeria",
-    "deadline": "2026-11-09",
-    "salary": "15,000 DZD/mo",
-    "description": "Predictive models for telecom churn. Hybrid rhythm, two days on-site in Algiers.",
-    "tags": [
-      "python",
-      "machine learning",
-      "sql"
+    "language": "fr",
+    "deadline": "2026-11-11",
+    "funding": "15,000 DZD/mo",
+    "eligibility": [
+      "Students only",
+      "Python required"
     ],
+    "benefits": [
+      "Mentorship",
+      "Possibility of conversion to CDI"
+    ],
+    "summary": "Modeles predictifs pour la retention client. Rythme hybride, deux jours sur site.",
+    "url": "https://example.org/opportunities/02",
     "source": "fixture",
-    "source_url": "https://example.org/opportunities/02"
+    "trust_level": "unknown",
+    "added_via": "pipeline"
   },
   {
     "id": "opp-03",
     "title": "Frontend Developer Intern",
-    "organization": "Yassir",
+    "organizer": "Yassir",
     "type": "internship",
     "mode": "hybrid",
     "location": "Algiers",
     "country": "Algeria",
-    "deadline": "2026-10-31",
-    "salary": "20,000 DZD/mo",
-    "description": "Join the Yassir product squad building the super-app used across the Maghreb.",
-    "tags": [
-      "react",
-      "typescript",
-      "next.js",
-      "css"
+    "language": "en",
+    "deadline": "2026-11-02",
+    "funding": "20,000 DZD/mo",
+    "eligibility": [
+      "React knowledge",
+      "Students welcome"
     ],
+    "benefits": [
+      "Product impact",
+      "Sport card"
+    ],
+    "summary": "Join the Yassir product squad building the super-app used across the Maghreb.",
+    "url": "https://example.org/opportunities/03",
     "source": "fixture",
-    "source_url": "https://example.org/opportunities/03"
+    "trust_level": "unknown",
+    "added_via": "pipeline"
   },
   {
     "id": "opp-04",
     "title": "Data Analyst Intern",
-    "organization": "DP World",
+    "organizer": "DP World",
     "type": "internship",
     "mode": "onsite",
     "location": "Djibouti",
     "country": "Djibouti",
-    "deadline": "2026-12-18",
-    "salary": "Unpaid",
-    "description": "Port logistics analytics. On-site at the Djibouti terminal, accommodation provided.",
-    "tags": [
-      "sql",
-      "power bi",
-      "excel",
-      "python"
+    "language": "en",
+    "deadline": "2026-12-20",
+    "funding": "Unpaid",
+    "eligibility": [
+      "Statistics or CS background",
+      "Willing to relocate"
     ],
+    "benefits": [
+      "Housing provided",
+      "Certificate"
+    ],
+    "summary": "Port logistics analytics on-site in Djibouti.",
+    "url": "https://example.org/opportunities/04",
     "source": "fixture",
-    "source_url": "https://example.org/opportunities/04"
+    "trust_level": "unknown",
+    "added_via": "pipeline"
   },
   {
     "id": "opp-05",
     "title": "Backend Engineer (Junior)",
-    "organization": "Sarawak",
+    "organizer": "Sarawak",
     "type": "job",
     "mode": "remote",
     "location": "Remote",
     "country": "France",
-    "deadline": "2026-11-18",
-    "salary": "€38k-45k/yr",
-    "description": "Junior backend role on a FastAPI + Postgres stack. Fully remote within EU timezones.",
-    "tags": [
-      "python",
-      "fastapi",
-      "postgresql",
-      "docker"
+    "language": "en",
+    "deadline": "2026-11-20",
+    "funding": "38k-45k EUR/yr",
+    "eligibility": [
+      "Python",
+      "FastAPI or Django",
+      "SQL"
     ],
+    "benefits": [
+      "Remote work",
+      "12 extra vacation days"
+    ],
+    "summary": "Junior backend role on a FastAPI and Postgres stack, remote within EU timezones.",
+    "url": "https://example.org/opportunities/05",
     "source": "fixture",
-    "source_url": "https://example.org/opportunities/05"
+    "trust_level": "unknown",
+    "added_via": "pipeline"
   },
   {
     "id": "opp-06",
     "title": "Software Engineer I",
-    "organization": "Canonical",
+    "organizer": "Canonical",
     "type": "job",
     "mode": "remote",
     "location": "Remote",
-    "country": "UK",
-    "deadline": "2026-11-28",
-    "salary": "$70k-90k/yr",
-    "description": "Ubuntu engineering team. Async-first, written communication is key.",
-    "tags": [
-      "python",
-      "go",
-      "linux",
-      "distributed systems"
+    "country": "United Kingdom",
+    "language": "en",
+    "deadline": "2026-11-30",
+    "funding": "70k-90k USD/yr",
+    "eligibility": [
+      "Professional English writing",
+      "Linux fluency"
     ],
+    "benefits": [
+      "All-remote",
+      "Annual retreat"
+    ],
+    "summary": "Ubuntu engineering team, async-first, written communication is key.",
+    "url": "https://example.org/opportunities/06",
     "source": "fixture",
-    "source_url": "https://example.org/opportunities/06"
+    "trust_level": "unknown",
+    "added_via": "pipeline"
   },
   {
     "id": "opp-07",
-    "title": "PhD Position — NLP for Arabic",
-    "organization": "MBZUAI",
+    "title": "PhD Position - NLP for Arabic",
+    "organizer": "MBZUAI",
     "type": "research",
     "mode": "onsite",
     "location": "Abu Dhabi",
     "country": "UAE",
-    "deadline": "2026-11-13",
-    "salary": "Fully funded",
-    "description": "Fully funded PhD on low-resource Arabic NLP. Start Spring 2027.",
-    "tags": [
-      "nlp",
-      "python",
-      "deep learning",
-      "transformers"
+    "language": "en",
+    "deadline": "2026-11-15",
+    "funding": "Fully funded",
+    "eligibility": [
+      "MSc in CS or NLP",
+      "Research experience",
+      "English"
     ],
+    "benefits": [
+      "Full funding",
+      "Stipend",
+      "Conference budget"
+    ],
+    "summary": "Fully funded PhD on low-resource Arabic NLP, start Spring 2027.",
+    "url": "https://example.org/opportunities/07",
     "source": "fixture",
-    "source_url": "https://example.org/opportunities/07"
+    "trust_level": "unknown",
+    "added_via": "pipeline"
   },
   {
     "id": "opp-08",
     "title": "Master's Scholarship in AI",
-    "organization": "ENSICAEN",
+    "organizer": "ENSICAEN",
     "type": "scholarship",
     "mode": "onsite",
     "location": "Caen",
     "country": "France",
-    "deadline": "2026-11-06",
-    "salary": "€8,000/yr",
-    "description": "Erasmus Mundus joint master's scholarship in artificial intelligence, covering tuition and living.",
-    "tags": [
-      "artificial intelligence"
+    "language": "en",
+    "deadline": "2026-11-08",
+    "funding": "8,000 EUR/yr",
+    "eligibility": [
+      "Bachelor's degree",
+      "English B2"
     ],
+    "benefits": [
+      "Tuition coverage",
+      "Mobility grant"
+    ],
+    "summary": "Erasmus Mundus joint master's scholarship in artificial intelligence.",
+    "url": "https://example.org/opportunities/08",
     "source": "fixture",
-    "source_url": "https://example.org/opportunities/08"
+    "trust_level": "unknown",
+    "added_via": "pipeline"
   },
   {
     "id": "opp-09",
     "title": "DAAD Development-Related Scholarships",
-    "organization": "DAAD",
+    "organizer": "DAAD",
     "type": "scholarship",
     "mode": "onsite",
     "location": "Germany",
     "country": "Germany",
-    "deadline": "2026-11-23",
-    "salary": "€992/mo",
-    "description": "Scholarships for graduates from developing countries pursuing a postgraduate degree in Germany.",
-    "tags": [
-      "engineering",
-      "research"
+    "language": "en",
+    "deadline": "2026-11-25",
+    "funding": "992 EUR/mo",
+    "eligibility": [
+      "Graduate from a developing country",
+      "Two years of work experience"
     ],
+    "benefits": [
+      "Monthly stipend",
+      "Tuition covered"
+    ],
+    "summary": "Scholarships for graduates from developing countries pursuing postgraduate degrees in Germany.",
+    "url": "https://example.org/opportunities/09",
     "source": "fixture",
-    "source_url": "https://example.org/opportunities/09"
+    "trust_level": "unknown",
+    "added_via": "pipeline"
   },
   {
     "id": "opp-10",
-    "title": "Africa Data Cup 2026",
-    "organization": "InstaDeep",
-    "type": "competition",
+    "title": "Expired Data Viz Contest",
+    "organizer": "Old Charts Org",
+    "type": "hackathon",
     "mode": "remote",
     "location": "Remote",
-    "country": "Tunisia",
-    "deadline": "2026-11-03",
-    "salary": "$10,000 prize",
-    "description": "Continent-wide ML competition on crop-disease detection from satellite imagery.",
-    "tags": [
-      "machine learning",
-      "python",
-      "computer vision"
+    "country": "Global",
+    "language": "en",
+    "deadline": "2026-09-21",
+    "funding": "$500 prize",
+    "eligibility": [
+      "Open to all"
     ],
+    "benefits": [
+      "Prize"
+    ],
+    "summary": "This listing closed a month ago - used to test expired-opportunity filtering.",
+    "url": "https://example.org/opportunities/10",
     "source": "fixture",
-    "source_url": "https://example.org/opportunities/10"
+    "trust_level": "unknown",
+    "added_via": "pipeline"
   },
   {
     "id": "opp-11",
     "title": "Global Hack: Fintech",
-    "organization": "Devpost",
-    "type": "competition",
+    "organizer": "Devpost",
+    "type": "hackathon",
     "mode": "remote",
     "location": "Remote",
     "country": "Global",
-    "deadline": "2026-10-27",
-    "salary": "$5,000 prize",
-    "description": "48-hour online hackathon. Build the future of payments with the sponsor API.",
-    "tags": [
-      "javascript",
-      "api",
-      "fintech"
+    "language": "en",
+    "deadline": "2026-10-29",
+    "funding": "$5,000 prize",
+    "eligibility": [
+      "Teams of 1-4",
+      "Open to all"
     ],
+    "benefits": [
+      "Prize pool",
+      "Sponsor mentorship"
+    ],
+    "summary": "48-hour online hackathon building the future of payments with sponsor APIs.",
+    "url": "https://example.org/opportunities/11",
     "source": "fixture",
-    "source_url": "https://example.org/opportunities/11"
+    "trust_level": "unknown",
+    "added_via": "pipeline"
   },
   {
     "id": "opp-12",
     "title": "Deep Learning Bootcamp",
-    "organization": "ALX Africa",
+    "organizer": "ALX Africa",
     "type": "bootcamp",
     "mode": "remote",
     "location": "Remote",
     "country": "Nigeria",
-    "deadline": "2026-11-16",
-    "salary": "Free",
-    "description": "12-week intensive deep learning program for African developers. Selection-based.",
-    "tags": [
-      "deep learning",
-      "python",
-      "ai"
+    "language": "en",
+    "deadline": "2026-11-18",
+    "funding": "Free",
+    "eligibility": [
+      "African residents",
+      "Ages 18-34"
     ],
+    "benefits": [
+      "12-week program",
+      "Career support"
+    ],
+    "summary": "12-week intensive deep learning program for African developers, selection-based.",
+    "url": "https://example.org/opportunities/12",
     "source": "fixture",
-    "source_url": "https://example.org/opportunities/12"
+    "trust_level": "unknown",
+    "added_via": "pipeline"
   },
   {
     "id": "opp-13",
-    "title": "Full-Stack Bootcamp Scholarship",
-    "organization": "1337 / 42 Network",
+    "title": "Full-Stack Bootcamp Selection",
+    "organizer": "1337 - 42 Network",
     "type": "bootcamp",
     "mode": "onsite",
     "location": "Benguerir",
     "country": "Morocco",
-    "deadline": "2026-12-08",
-    "salary": "Free",
-    "description": "Peer-to-peer full-stack curriculum. No teacher, no tuition, selection by game.",
-    "tags": [
-      "c",
-      "algorithms",
-      "peer learning"
+    "language": "fr",
+    "deadline": "2026-12-10",
+    "funding": "Free",
+    "eligibility": [
+      "No degree required",
+      "Able to relocate to Benguerir"
     ],
+    "benefits": [
+      "No tuition",
+      "Peer learning"
+    ],
+    "summary": "Curriculum full-stack par les pairs. Pas de professeur, pas de frais, selection par le game.",
+    "url": "https://example.org/opportunities/13",
     "source": "fixture",
-    "source_url": "https://example.org/opportunities/13"
+    "trust_level": "unknown",
+    "added_via": "pipeline"
   },
   {
     "id": "opp-14",
-    "title": "Research Assistant — Computer Vision",
-    "organization": "Institut Polytechnique de Paris",
+    "title": "Research Assistant - Computer Vision",
+    "organizer": "Institut Polytechnique de Paris",
     "type": "research",
     "mode": "hybrid",
     "location": "Palaiseau",
     "country": "France",
-    "deadline": "2026-11-21",
-    "salary": "€1,700/mo",
-    "description": "6-month research assistant contract on 3D reconstruction for robotics.",
-    "tags": [
-      "computer vision",
-      "pytorch",
-      "python"
+    "language": "fr",
+    "deadline": "2026-11-23",
+    "funding": "1,700 EUR/mo",
+    "eligibility": [
+      "MSc in progress",
+      "PyTorch"
     ],
+    "benefits": [
+      "Research contract",
+      "Lab access"
+    ],
+    "summary": "Contrat de 6 mois en reconstruction 3D pour la robotique.",
+    "url": "https://example.org/opportunities/14",
     "source": "fixture",
-    "source_url": "https://example.org/opportunities/14"
+    "trust_level": "unknown",
+    "added_via": "pipeline"
   },
   {
     "id": "opp-15",
     "title": "Volunteer AI Tutor",
-    "organization": "Code.org Maghreb",
+    "organizer": "Code.org Maghreb",
     "type": "volunteer",
     "mode": "remote",
     "location": "Remote",
     "country": "Algeria",
-    "deadline": "2026-11-08",
-    "salary": "Unpaid",
-    "description": "Mentor high-school students in Python twice a week. Remote, flexible hours.",
-    "tags": [
-      "teaching",
-      "python"
+    "language": "en",
+    "deadline": "2026-11-10",
+    "funding": "Unpaid",
+    "eligibility": [
+      "Fluent in Python",
+      "Available 2h/week"
     ],
+    "benefits": [
+      "Impact",
+      "Community"
+    ],
+    "summary": "Mentor high-school students in Python twice a week, remote.",
+    "url": "https://example.org/opportunities/15",
     "source": "fixture",
-    "source_url": "https://example.org/opportunities/15"
+    "trust_level": "unknown",
+    "added_via": "pipeline"
   },
   {
     "id": "opp-16",
-    "title": "Summer Intern — Quantitative Research",
-    "organization": "Wren Capital",
+    "title": "Summer Intern - Quantitative Research",
+    "organizer": "Wren Capital",
     "type": "internship",
     "mode": "onsite",
     "location": "London",
-    "country": "UK",
-    "deadline": "2026-10-29",
-    "salary": "£2,500/mo",
-    "description": "Quant research internship for maths/CS students. On-site in London, June-August.",
-    "tags": [
-      "python",
-      "statistics",
-      "pandas"
+    "country": "United Kingdom",
+    "language": "en",
+    "deadline": "2026-10-31",
+    "funding": "2,500 GBP/mo",
+    "eligibility": [
+      "Maths or CS students",
+      "Strong Python"
     ],
+    "benefits": [
+      "Paid internship",
+      "Return offer possible"
+    ],
+    "summary": "Quant research internship for maths and CS students, June to August.",
+    "url": "https://example.org/opportunities/16",
     "source": "fixture",
-    "source_url": "https://example.org/opportunities/16"
+    "trust_level": "unknown",
+    "added_via": "pipeline"
   },
   {
     "id": "opp-17",
     "title": "DevOps Engineer",
-    "organization": "GitLab",
+    "organizer": "GitLab",
     "type": "job",
     "mode": "remote",
     "location": "Remote",
     "country": "Global",
-    "deadline": "2026-12-13",
-    "salary": "$85k-105k/yr",
-    "description": "All-remote company. Own the CI/CD platform serving hundreds of engineers.",
-    "tags": [
-      "kubernetes",
-      "terraform",
-      "docker",
-      "linux"
+    "language": "en",
+    "deadline": "2026-12-15",
+    "funding": "85k-105k USD/yr",
+    "eligibility": [
+      "Kubernetes",
+      "Terraform",
+      "English"
     ],
+    "benefits": [
+      "All-remote",
+      "Company paid home office"
+    ],
+    "summary": "Own the CI/CD platform serving hundreds of engineers.",
+    "url": "https://example.org/opportunities/17",
     "source": "fixture",
-    "source_url": "https://example.org/opportunities/17"
+    "trust_level": "unknown",
+    "added_via": "pipeline"
   },
   {
     "id": "opp-18",
     "title": "Graphic Design Intern",
-    "organization": "Yassir",
+    "organizer": "Yassir",
     "type": "internship",
     "mode": "hybrid",
     "location": "Oran",
     "country": "Algeria",
-    "deadline": "2026-10-28",
-    "salary": "12,000 DZD/mo",
-    "description": "Design marketing assets and app screens with the brand team.",
-    "tags": [
-      "figma",
-      "ui design",
-      "branding"
+    "language": "en",
+    "deadline": "2026-10-30",
+    "funding": "12,000 DZD/mo",
+    "eligibility": [
+      "Figma portfolio",
+      "Students welcome"
     ],
+    "benefits": [
+      "Portfolio pieces",
+      "Mentorship"
+    ],
+    "summary": "Design marketing assets and app screens with the brand team.",
+    "url": "https://example.org/opportunities/18",
     "source": "fixture",
-    "source_url": "https://example.org/opportunities/18"
+    "trust_level": "unknown",
+    "added_via": "pipeline"
   },
   {
     "id": "opp-19",
     "title": "Erasmus+ Traineeship Grant",
-    "organization": "European Commission",
-    "type": "scholarship",
+    "organizer": "European Commission",
+    "type": "grant",
     "mode": "hybrid",
     "location": "EU",
     "country": "France",
-    "deadline": "2026-12-28",
-    "salary": "€600/mo",
-    "description": "Grant funding a 2-3 month traineeship anywhere in the EU for enrolled students.",
-    "tags": [
-      "traineeship"
+    "language": "en",
+    "deadline": "2026-12-30",
+    "funding": "600 EUR/mo",
+    "eligibility": [
+      "Enrolled in a European university"
     ],
+    "benefits": [
+      "Grant funding",
+      "Travel allowance"
+    ],
+    "summary": "Grant funding a 2-3 month traineeship anywhere in the EU for enrolled students.",
+    "url": "https://example.org/opportunities/19",
     "source": "fixture",
-    "source_url": "https://example.org/opportunities/19"
+    "trust_level": "unknown",
+    "added_via": "pipeline"
   },
   {
     "id": "opp-20",
     "title": "Junior Data Scientist",
-    "organization": "InstaDeep",
+    "organizer": "InstaDeep",
     "type": "job",
     "mode": "hybrid",
     "location": "Tunis",
     "country": "Tunisia",
-    "deadline": "2026-11-15",
-    "salary": "TND 4,500/mo",
-    "description": "Optimization + ML hybrid role. Hybrid in the Tunis office.",
-    "tags": [
-      "python",
-      "machine learning",
-      "optimization"
+    "language": "en",
+    "deadline": "2026-11-17",
+    "funding": "4,500 TND/mo",
+    "eligibility": [
+      "Python",
+      "Optimization or ML background",
+      "English"
     ],
+    "benefits": [
+      "Relocation support",
+      "Equity"
+    ],
+    "summary": "Optimization plus ML hybrid role, hybrid in the Tunis office.",
+    "url": "https://example.org/opportunities/20",
     "source": "fixture",
-    "source_url": "https://example.org/opportunities/20"
+    "trust_level": "unknown",
+    "added_via": "pipeline"
   },
   {
     "id": "opp-21",
-    "title": "Open Source Summer — Compilers",
-    "organization": "MLIR Community",
+    "title": "Open Source Summer - Compilers",
+    "organizer": "MLIR Community",
     "type": "research",
     "mode": "remote",
     "location": "Remote",
     "country": "Global",
-    "deadline": "2026-10-22",
-    "salary": "Stipend $6,000",
-    "description": "Paid open-source summer program on the MLIR compiler infrastructure.",
-    "tags": [
-      "c++",
-      "compilers",
-      "llvm"
+    "language": "en",
+    "deadline": "2026-10-24",
+    "funding": "6,000 USD stipend",
+    "eligibility": [
+      "C++ skills",
+      "Open source interest"
     ],
+    "benefits": [
+      "Stipend",
+      "Mentorship"
+    ],
+    "summary": "Paid open-source summer program on the MLIR compiler infrastructure.",
+    "url": "https://example.org/opportunities/21",
     "source": "fixture",
-    "source_url": "https://example.org/opportunities/21"
+    "trust_level": "unknown",
+    "added_via": "pipeline"
   },
   {
     "id": "opp-22",
     "title": "Cloud Engineering Intern",
-    "organization": "Amazon Web Services",
+    "organizer": "Amazon Web Services",
     "type": "internship",
     "mode": "onsite",
     "location": "Cape Town",
     "country": "South Africa",
-    "deadline": "2026-11-07",
-    "salary": "ZAR 25,000/mo",
-    "description": "12-month graduate rotation across AWS solution teams in Cape Town.",
-    "tags": [
-      "aws",
-      "python",
-      "linux"
+    "language": "en",
+    "deadline": "2026-11-09",
+    "funding": "25,000 ZAR/mo",
+    "eligibility": [
+      "CS students",
+      "Linux basics"
     ],
+    "benefits": [
+      "Graduate rotation",
+      "Return offers"
+    ],
+    "summary": "12-month graduate rotation across AWS solution teams in Cape Town.",
+    "url": "https://example.org/opportunities/22",
     "source": "fixture",
-    "source_url": "https://example.org/opportunities/22"
+    "trust_level": "unknown",
+    "added_via": "pipeline"
   },
   {
     "id": "opp-23",
-    "title": "MSc Scholarship — Data Science",
-    "organization": "Mohammed VI Polytechnic University",
+    "title": "MSc Scholarship - Data Science",
+    "organizer": "Mohammed VI Polytechnic University",
     "type": "scholarship",
     "mode": "onsite",
     "location": "Ben Guerir",
     "country": "Morocco",
-    "deadline": "2026-12-02",
-    "salary": "Full funding",
-    "description": "Fully funded master's in data science with research track and industry internship.",
-    "tags": [
-      "data science",
-      "statistics"
+    "language": "en",
+    "deadline": "2026-12-04",
+    "funding": "Full funding",
+    "eligibility": [
+      "BSc in a quantitative field",
+      "English"
     ],
+    "benefits": [
+      "Full funding",
+      "Industry internship"
+    ],
+    "summary": "Fully funded master's in data science with a research track.",
+    "url": "https://example.org/opportunities/23",
     "source": "fixture",
-    "source_url": "https://example.org/opportunities/23"
+    "trust_level": "unknown",
+    "added_via": "pipeline"
   },
   {
     "id": "opp-24",
-    "title": "Backend Intern — Rust",
-    "organization": "Astra Labs",
+    "title": "Backend Intern - Rust",
+    "organizer": "Astra Labs",
     "type": "internship",
     "mode": "remote",
     "location": "Remote",
     "country": "Global",
-    "deadline": "2026-11-18",
-    "salary": "$1,200/mo",
-    "description": "Rust services for a satellite ground-station network. Remote, async-first.",
-    "tags": [
-      "rust",
-      "grpc",
-      "postgresql"
+    "language": "en",
+    "deadline": "2026-11-20",
+    "funding": "1,200 USD/mo",
+    "eligibility": [
+      "Rust basics",
+      "Async-first work style"
     ],
+    "benefits": [
+      "Remote",
+      "Open-source work"
+    ],
+    "summary": "Rust services for a satellite ground-station network, remote, async-first.",
+    "url": "https://example.org/opportunities/24",
     "source": "fixture",
-    "source_url": "https://example.org/opportunities/24"
+    "trust_level": "unknown",
+    "added_via": "pipeline"
   },
   {
     "id": "opp-25",
     "title": "AI Ethics Fellowship",
-    "organization": "Mozilla Foundation",
-    "type": "scholarship",
+    "organizer": "Mozilla Foundation",
+    "type": "fellowship",
     "mode": "remote",
     "location": "Remote",
     "country": "Global",
-    "deadline": "2026-12-18",
-    "salary": "$20,000 stipend",
-    "description": "One-year fellowship at the intersection of AI policy and open technology.",
-    "tags": [
-      "ai policy",
-      "research"
+    "language": "en",
+    "deadline": "2026-12-20",
+    "funding": "20,000 USD stipend",
+    "eligibility": [
+      "Interest in AI policy",
+      "Publications or writing samples"
     ],
+    "benefits": [
+      "Stipend",
+      "Network"
+    ],
+    "summary": "One-year fellowship at the intersection of AI policy and open technology.",
+    "url": "https://example.org/opportunities/25",
     "source": "fixture",
-    "source_url": "https://example.org/opportunities/25"
+    "trust_level": "unknown",
+    "added_via": "pipeline"
   },
   {
     "id": "opp-26",
     "title": "React Native Developer",
-    "organization": "Batolis",
+    "organizer": "Batolis",
     "type": "job",
     "mode": "hybrid",
     "location": "Algiers",
     "country": "Algeria",
-    "deadline": "2026-11-10",
-    "salary": "60,000 DZD/mo",
-    "description": "Mobile engineer for a logistics platform. Hybrid rhythm in Algiers.",
-    "tags": [
-      "react native",
-      "typescript",
-      "mobile"
+    "language": "en",
+    "deadline": "2026-11-12",
+    "funding": "60,000 DZD/mo",
+    "eligibility": [
+      "React Native",
+      "TypeScript",
+      "Arabic and French"
     ],
+    "benefits": [
+      "Hybrid work",
+      "Transport allowance"
+    ],
+    "summary": "Mobile engineer for a logistics platform, hybrid rhythm in Algiers.",
+    "url": "https://example.org/opportunities/26",
     "source": "fixture",
-    "source_url": "https://example.org/opportunities/26"
+    "trust_level": "unknown",
+    "added_via": "pipeline"
   },
   {
     "id": "opp-27",
     "title": "Robotics Intern",
-    "organization": "Boston Dynamics AI Institute",
+    "organizer": "Boston Dynamics AI Institute",
     "type": "internship",
     "mode": "onsite",
     "location": "Boston",
     "country": "USA",
-    "deadline": "2026-12-06",
-    "salary": "$6,500/mo",
-    "description": "Research internship on learning-based manipulation. On-site in Boston.",
-    "tags": [
-      "robotics",
-      "python",
-      "control systems"
+    "language": "en",
+    "deadline": "2026-12-08",
+    "funding": "6,500 USD/mo",
+    "eligibility": [
+      "Robotics coursework",
+      "Python and C++"
     ],
+    "benefits": [
+      "Research internship",
+      "Housing help"
+    ],
+    "summary": "Research internship on learning-based manipulation, on-site in Boston.",
+    "url": "https://example.org/opportunities/27",
     "source": "fixture",
-    "source_url": "https://example.org/opportunities/27"
+    "trust_level": "unknown",
+    "added_via": "pipeline"
   },
   {
     "id": "opp-28",
-    "title": "URGENT!!! Make $$$ From Home — No Experience",
-    "organization": "Global Talent Now LLC",
+    "title": "Web Development Training",
+    "organizer": "Algerie Telecom Foundation",
+    "type": "bootcamp",
+    "mode": "onsite",
+    "location": "Constantine",
+    "country": "Algeria",
+    "language": "fr",
+    "deadline": "2026-10-27",
+    "funding": "Free",
+    "eligibility": [
+      "Baccalaureate or equivalent"
+    ],
+    "benefits": [
+      "Free training",
+      "Certificate"
+    ],
+    "summary": "Formation de 6 developpement web sur le campus de Constantine.",
+    "url": "https://example.org/opportunities/28",
+    "source": "fixture",
+    "trust_level": "unknown",
+    "added_via": "pipeline"
+  },
+  {
+    "id": "opp-29",
+    "title": "URGENT Make Money From Home - No Experience",
+    "organizer": "Global Talent Now LLC",
     "type": "job",
     "mode": "remote",
     "location": "Remote",
     "country": "Unknown",
-    "deadline": "2026-10-21",
-    "salary": "$5,000/week",
-    "description": "Send your passport by WhatsApp and pay a 2,000 DZD registration fee to start immediately. LAST CHANCE!!!",
-    "tags": [
-      "no skills needed"
+    "language": "en",
+    "deadline": "2026-10-23",
+    "funding": "5,000 USD/week",
+    "eligibility": [
+      "No skills needed"
     ],
-    "source": "fixture",
-    "source_url": "https://example.org/opportunities/28"
-  },
-  {
-    "id": "opp-29",
-    "title": "Climate Data Challenge",
-    "organization": "Copernicus",
-    "type": "competition",
-    "mode": "remote",
-    "location": "Remote",
-    "country": "Europe",
-    "deadline": "2026-11-25",
-    "salary": "€15,000 prize",
-    "description": "Build visual stories from open climate datasets. Teams of up to four.",
-    "tags": [
-      "python",
-      "data visualization",
-      "climate"
+    "benefits": [
+      "Instant income"
     ],
+    "summary": "Send your passport by WhatsApp and pay a 2,000 DZD registration fee to start immediately. LAST CHANCE! Contact hr.talentnow@gmail.com.",
+    "url": "https://example.org/opportunities/29",
     "source": "fixture",
-    "source_url": "https://example.org/opportunities/29"
+    "trust_level": "unknown",
+    "added_via": "pipeline"
   },
   {
     "id": "opp-30",
-    "title": "Quantum Computing Intern",
-    "organization": "Pasqal",
-    "type": "internship",
-    "mode": "hybrid",
-    "location": "Massy",
-    "country": "France",
-    "deadline": "2026-11-14",
-    "salary": "€2,200/mo",
-    "description": "Simulate quantum algorithms for industrial optimization use cases.",
-    "tags": [
-      "python",
-      "quantum",
-      "linear algebra"
+    "title": "Bank Transfer Scholarship 100% Guaranteed",
+    "organizer": "Education Fund Intl",
+    "type": "scholarship",
+    "mode": "remote",
+    "location": "Remote",
+    "country": "Unknown",
+    "language": "en",
+    "deadline": "2026-10-26",
+    "funding": "10,000 USD",
+    "eligibility": [
+      "Send your RIB and ID card by email now"
     ],
+    "benefits": [
+      "100% guaranteed funding"
+    ],
+    "summary": "Easy money for students! Send your bank details (RIB) and a copy of your ID card to fund.intl.scholarships@yahoo.com within 48h to receive your grant. Guaranteed 100%!",
+    "url": "https://example.org/opportunities/30",
     "source": "fixture",
-    "source_url": "https://example.org/opportunities/30"
+    "trust_level": "unknown",
+    "added_via": "pipeline"
   }
 ]

@@ -1,0 +1,70 @@
+{
+  "full_name": "Amine Kaddour",
+  "headline": "Data Science Master's student",
+  "email": "amine.kaddour@example.org",
+  "country": "Algeria",
+  "skills": [
+    "python",
+    "sql",
+    "pandas",
+    "numpy",
+    "pytorch",
+    "scikit-learn",
+    "machine learning",
+    "deep learning",
+    "git",
+    "linux"
+  ],
+  "languages": [
+    "arabic",
+    "french",
+    "english"
+  ],
+  "education": [
+    {
+      "institution": "USTHB",
+      "degree": "MSc",
+      "field": "Data Science",
+      "start_date": "2025",
+      "end_date": "2027"
+    },
+    {
+      "institution": "USTHB",
+      "degree": "BSc",
+      "field": "Computer Science",
+      "start_date": "2022",
+      "end_date": "2025"
+    }
+  ],
+  "experience": [
+    {
+      "organization": "NAMOCO Analytics",
+      "title": "Machine Learning Intern",
+      "start_date": "2025-06",
+      "end_date": "2025-09"
+    },
+    {
+      "organization": "Freelance",
+      "title": "Data Analyst",
+      "start_date": "2024",
+      "end_date": null
+    }
+  ],
+  "certificates": [
+    {
+      "title": "Deep Learning Bootcamp",
+      "issuer": "ALX Africa"
+    }
+  ],
+  "projects": [
+    {
+      "name": "Churn-Prediction-Toolkit",
+      "url": "https://github.com/aminek/churn-toolkit"
+    }
+  ],
+  "interests": [
+    "nlp",
+    "computer vision",
+    "ai research"
+  ]
+}

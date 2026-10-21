@@ -1,0 +1,24 @@
+{
+  "full_name": "Sara Belkacem",
+  "email": "sara.belkacem@example.org",
+  "projects": [
+    {
+      "name": "Logistics Tracker",
+      "url": "https://github.com/sarab/logistics-tracker",
+      "technologies": [
+        "react native",
+        "typescript",
+        "graphql"
+      ]
+    },
+    {
+      "name": "Design System Starter",
+      "url": "https://github.com/sarab/ds-starter",
+      "technologies": [
+        "next.js",
+        "typescript",
+        "css modules"
+      ]
+    }
+  ]
+}

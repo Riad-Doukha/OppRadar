@@ -1,0 +1,44 @@
+{
+  "full_name": "Sara Belkacem",
+  "headline": "Frontend Developer",
+  "email": "sara.belkacem@example.org",
+  "country": "Algeria",
+  "skills": [
+    "react",
+    "typescript",
+    "next.js",
+    "css",
+    "figma",
+    "react native"
+  ],
+  "languages": [
+    "french",
+    "english"
+  ],
+  "education": [
+    {
+      "institution": "ENSMAD",
+      "degree": "BSc",
+      "field": "Web Development",
+      "start_date": "2021",
+      "end_date": "2024"
+    }
+  ],
+  "experience": [
+    {
+      "organization": "Startup Studio Oran",
+      "title": "Frontend Developer",
+      "start_date": "2024"
+    }
+  ],
+  "projects": [
+    {
+      "name": "Logistics Tracker",
+      "url": "https://github.com/sarab/logistics-tracker"
+    },
+    {
+      "name": "Design System Starter",
+      "url": "https://github.com/sarab/ds-starter"
+    }
+  ]
+}

@@ -4,34 +4,48 @@ build-backend = "hatchling.build"
 
 [project]
 name = "oppradar-ai"
-version = "0.1.0"
-description = "AI core of OppRadar: ingestion, CV parsing, matching, chat."
+version = "0.2.0"
+description = "AI layer of OppRadar: documents, ingestion, matching, notifications, chat."
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
 dependencies = [
+    # core
     "pydantic>=2.7",
-    "httpx>=0.27",
-    "pyyaml>=6.0",
+    "pydantic-settings>=2.2",
+    "python-dotenv>=1.0",
     "numpy>=1.26",
+    "tenacity>=8.2",
+    "pyyaml>=6.0",
+    # LLM providers (free tiers)
+    "google-genai>=0.3",
+    "httpx>=0.27",
+    # web: discovery + extraction
+    "tavily-python>=0.5",
+    "feedparser>=6.0",
+    "trafilatura>=1.8",
+    # documents
+    "pymupdf>=1.24",
+    "pdfplumber>=0.11",
+    "python-docx>=1.1",
+    # NOTE: the spec asked for rapidocr-onnxruntime, but that package caps at
+    # Python <3.13; `rapidocr` is its maintained successor (same engine/authors).
+    "rapidocr>=2.1",
+    "pillow>=10.0",
+    # matching / agent / notebook UI
+    "sentence-transformers>=3.0",
     "rapidfuzz>=3.9",
-    "beautifulsoup4>=4.12",
+    "apscheduler>=3.10",
+    "ipywidgets>=8.1",
 ]
 
 [project.optional-dependencies]
-cv = [
-    "pypdf>=4.2",
-    "python-docx>=1.1",
-]
-embeddings = [
-    "sentence-transformers>=3.0",
-]
 dev = [
     "pytest>=8.0",
-    "pytest-asyncio>=0.24",
-    "ruff>=0.8",
-    "pypdf>=4.2",
-    "python-docx>=1.1",
+    "ruff>=0.6",
+    "pandas>=2.0",
+    "matplotlib>=3.8",
+    "nbstripout>=0.7",
 ]
 
 [tool.hatch.build.targets.wheel]
@@ -46,4 +60,9 @@ line-length = 100
 target-version = "py311"
 
 [tool.ruff.lint]
-select = ["E", "F", "I", "UP", "B"]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.ruff.lint.per-file-ignores]
+# Notebooks run cells top-to-bottom; magics like %load_ext force imports to be
+# non-first, and display lines are allowed to be long.
+"notebooks/*" = ["E402", "E501"]

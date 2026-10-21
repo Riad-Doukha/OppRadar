@@ -6,6 +6,8 @@
 # --- CVs & private user data (never commit) ---
 *.pdf
 !docs/*.pdf
+# ...but the SYNTHETIC sample documents are fine to commit
+!ai/data/samples/*.pdf
 uploads/
 data/private/
 ai/data/private/
@@ -30,7 +32,13 @@ htmlcov/
 .ipynb_checkpoints/
 
 # --- AI artifacts / caches ---
+ai/data/cache/
+ai/data/private/
+ai/data/store/
 ai/data/vectorstore/
+ai/data/live_feed/*
+!ai/data/live_feed/.gitkeep
+**/.ipynb_checkpoints/
 *.faiss
 models/
 .cache/

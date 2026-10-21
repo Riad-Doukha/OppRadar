@@ -1,0 +1,3 @@
+# Never commit notebook outputs (nbstripout).
+*.ipynb filter=nbstripout
+*.ipynb diff=jupyternotebook
