@@ -145,6 +145,16 @@ class LLM(ABC):
             _stats.errors += 1
             raise LLMError(f"{self.name} returned invalid {schema.__name__}: {exc}") from exc
 
+    def is_cached(self, prompt: str, schema: type[T], system: str | None = None) -> bool:
+        """True when `structured()` would be a free disk-cache hit.
+
+        Lets callers check the cache BEFORE counting against a per-run
+        budget, so cached answers never consume the free-tier quota.
+        """
+        clean = self._truncate(prompt)
+        key = self.cache.key(self.name, self.model, f"{system or ''}\n{clean}", schema.__name__)
+        return self.cache.get(key) is not None
+
     def text(self, prompt: str, system: str | None = None) -> str:
         """Ask for a plain-text answer (cached on disk)."""
         clean = self._truncate(prompt)
@@ -434,6 +444,28 @@ _CANNED: dict[str, dict[str, Any]] = {
             }
         ],
         "needs_review": [],
+    },
+    # ingestion/ (Phase 3) — deadline exactly as written (never invented);
+    # the converter normalizes it to ISO. `location` is low-confidence on
+    # purpose so the "to verify" path is exercised offline too.
+    "OpportunityExtraction": {
+        "title": "Atlas Merit Scholarship 2027",
+        "organizer": "Atlas Digital Foundation",
+        "type": "scholarship",
+        "mode": "remote",
+        "location": "Online",
+        "country": "Algeria",
+        "funding": "Full funding",
+        "eligibility": ["Open to students", "Under 30 years old"],
+        "benefits": ["Tuition covered", "Mentorship"],
+        "summary": "A synthetic scholarship returned by the fake LLM provider.",
+        "deadline": "March 15, 2027",
+        "field_confidences": [
+            {"field": "title", "confidence": 0.95},
+            {"field": "organizer", "confidence": 0.9},
+            {"field": "deadline", "confidence": 0.9},
+            {"field": "location", "confidence": 0.5},
+        ],
     },
 }
 

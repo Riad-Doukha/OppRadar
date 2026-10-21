@@ -41,6 +41,15 @@ class Settings(BaseSettings):
     # --- Web discovery ------------------------------------------------------
     tavily_api_key: SecretStr = SecretStr("")
     tavily_max_results: int = 5
+    # Hard per-run caps on REMOTE calls (free-tier protection; disk-cache
+    # hits are always allowed and never counted against these limits).
+    tavily_max_searches_per_run: int = 5
+    max_extractions_per_run: int = 20
+    # Polite crawling: one clear identity + a pause between HTTP requests.
+    user_agent: str = "OppRadarBot/0.1 (student project; https://github.com/Riad-Doukha/OppRadar)"
+    fetch_delay_seconds: float = 1.5
+    fetch_timeout_seconds: float = 15.0
+    respect_robots: bool = True
 
     # --- Embeddings ---------------------------------------------------------
     embedding_model: str = "BAAI/bge-m3"
@@ -93,6 +102,11 @@ class Settings(BaseSettings):
     @property
     def fixtures_dir(self) -> Path:
         return self.data_dir / "fixtures"
+
+    @property
+    def sources_path(self) -> Path:
+        """Curated real-world sources (sources.yaml, committed)."""
+        return self.data_dir / "sources.yaml"
 
     @property
     def live_feed_dir(self) -> Path:

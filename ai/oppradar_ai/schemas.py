@@ -228,6 +228,10 @@ class Source(BaseModel):
     language: str = "en"
     country: str = ""
     enabled: bool = True
+    # Provenance (sources.yaml): `verified` is true only after the URL was
+    # confirmed reachable; `notes` explains what the source provides.
+    verified: bool = False
+    notes: str = ""
 
 
 class SourceStats(BaseModel):
@@ -239,8 +243,18 @@ class SourceStats(BaseModel):
     new: int = 0
     duplicates: int = 0
     scam_flagged: int = 0
+    fields_filled: int = 0
     duration_seconds: float = 0.0
     errors: list[str] = Field(default_factory=list)
+
+
+class CallUsage(BaseModel):
+    """Free-tier accounting for one kind of remote call in a single run."""
+
+    made: int = 0  # real network/provider calls
+    cached: int = 0  # served from the disk cache (free)
+    skipped: int = 0  # blocked by the per-run limit or missing key
+    limit: int = 0  # hard cap on real calls (0 blocks them all)
 
 
 class IngestionReport(BaseModel):
@@ -254,6 +268,8 @@ class IngestionReport(BaseModel):
     items_new: int = 0
     items_duplicate: int = 0
     items_flagged: int = 0
+    searches: CallUsage = Field(default_factory=CallUsage)
+    extractions: CallUsage = Field(default_factory=CallUsage)
     failures: list[str] = Field(default_factory=list)
 
 
@@ -412,3 +428,27 @@ class ExtractionGrade(BaseModel):
     accuracy: float = Field(ge=0, le=1)
     per_field: dict[str, bool] = Field(default_factory=dict)
     missing: list[str] = Field(default_factory=list)  # expected values not found
+
+
+# --------------------------------------------------------------------------- #
+# Ingestion extraction (Phase 3)
+# --------------------------------------------------------------------------- #
+class OpportunityExtraction(BaseModel):
+    """Raw LLM view of one opportunity (deadline kept as written, never guessed).
+
+    `deadline` stays a free string here: `ingestion.extract.parse_deadline`
+    converts it to ISO or drops it to None when absent/rolling/unparseable.
+    """
+
+    title: str
+    organizer: str = ""
+    type: OpportunityType = OpportunityType.OTHER
+    mode: Literal["remote", "hybrid", "onsite"] | None = None
+    location: str = ""
+    country: str = ""
+    funding: str | None = None
+    eligibility: list[str] = Field(default_factory=list)
+    benefits: list[str] = Field(default_factory=list)
+    summary: str = ""
+    deadline: str = ""  # exactly as written in the source; "" when none is stated
+    field_confidences: list[FieldConfidence] = Field(default_factory=list)
