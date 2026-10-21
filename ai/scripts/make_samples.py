@@ -162,14 +162,14 @@ def write_ground_truth() -> None:
             "languages": ["arabic", "french", "english"],
             "education": [
                 {
-                    "institution": "USTHB",
+                    "institution": "USTHB Algiers",
                     "degree": "MSc",
                     "field": "Data Science",
                     "start_date": "2025",
                     "end_date": "2027",
                 },
                 {
-                    "institution": "USTHB",
+                    "institution": "USTHB Algiers",
                     "degree": "BSc",
                     "field": "Computer Science",
                     "start_date": "2022",
@@ -180,14 +180,15 @@ def write_ground_truth() -> None:
                 {
                     "organization": "NAMOCO Analytics",
                     "title": "Machine Learning Intern",
-                    "start_date": "2025-06",
-                    "end_date": "2025-09",
+                    "start_date": "Jun 2025",
+                    "end_date": "Sep 2025",
                 },
                 {
-                    "organization": "Freelance",
-                    "title": "Data Analyst",
+                    # No organisation in the CV: "Data Analyst (Freelance)" is the
+                    # title as written; omit `organization` so it is not graded.
+                    "title": "Data Analyst (Freelance)",
                     "start_date": "2024",
-                    "end_date": None,
+                    "end_date": "present",
                 },
             ],
             "certificates": [{"title": "Deep Learning Bootcamp", "issuer": "ALX Africa"}],

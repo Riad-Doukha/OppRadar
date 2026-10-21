@@ -82,8 +82,11 @@ def _grade_items(expected: list[dict], got: list[BaseModel]) -> tuple[bool, list
     """Each expected item must match SOME got item on all its provided subfields."""
     missing: list[str] = []
     for i, want in enumerate(expected):
-        if not any(_item_matches(want, item) for item in got):
-            missing.append(f"[{i}] " + ", ".join(f"{k}={v}" for k, v in want.items()))
+        if any(_item_matches(want, item) for item in got):
+            continue
+        actual = got[i].model_dump(exclude_none=True) if i < len(got) else None
+        want_txt = ", ".join(f"{k}={v}" for k, v in want.items())
+        missing.append(f"[{i}] want {want_txt}; got {actual}")
     return not missing, missing
 
 

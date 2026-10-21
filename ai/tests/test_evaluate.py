@@ -52,6 +52,7 @@ def test_items_match_on_normalized_subfields() -> None:
     mismatch = grade_extraction("cv", cv, {"education": [{"institution": "DAAD", "degree": "msc"}]})
     assert mismatch.per_field["education"] is False
     assert mismatch.missing
+    assert "got" in mismatch.missing[0]  # shows the extracted side, not just the expected
 
 
 def test_empty_expectations_are_not_graded() -> None:
