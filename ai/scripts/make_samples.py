@@ -40,7 +40,7 @@ Data Analyst (Freelance), 2024 - present
 Dashboards and reporting for SME clients.
 
 PROJECTS
-Churn-Prediction-Toolkit - https://github.com/aminek/churn-toolkit
+Churn-Prediction-Toolkit - https://github.com/example-user/churn-toolkit
 Python, scikit-learn, pandas.
 
 CERTIFICATES
@@ -194,7 +194,7 @@ def write_ground_truth() -> None:
             "projects": [
                 {
                     "name": "Churn-Prediction-Toolkit",
-                    "url": "https://github.com/aminek/churn-toolkit",
+                    "url": "https://github.com/example-user/churn-toolkit",
                 }
             ],
             "interests": ["nlp", "computer vision", "ai research"],

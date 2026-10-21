@@ -32,7 +32,9 @@ dependencies = [
     "python-docx>=1.1",
     # NOTE: the spec asked for rapidocr-onnxruntime, but that package caps at
     # Python <3.13; `rapidocr` is its maintained successor (same engine/authors).
+    # rapidocr 3.x ships without an inference engine, so onnxruntime is explicit.
     "rapidocr>=2.1",
+    "onnxruntime>=1.17",
     "pillow>=10.0",
     # matching / agent / notebook UI
     "sentence-transformers>=3.0",

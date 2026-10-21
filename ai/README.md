@@ -39,6 +39,24 @@ scripts/              generators for the synthetic data above
 tests/                pytest (always runs with the fake provider)
 ```
 
+## Before a demo: regenerate the fixtures
+
+`scripts/make_fixtures.py` stamps every opportunity with a deadline **relative to
+the day it ran**, so committed fixtures drift out of date. Refresh them and the
+sample documents right before a demo:
+
+```bash
+cd ai
+python scripts/make_fixtures.py   # writes opportunities/profiles + data/eval/scam_labels.json
+python scripts/make_samples.py    # rewrites the synthetic CVs/certificates/portfolios
+```
+
+`make_fixtures.py` prints a `WARNING: fixtures were last generated on ...` if the
+stamp in `data/fixtures/generated_on.txt` isn't today. You can check this from code
+with `warn_if_stale()` (returns `True` when stale). Scam ground truth lives in
+`data/eval/scam_labels.json` (`{"opp-31": true, ...}`); only two fixtures are scams
+and the two borderline ones (a paid event, a free-mail contact) are labelled legit.
+
 ## Privacy
 
 All documents under `data/samples/` are synthetic. Never commit real CVs or

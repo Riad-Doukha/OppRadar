@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from datetime import date, datetime, timezone
 from enum import Enum
-from typing import Any, Literal
+from typing import Literal
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -343,12 +343,72 @@ class ProfileBuildResult(BaseModel):
     document_errors: list[str] = Field(default_factory=list)
 
 
-class ExtractionResult(BaseModel):
-    """Generic per-document extraction wrapper (used by documents/)."""
+class DocumentContent(BaseModel):
+    """Raw text read out of one file, plus how it was obtained."""
 
-    fields: dict[str, Any] = Field(default_factory=dict)
-    confidences: list[FieldConfidence] = Field(default_factory=list)
-    low_confidence_fields: list[str] = Field(default_factory=list)
-    method: Literal["text", "ocr", "vision"] = "text"
-    chars_extracted: int = 0
-    error: str | None = None
+    file_name: str
+    method: Literal["pdf_text", "pdf_ocr", "image_ocr", "docx", "text", "gemini_vision"]
+    text: str
+    pages: int = 1
+    chars: int = 0
+    warnings: list[str] = Field(default_factory=list)
+
+
+class CVExtraction(BaseModel):
+    """Structured CV fields, produced by cheap rules plus the LLM."""
+
+    full_name: str = ""
+    headline: str = ""
+    email: str = ""
+    phone: str = ""
+    country: str = ""
+    summary: str = ""
+    skills: list[str] = Field(default_factory=list)
+    languages: list[str] = Field(default_factory=list)
+    interests: list[str] = Field(default_factory=list)
+    education: list[EducationItem] = Field(default_factory=list)
+    experience: list[ExperienceItem] = Field(default_factory=list)
+    certificates: list[Certificate] = Field(default_factory=list)
+    projects: list[Project] = Field(default_factory=list)
+    links: list[str] = Field(default_factory=list)
+    needs_review: list[str] = Field(default_factory=list)  # fields the LLM marked uncertain
+    source_file: str = ""
+
+
+class CertificateExtraction(BaseModel):
+    """Structured fields of a certificate/credential document."""
+
+    title: str = ""
+    issuer: str = ""
+    holder: str = ""
+    issued_on: str | None = None
+    hours: int | None = None
+    credential_url: str | None = None
+    skills: list[str] = Field(default_factory=list)
+    needs_review: list[str] = Field(default_factory=list)
+    source_file: str = ""
+
+
+class PortfolioExtraction(BaseModel):
+    """Structured fields of a portfolio document (projects and links)."""
+
+    full_name: str = ""
+    email: str = ""
+    links: list[str] = Field(default_factory=list)
+    projects: list[Project] = Field(default_factory=list)
+    needs_review: list[str] = Field(default_factory=list)
+    source_file: str = ""
+
+
+class ExtractionGrade(BaseModel):
+    """How close one extraction was to its ground truth.
+
+    Comparison is case-insensitive and whitespace-normalized.
+    """
+
+    document: str
+    fields_checked: int
+    fields_matched: int
+    accuracy: float = Field(ge=0, le=1)
+    per_field: dict[str, bool] = Field(default_factory=dict)
+    missing: list[str] = Field(default_factory=list)  # expected values not found

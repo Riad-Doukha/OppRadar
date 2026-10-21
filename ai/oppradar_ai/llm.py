@@ -370,6 +370,71 @@ _CANNED: dict[str, dict[str, Any]] = {
         "gaps": ["No profile information available to compare."],
         "next_steps": ["Upload a CV to assess eligibility."],
     },
+    # documents/ (Phase 2) — empty e-mail/links so the regex backfill is exercised
+    "CVExtraction": {
+        "full_name": "Fake Person",
+        "headline": "Test Candidate",
+        "email": "",
+        "phone": "",
+        "country": "Algeria",
+        "summary": "Deterministic fake CV produced by the offline provider.",
+        "skills": ["python", "pytest"],
+        "languages": ["french", "english"],
+        "interests": ["ai"],
+        "education": [
+            {
+                "institution": "Fake University",
+                "degree": "MSc",
+                "field": "Data Science",
+                "start_date": "2022",
+                "end_date": "2024",
+            }
+        ],
+        "experience": [
+            {
+                "organization": "Fake Corp",
+                "title": "Intern",
+                "start_date": "2023",
+                "end_date": "2023",
+                "description": "Built tests.",
+            }
+        ],
+        "certificates": [],
+        "projects": [
+            {
+                "name": "Fake Project",
+                "description": "",
+                "url": "https://example.org/fake",
+                "technologies": ["python"],
+            }
+        ],
+        "links": [],
+        "needs_review": ["headline"],
+    },
+    "CertificateExtraction": {
+        "title": "Fake Certificate",
+        "issuer": "Fake Issuer",
+        "holder": "Fake Person",
+        "issued_on": "2024",
+        "hours": 10,
+        "credential_url": "",
+        "skills": ["python"],
+        "needs_review": ["issued_on"],
+    },
+    "PortfolioExtraction": {
+        "full_name": "Fake Person",
+        "email": "",
+        "links": [],
+        "projects": [
+            {
+                "name": "Fake Portfolio Project",
+                "description": "",
+                "url": "https://example.org/p",
+                "technologies": ["python"],
+            }
+        ],
+        "needs_review": [],
+    },
 }
 
 

@@ -102,7 +102,7 @@
   {
     "id": "opp-05",
     "title": "Backend Engineer (Junior)",
-    "organizer": "Sarawak",
+    "organizer": "Acme Cloud Labs",
     "type": "job",
     "mode": "remote",
     "location": "Remote",
@@ -695,7 +695,7 @@
       "Free training",
       "Certificate"
     ],
-    "summary": "Formation de 6 developpement web sur le campus de Constantine.",
+    "summary": "Formation de 6 mois en developpement web sur le campus de Constantine.",
     "url": "https://example.org/opportunities/28",
     "source": "fixture",
     "trust_level": "unknown",
@@ -703,6 +703,56 @@
   },
   {
     "id": "opp-29",
+    "title": "Algiers AI Summit Hackathon",
+    "organizer": "Sahara Tech Events",
+    "type": "hackathon",
+    "mode": "onsite",
+    "location": "Algiers",
+    "country": "Algeria",
+    "language": "en",
+    "deadline": "2026-11-04",
+    "funding": "5,000 DZD prize",
+    "eligibility": [
+      "Students and juniors welcome",
+      "Teams of 1-4"
+    ],
+    "benefits": [
+      "Meals and starter kit included",
+      "Mentorship"
+    ],
+    "summary": "48-hour student hackathon during the Algiers AI Summit. The 1,500 DZD registration fee covers meals, t-shirt and starter kit; free for scholarship holders.",
+    "url": "https://example.org/opportunities/29",
+    "source": "fixture",
+    "trust_level": "unknown",
+    "added_via": "pipeline"
+  },
+  {
+    "id": "opp-30",
+    "title": "Junior Web Developer (Small Studio)",
+    "organizer": "Studio Lina Digital",
+    "type": "job",
+    "mode": "hybrid",
+    "location": "Oran",
+    "country": "Algeria",
+    "language": "en",
+    "deadline": "2026-11-06",
+    "funding": "25,000 DZD/mo",
+    "eligibility": [
+      "React or Vue basics",
+      "Portfolio required"
+    ],
+    "benefits": [
+      "Paid trial task",
+      "Flexible hours"
+    ],
+    "summary": "A five-person studio in Oran builds e-commerce sites. Write to contact.studiolinadigital@gmail.com with your portfolio. No application fee, paid trial task, signed contract from day one.",
+    "url": "https://example.org/opportunities/30",
+    "source": "fixture",
+    "trust_level": "unknown",
+    "added_via": "pipeline"
+  },
+  {
+    "id": "opp-31",
     "title": "URGENT Make Money From Home - No Experience",
     "organizer": "Global Talent Now LLC",
     "type": "job",
@@ -719,13 +769,13 @@
       "Instant income"
     ],
     "summary": "Send your passport by WhatsApp and pay a 2,000 DZD registration fee to start immediately. LAST CHANCE! Contact hr.talentnow@gmail.com.",
-    "url": "https://example.org/opportunities/29",
+    "url": "https://example.org/opportunities/31",
     "source": "fixture",
     "trust_level": "unknown",
     "added_via": "pipeline"
   },
   {
-    "id": "opp-30",
+    "id": "opp-32",
     "title": "Bank Transfer Scholarship 100% Guaranteed",
     "organizer": "Education Fund Intl",
     "type": "scholarship",
@@ -742,7 +792,7 @@
       "100% guaranteed funding"
     ],
     "summary": "Easy money for students! Send your bank details (RIB) and a copy of your ID card to fund.intl.scholarships@yahoo.com within 48h to receive your grant. Guaranteed 100%!",
-    "url": "https://example.org/opportunities/30",
+    "url": "https://example.org/opportunities/32",
     "source": "fixture",
     "trust_level": "unknown",
     "added_via": "pipeline"

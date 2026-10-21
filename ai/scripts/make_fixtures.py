@@ -10,7 +10,13 @@ from datetime import date, timedelta
 from pathlib import Path
 
 FIXTURES = Path(__file__).resolve().parents[1] / "data" / "fixtures"
+EVAL = Path(__file__).resolve().parents[1] / "data" / "eval"
+STAMP = FIXTURES / "generated_on.txt"
 TODAY = date.today()
+
+# Ids of the two fixture entries that ARE scams (all others, including the two
+# borderline ones, are legitimate). Written to data/eval/scam_labels.json.
+KNOWN_SCAMS = {"opp-31", "opp-32"}
 
 # title, organizer, type, mode, location, country, days_to_deadline, funding,
 # eligibility, benefits, language, summary
@@ -73,7 +79,7 @@ ROWS = [
     ),
     (
         "Backend Engineer (Junior)",
-        "Sarawak",
+        "Acme Cloud Labs",
         "job",
         "remote",
         "Remote",
@@ -407,7 +413,44 @@ ROWS = [
         ["Baccalaureate or equivalent"],
         ["Free training", "Certificate"],
         "fr",
-        "Formation de 6 developpement web sur le campus de Constantine.",
+        "Formation de 6 mois en developpement web sur le campus de Constantine.",
+    ),
+    # --- Borderline #1: legitimate event that charges a registration fee ------
+    # A fee on its own is NOT a scam (summits/hackathons charge fees) — the
+    # scam checker must not flag this one.
+    (
+        "Algiers AI Summit Hackathon",
+        "Sahara Tech Events",
+        "hackathon",
+        "onsite",
+        "Algiers",
+        "Algeria",
+        14,
+        "5,000 DZD prize",
+        ["Students and juniors welcome", "Teams of 1-4"],
+        ["Meals and starter kit included", "Mentorship"],
+        "en",
+        "48-hour student hackathon during the Algiers AI Summit. The 1,500 DZD registration "
+        "fee covers meals, t-shirt and starter kit; free for scholarship holders.",
+    ),
+    # --- Borderline #2: legitimate offer whose contact is a free e-mail -------
+    # A gmail contact on its own is NOT a scam (small studios use free mail).
+    # No fee, no urgency, no bank/ID requests — must stay unflagged.
+    (
+        "Junior Web Developer (Small Studio)",
+        "Studio Lina Digital",
+        "job",
+        "hybrid",
+        "Oran",
+        "Algeria",
+        16,
+        "25,000 DZD/mo",
+        ["React or Vue basics", "Portfolio required"],
+        ["Paid trial task", "Flexible hours"],
+        "en",
+        "A five-person studio in Oran builds e-commerce sites. Write to "
+        "contact.studiolinadigital@gmail.com with your portfolio. No application fee, "
+        "paid trial task, signed contract from day one.",
     ),
     # --- Known scam #1: application fee + urgency (must be flagged) ----------
     (
@@ -633,8 +676,38 @@ PROFILES = [
 ]
 
 
+def make_scam_labels(opportunities: list[dict]) -> dict[str, bool]:
+    """is_scam ground truth for every fixture id: only KNOWN_SCAMS are True."""
+    return {opp["id"]: opp["id"] in KNOWN_SCAMS for opp in opportunities}
+
+
+def warn_if_stale(stamp_path: Path | None = None, today: date | None = None) -> bool:
+    """Warn when the fixtures were generated on a previous day.
+
+    Fixture deadlines are relative to the generation day, so they drift out of
+    date. Call this before a demo; re-run `python scripts/make_fixtures.py` to
+    refresh. Returns True when the fixtures are stale.
+
+    Example:
+        >>> warn_if_stale()  # True + warning if generated before today
+        True
+    """
+    stamp_path = stamp_path or STAMP
+    today = today or date.today()
+    stamp = stamp_path.read_text(encoding="utf-8").strip() if stamp_path.exists() else None
+    if stamp != today.isoformat():
+        print(
+            f"WARNING: fixtures were last generated on {stamp or 'unknown'} — deadlines may "
+            "be stale. Re-run: python scripts/make_fixtures.py"
+        )
+        return True
+    return False
+
+
 def main() -> None:
+    warn_if_stale()
     FIXTURES.mkdir(parents=True, exist_ok=True)
+    EVAL.mkdir(parents=True, exist_ok=True)
     opportunities = make_opportunities()
     (FIXTURES / "opportunities.json").write_text(
         json.dumps(opportunities, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
@@ -642,9 +715,15 @@ def main() -> None:
     (FIXTURES / "profiles.json").write_text(
         json.dumps(PROFILES, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
     )
+    (STAMP).write_text(TODAY.isoformat() + "\n", encoding="utf-8")
+    labels = make_scam_labels(opportunities)
+    (EVAL / "scam_labels.json").write_text(
+        json.dumps(labels, indent=2) + "\n", encoding="utf-8"
+    )
+    scams = sum(labels.values())
     print(
-        f"wrote {len(opportunities)} opportunities and {len(PROFILES)} profiles "
-        f"(today={TODAY.isoformat()})"
+        f"wrote {len(opportunities)} opportunities ({scams} known scams) and "
+        f"{len(PROFILES)} profiles (today={TODAY.isoformat()})"
     )
 
 
