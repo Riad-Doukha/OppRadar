@@ -9,7 +9,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Literal
 
-from pydantic import SecretStr, model_validator
+from pydantic import SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # We only ever use PyTorch. When tensorflow is installed (for other projects),
@@ -37,6 +37,10 @@ class Settings(BaseSettings):
     gemini_model: str = "gemini-3.8-flash"
     ollama_base_url: str = "http://localhost:11434"
     ollama_model: str = "llama3.2"
+    # Live opt-in (RUN_LIVE_LLM=1 in the shell): False keeps every run offline —
+    # no live LLM call, no detail-page fetch. Read by the notebooks' cost gate
+    # and by ingestion's detail fetch.
+    run_live_llm: bool = False
 
     # --- Web discovery ------------------------------------------------------
     tavily_api_key: SecretStr = SecretStr("")
@@ -137,6 +141,19 @@ class Settings(BaseSettings):
     @property
     def tavily_key_value(self) -> str:
         return self.tavily_api_key.get_secret_value()
+
+    @field_validator("run_live_llm", mode="before")
+    @classmethod
+    def _empty_is_off(cls, value: object) -> object:
+        """`RUN_LIVE_LLM=` (empty) in a shell means "off", not a config error.
+
+        Example:
+            >>> Settings._empty_is_off("")
+            False
+            >>> Settings._empty_is_off("1")
+            '1'
+        """
+        return False if value in ("", None) else value
 
     @model_validator(mode="after")
     def _check_weights(self) -> Settings:

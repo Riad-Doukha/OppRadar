@@ -29,6 +29,20 @@ DEADLINE_CASES = [
     ("11/30/2026", date(2026, 11, 30)),  # US style when the first part > 12
     ("15 mars 2027", date(2027, 3, 15)),  # French month names
     ("Deadline: 30 October 2026!", date(2026, 10, 30)),  # embedded in a sentence
+    # Ordinal day suffixes (EN st/nd/rd/th, FR er) are accepted and ignored
+    ("3 November 2026", date(2026, 11, 3)),
+    ("November 3rd, 2026", date(2026, 11, 3)),
+    ("1st March 2027", date(2027, 3, 1)),
+    ("May 1st, 2027", date(2027, 5, 1)),
+    ("2nd April 2027", date(2027, 4, 2)),
+    ("21st October 2026", date(2026, 10, 21)),
+    ("22nd July 2027", date(2027, 7, 22)),
+    ("23rd December 2026", date(2026, 12, 23)),
+    ("May 5th 2027", date(2027, 5, 5)),
+    ("1er mars 2027", date(2027, 3, 1)),  # French ordinal day
+    ("Deadline: 15th June 2027", date(2027, 6, 15)),
+    ("3rd", None),  # bare ordinal: a month/year is never invented
+    ("1er", None),
     ("ongoing", None),
     ("present", None),
     ("current", None),
@@ -48,6 +62,7 @@ def test_parse_deadline_is_iso_and_never_invents(raw: str, expected) -> None:
 
 def test_find_deadline_scans_the_source_text() -> None:
     assert find_deadline("Applications close 30 October 2026. Go!") == "30 October 2026"
+    assert find_deadline("Apply by 3rd November 2026!") == "3rd November 2026"
     assert find_deadline("cycle 2026, deadline 2027-03-15") == "2027-03-15"
     assert find_deadline("no dates in this text") == ""
     assert find_deadline("") == ""

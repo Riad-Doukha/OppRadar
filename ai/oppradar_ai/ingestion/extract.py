@@ -60,9 +60,16 @@ _MONTHS = {
 }
 
 # Ordered: ISO first, then word-based forms, then all-numeric d/m/y.
+# Word forms accept an optional day suffix: "November 3rd, 2026", "22nd March",
+# French "1er mars 2027" (st/nd/rd/th/er/ère/ème, any case).
+_ORDINAL = r"(?:st|nd|rd|th|er|ère|ème)?"
 _ISO_RE = re.compile(r"(?<!\d)(\d{4})-(\d{1,2})-(\d{1,2})(?!\d)")
-_DAY_MONTH_RE = re.compile(r"(?<!\d)(\d{1,2})\s+([A-Za-zÀ-ÿ]+)\.?,?\s+(\d{4})(?!\d)")
-_MONTH_DAY_RE = re.compile(r"([A-Za-zÀ-ÿ]+)\s+(\d{1,2}),?\s+(\d{4})(?!\d)")
+_DAY_MONTH_RE = re.compile(
+    rf"(?<!\d)(\d{{1,2}}){_ORDINAL}\s+([A-Za-zÀ-ÿ]+)\.?,?\s+(\d{{4}})(?!\d)", re.IGNORECASE
+)
+_MONTH_DAY_RE = re.compile(
+    rf"([A-Za-zÀ-ÿ]+)\s+(\d{{1,2}}){_ORDINAL},?\s+(\d{{4}})(?!\d)", re.IGNORECASE
+)
 _DAY_FIRST_RE = re.compile(r"(?<!\d)(\d{1,2})[./-](\d{1,2})[./-](\d{4})(?!\d)")
 
 _OUTPUT_FIELDS = (
@@ -76,11 +83,14 @@ def parse_deadline(raw: str) -> date | None:
 
     Never invents: a month without a day, an impossible date or an
     unparseable claim all return None. Numeric d/m/y prefers the day
-    first (European/Algerian convention).
+    first (European/Algerian convention). Day suffixes are accepted and
+    ignored ("3rd", "1st", "22nd", "1er").
 
     Example:
         >>> parse_deadline("15 March 2027")
         datetime.date(2027, 3, 15)
+        >>> parse_deadline("November 3rd, 2026"), parse_deadline("1er mars 2027")
+        (datetime.date(2026, 11, 3), datetime.date(2027, 3, 1))
         >>> parse_deadline("ongoing"), parse_deadline("March 2027")
         (None, None)
     """

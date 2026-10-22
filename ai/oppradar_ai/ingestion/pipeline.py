@@ -10,6 +10,7 @@ from __future__ import annotations
 import logging
 import time
 from datetime import datetime, timezone
+from urllib.parse import urlsplit
 
 from oppradar_ai.config import Settings, get_settings
 from oppradar_ai.ingestion.budget import RunBudget
@@ -152,6 +153,40 @@ def _from_entry(
     return outcome
 
 
+def _detail_fetch_allowed(settings: Settings, url: str) -> bool:
+    """May a missing deadline trigger a live detail-page fetch for `url`?
+
+    Offline runs must never touch the network: the fake provider has
+    nothing to re-extract with, and without the RUN_LIVE_LLM=1 opt-in no
+    remote call is ever intended. Placeholder URLs (local fixtures,
+    example.org) are also refused — they can only cost a request and a 404.
+
+    Example:
+        >>> live = Settings(llm_provider="gemini", run_live_llm=True)
+        >>> _detail_fetch_allowed(live, "https://example.org/job/1")
+        False
+        >>> _detail_fetch_allowed(Settings(llm_provider="fake", run_live_llm=True),
+        ...                       "https://host.tld/job/1")
+        False
+        >>> _detail_fetch_allowed(live, "https://host.tld/job/1")
+        True
+    """
+    if settings.llm_provider == "fake" or not settings.run_live_llm:
+        return False
+    return not _placeholder_url(url)
+
+
+def _placeholder_url(url: str) -> bool:
+    """Local paths, example.* hosts and reserved TLDs (.test/.invalid/...)."""
+    if not url.startswith(("http://", "https://")):
+        return True
+    host = urlsplit(url).netloc.lower().removeprefix("www.")
+    root = ".".join(host.split(".")[-2:])
+    if root in {"example.org", "example.com", "example.net"}:
+        return True
+    return host.endswith((".test", ".example", ".invalid", ".localhost", ".local"))
+
+
 def _fill_deadline_from_detail(
     outcome: RawExtraction,
     entry: FeedEntry,
@@ -163,6 +198,10 @@ def _fill_deadline_from_detail(
 ) -> None:
     """Accepted entry without a deadline -> one capped detail-page re-extract."""
     if outcome.opportunity is None or outcome.opportunity.deadline is not None:
+        return
+    if not _detail_fetch_allowed(settings, entry.url):
+        logger.info("detail fetch skipped (offline): %s", entry.url)
+        detail_usage.skipped += 1  # declined on purpose, not by budget
         return
     if detail_usage.made >= detail_usage.limit:  # hard cap (free-tier protection)
         return
@@ -348,13 +387,14 @@ def _report(
     logger.info(
         "ingestion finished: %d new / %d fetched from %d source(s) | "
         "accepted %d / rejected %d / flagged %d | deadlines rule %d llm %d "
-        "mismatch %d null %d | detail fetches %d | "
+        "mismatch %d null %d | detail fetches %d (%d declined offline) | "
         "Tavily %d made / %d cached / %d skipped (cap %d) | "
         "LLM %d made / %d cached / %d skipped (cap %d) | %d failure(s)",
         report.items_new, report.items_fetched, len(stats),
         report.items_new, report.items_rejected, report.items_flagged,
         report.deadline_from_rule, report.deadline_from_llm,
         report.deadline_mismatches, report.deadline_null, report.detail_fetches,
+        detail_usage.skipped,
         report.searches.made, report.searches.cached, report.searches.skipped,
         report.searches.limit,
         report.extractions.made, report.extractions.cached, report.extractions.skipped,

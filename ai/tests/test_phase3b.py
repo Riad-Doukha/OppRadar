@@ -1,7 +1,8 @@
 # Phase 3b: the is_opportunity gate (listicles -> rejected, never stored),
 # rule-first deadlines (a "Deadline:" line beats the model; a mismatch is
 # flagged; Rolling/Varies stay null), body truncation, the capped optional
-# detail fetch, list-page marking, and the frozen live-snapshot sanity.
+# detail fetch (live opt-in only — offline runs must never issue a request),
+# list-page marking, and the frozen live-snapshot sanity.
 
 from datetime import date, datetime, timezone
 from pathlib import Path
@@ -18,8 +19,8 @@ from oppradar_ai.ingestion.extract import (
     to_opportunity,
     truncate_text,
 )
-from oppradar_ai.ingestion.fetch import PageDoc
-from oppradar_ai.ingestion.pipeline import run_ingestion
+from oppradar_ai.ingestion.fetch import PageDoc, PageFetcher
+from oppradar_ai.ingestion.pipeline import _detail_fetch_allowed, run_ingestion
 from oppradar_ai.schemas import (
     Opportunity,
     OpportunityExtraction,
@@ -252,34 +253,99 @@ class _StubFetcher:
                        fetched_at=datetime.now(timezone.utc))
 
 
+def _accept_without_deadline(text: str, **kwargs) -> RawExtraction:
+    """Extractor stub: every entry is accepted with NO deadline -> detail path."""
+    opp = Opportunity(
+        title="No Deadline", organizer="Org", type=OpportunityType.OTHER,
+        deadline=None, url=kwargs.get("url", ""), source="t",
+        field_confidences=[],
+    )
+    return RawExtraction(opportunity=opp, url=kwargs.get("url", ""))
+
+
 def test_detail_fetch_is_capped_and_only_fills_missing_deadlines(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     feed = _feed(tmp_path, [
-        ("No Deadline A", "https://example.org/na", "Body with no date at all."),
-        ("No Deadline B", "https://example.org/nb", "Body with no date at all."),
-        ("No Deadline C", "https://example.org/nc", "Body with no date at all."),
+        ("No Deadline A", "https://jobs.univ-annaba.dz/na", "Body with no date at all."),
+        ("No Deadline B", "https://jobs.univ-annaba.dz/nb", "Body with no date at all."),
+        ("No Deadline C", "https://jobs.univ-annaba.dz/nc", "Body with no date at all."),
     ])
     source = Source(name="t", url=str(feed), kind="rss")
     fetcher = _StubFetcher()
-    settings = _settings(max_detail_fetches_per_run=2)
-
-    def fake_extract_record(text, **kwargs):
-        # Every entry is accepted with NO deadline -> triggers the detail path.
-        opp = Opportunity(
-            title="No Deadline", organizer="Org", type=OpportunityType.OTHER,
-            deadline=None, url=kwargs.get("url", ""), source="t",
-            field_confidences=[],
-        )
-        return RawExtraction(opportunity=opp, url=kwargs.get("url", ""))
-
+    # A live detail fetch needs the opt-in AND a real provider. The fetcher is
+    # a stub and extract_record is replaced below: no request, no LLM call.
+    settings = _settings(
+        max_detail_fetches_per_run=2, llm_provider="ollama", run_live_llm=True
+    )
     monkeypatch.setattr(
-        "oppradar_ai.ingestion.pipeline.extract_record", fake_extract_record
+        "oppradar_ai.ingestion.pipeline.extract_record", _accept_without_deadline
     )
     report = run_ingestion(sources=[source], settings=settings, fetcher=fetcher)
 
     assert report.detail_fetches == 2  # capped at MAX_DETAIL_FETCHES_PER_RUN
     assert len(fetcher.calls) == 2  # only the cap's worth of detail pages fetched
+
+
+@pytest.mark.parametrize("updates", [
+    {},  # offline default: fake provider, no opt-in
+    {"run_live_llm": True},  # opt-in alone is not enough (fake provider)
+    {"llm_provider": "gemini", "run_live_llm": False},  # no opt-in either
+])
+def test_detail_fetch_never_touches_the_network_offline(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, updates: dict
+) -> None:
+    """Fake provider or RUN_LIVE_LLM unset -> not a single HTTP request."""
+    feed = _feed(tmp_path, [
+        ("No Deadline A", "https://jobs.univ-annaba.dz/na", "Body with no date at all."),
+        ("No Deadline B", "https://example.org/nb", "Body with no date at all."),
+    ])
+    source = Source(name="t", url=str(feed), kind="rss")
+
+    def _no_http(*args, **kwargs):
+        raise AssertionError("HTTP request attempted while offline")
+
+    monkeypatch.setattr("httpx.Client.request", _no_http)
+    monkeypatch.setattr(
+        "oppradar_ai.ingestion.pipeline.extract_record", _accept_without_deadline
+    )
+    settings = _settings(**updates)
+    report = run_ingestion(
+        sources=[source], settings=settings, fetcher=PageFetcher(settings)
+    )
+
+    assert report.detail_fetches == 0
+    assert report.failures == []  # a blocked fetch would surface here
+
+
+def test_detail_fetch_refuses_placeholder_urls_even_when_live(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """example.org / local fixtures are never worth a request (they only 404)."""
+    feed = _feed(tmp_path, [("No Deadline", "https://example.org/nd", "Body with no date.")])
+    source = Source(name="t", url=str(feed), kind="rss")
+    fetcher = _StubFetcher()
+    monkeypatch.setattr(
+        "oppradar_ai.ingestion.pipeline.extract_record", _accept_without_deadline
+    )
+    settings = _settings(llm_provider="gemini", run_live_llm=True)
+    report = run_ingestion(sources=[source], settings=settings, fetcher=fetcher)
+
+    assert fetcher.calls == []  # the placeholder URL was never requested
+    assert report.detail_fetches == 0
+
+
+@pytest.mark.parametrize("url,expected", [
+    ("https://jobs.univ-annaba.dz/x", True),
+    ("https://example.org/x", False),
+    ("https://www.example.com/x", False),
+    ("https://jobs.example.net/x", False),
+    ("https://scholarship.test/x", False),
+    ("/tmp/fixture_page.html", False),
+])
+def test_detail_fetch_gate_classifies_urls(url: str, expected: bool) -> None:
+    live = _settings(llm_provider="gemini", run_live_llm=True)
+    assert _detail_fetch_allowed(live, url) is expected
 
 
 def test_detail_fetch_skipped_when_deadline_already_present(

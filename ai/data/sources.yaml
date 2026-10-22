@@ -223,19 +223,19 @@ sources:
       scholarship-announcement ("bourses") page URL is verified yet.
       Find the right sub-page, then set enabled: true.
 
-  - name: euraxess-algeria
-    url: https://euraxess.algeria.dz/
-    kind: page
-    type_hint: research
-    language: en
-    country: Algeria
-    enabled: false
-    verified: false
-    notes: >-
-      EURAXESS Algeria national portal (historical URL) — UNREACHABLE
-      (transport error) when checked on 2026-10-21, so it is marked
-      verified: false and disabled. Check it manually; if it works,
-      set verified: true and enabled: true.
+  # - name: euraxess-algeria
+  #   url: https://euraxess.algeria.dz/
+  #   kind: page
+  #   type_hint: research
+  #   language: en
+  #   country: Algeria
+  #   enabled: false
+  #   verified: false
+  #   notes: >-
+  #     EURAXESS Algeria national portal (historical URL) — UNREACHABLE
+  #     (transport error) when checked on 2026-10-21, so it is marked
+  #     verified: false and disabled. Check it manually; if it works,
+  #     set verified: true and enabled: true.
 
   - name: emploitic-algeria
     url: https://emploitic.com/
