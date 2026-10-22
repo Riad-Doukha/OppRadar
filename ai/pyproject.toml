@@ -50,6 +50,9 @@ dev = [
     "pandas>=2.0",
     "matplotlib>=3.8",
     "nbstripout>=0.7",
+    # tests/test_notebooks.py executes notebooks 00-09 in a real kernel
+    "nbclient>=0.10",
+    "ipykernel>=6.29",
 ]
 
 [tool.hatch.build.targets.wheel]
