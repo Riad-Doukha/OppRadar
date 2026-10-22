@@ -1,0 +1,3027 @@
+{
+ "openapi": "3.1.0",
+ "info": {
+  "title": "OppRadar API",
+  "description": "Backend for OppRadar \u2014 opportunities in, matches out.",
+  "version": "0.2.0"
+ },
+ "paths": {
+  "/health": {
+   "get": {
+    "summary": "Health",
+    "operationId": "health_health_get",
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": {
+          "type": "string"
+         },
+         "type": "object",
+         "title": "Response Health Health Get"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/auth/demo": {
+   "post": {
+    "tags": [
+     "auth"
+    ],
+    "summary": "Demo Login",
+    "description": "'Try the demo instead': a session for the shared read-only demo account.\n\nThe frontend passes the tokens to `supabase.auth.setSession(...)`.",
+    "operationId": "demo_login_auth_demo_post",
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/DemoSession"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/me": {
+   "get": {
+    "tags": [
+     "me"
+    ],
+    "summary": "Get Me",
+    "description": "Whole profile + onboarding progress (wizard, review screen, 'Save & exit' resume).",
+    "operationId": "get_me_me_get",
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Me"
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ]
+   }
+  },
+  "/me/onboarding/about": {
+   "patch": {
+    "tags": [
+     "me"
+    ],
+    "summary": "Save About",
+    "description": "Step 1 \u00b7 About you.",
+    "operationId": "save_about_me_onboarding_about_patch",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/AboutYouStep"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Me"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ]
+   }
+  },
+  "/me/onboarding/education": {
+   "patch": {
+    "tags": [
+     "me"
+    ],
+    "summary": "Save Education",
+    "description": "Step 2 \u00b7 Education (experiences/certificates use their own endpoints).",
+    "operationId": "save_education_me_onboarding_education_patch",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/EducationStep"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Me"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ]
+   }
+  },
+  "/me/onboarding/skills": {
+   "patch": {
+    "tags": [
+     "me"
+    ],
+    "summary": "Save Skills",
+    "description": "Step 3 \u00b7 Skills & interests.",
+    "operationId": "save_skills_me_onboarding_skills_patch",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/SkillsStep"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Me"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ]
+   }
+  },
+  "/me/onboarding/goals": {
+   "patch": {
+    "tags": [
+     "me"
+    ],
+    "summary": "Save Goals",
+    "description": "Step 4 \u00b7 Goals & links.",
+    "operationId": "save_goals_me_onboarding_goals_patch",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/GoalsStep"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Me"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ]
+   }
+  },
+  "/me/onboarding/alerts": {
+   "patch": {
+    "tags": [
+     "me"
+    ],
+    "summary": "Save Alerts",
+    "description": "Step 5 \u00b7 Alerts & consent.",
+    "operationId": "save_alerts_me_onboarding_alerts_patch",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/AlertsStep"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Me"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ]
+   }
+  },
+  "/me/onboarding/complete": {
+   "post": {
+    "tags": [
+     "me"
+    ],
+    "summary": "Complete Onboarding",
+    "description": "'Finish setup': 422 with the list of missing required fields, or the completed profile.",
+    "operationId": "complete_onboarding_me_onboarding_complete_post",
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Me"
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ]
+   }
+  },
+  "/me/agent/start": {
+   "post": {
+    "tags": [
+     "me"
+    ],
+    "summary": "Start Agent",
+    "description": "'Start my agent' \u2014 needs the ingestion + matching AI phases (not shipped yet).",
+    "operationId": "start_agent_me_agent_start_post",
+    "responses": {
+     "501": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": {
+          "type": "string"
+         },
+         "type": "object",
+         "title": "Response Start Agent Me Agent Start Post"
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ]
+   }
+  },
+  "/me/experiences": {
+   "post": {
+    "tags": [
+     "me"
+    ],
+    "summary": "Add Experience",
+    "operationId": "add_experience_me_experiences_post",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/ExperienceIn"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "201": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Experience"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ]
+   }
+  },
+  "/me/experiences/{experience_id}": {
+   "patch": {
+    "tags": [
+     "me"
+    ],
+    "summary": "Edit Experience",
+    "operationId": "edit_experience_me_experiences__experience_id__patch",
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ],
+    "parameters": [
+     {
+      "name": "experience_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid",
+       "title": "Experience Id"
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/ExperiencePatch"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Experience"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   },
+   "delete": {
+    "tags": [
+     "me"
+    ],
+    "summary": "Delete Experience",
+    "operationId": "delete_experience_me_experiences__experience_id__delete",
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ],
+    "parameters": [
+     {
+      "name": "experience_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid",
+       "title": "Experience Id"
+      }
+     }
+    ],
+    "responses": {
+     "204": {
+      "description": "Successful Response"
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/me/certificates": {
+   "post": {
+    "tags": [
+     "me"
+    ],
+    "summary": "Add Certificate",
+    "operationId": "add_certificate_me_certificates_post",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/CertificateIn"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "201": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Certificate"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ]
+   }
+  },
+  "/me/certificates/{certificate_id}": {
+   "patch": {
+    "tags": [
+     "me"
+    ],
+    "summary": "Edit Certificate",
+    "operationId": "edit_certificate_me_certificates__certificate_id__patch",
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ],
+    "parameters": [
+     {
+      "name": "certificate_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid",
+       "title": "Certificate Id"
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/CertificatePatch"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Certificate"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   },
+   "delete": {
+    "tags": [
+     "me"
+    ],
+    "summary": "Delete Certificate",
+    "operationId": "delete_certificate_me_certificates__certificate_id__delete",
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ],
+    "parameters": [
+     {
+      "name": "certificate_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid",
+       "title": "Certificate Id"
+      }
+     }
+    ],
+    "responses": {
+     "204": {
+      "description": "Successful Response"
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/documents": {
+   "get": {
+    "tags": [
+     "documents"
+    ],
+    "summary": "List Documents",
+    "operationId": "list_documents_documents_get",
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "items": {
+          "$ref": "#/components/schemas/Document"
+         },
+         "type": "array",
+         "title": "Response List Documents Documents Get"
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ]
+   },
+   "post": {
+    "tags": [
+     "documents"
+    ],
+    "summary": "Upload Document",
+    "description": "Accept a PDF and start extracting it.\n\nProgress: poll GET /documents/{id} or listen to the `document:progress` socket event.",
+    "operationId": "upload_document_documents_post",
+    "requestBody": {
+     "content": {
+      "multipart/form-data": {
+       "schema": {
+        "$ref": "#/components/schemas/Body_upload_document_documents_post"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "202": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Document"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ]
+   }
+  },
+  "/documents/{document_id}": {
+   "get": {
+    "tags": [
+     "documents"
+    ],
+    "summary": "Get Document",
+    "description": "One document; for a finished CV, `prefill` holds the values for the onboarding steps.",
+    "operationId": "get_document_documents__document_id__get",
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ],
+    "parameters": [
+     {
+      "name": "document_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid",
+       "title": "Document Id"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/DocumentDetail"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   },
+   "delete": {
+    "tags": [
+     "documents"
+    ],
+    "summary": "Delete Document",
+    "operationId": "delete_document_documents__document_id__delete",
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ],
+    "parameters": [
+     {
+      "name": "document_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid",
+       "title": "Document Id"
+      }
+     }
+    ],
+    "responses": {
+     "204": {
+      "description": "Successful Response"
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/opportunities": {
+   "get": {
+    "tags": [
+     "opportunities"
+    ],
+    "summary": "List Opportunities",
+    "operationId": "list_opportunities_opportunities_get",
+    "parameters": [
+     {
+      "name": "q",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string",
+         "maxLength": 200
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "description": "Full-text search",
+       "title": "Q"
+      },
+      "description": "Full-text search"
+     },
+     {
+      "name": "type",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "array",
+       "items": {
+        "enum": [
+         "scholarship",
+         "job",
+         "internship",
+         "fellowship",
+         "hackathon",
+         "datathon",
+         "competition",
+         "bootcamp",
+         "research",
+         "volunteer",
+         "course",
+         "grant",
+         "other"
+        ],
+        "type": "string"
+       },
+       "default": [],
+       "title": "Type"
+      }
+     },
+     {
+      "name": "mode",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "array",
+       "items": {
+        "enum": [
+         "remote",
+         "hybrid",
+         "onsite"
+        ],
+        "type": "string"
+       },
+       "default": [],
+       "title": "Mode"
+      }
+     },
+     {
+      "name": "country",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string",
+         "maxLength": 60
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Country"
+      }
+     },
+     {
+      "name": "trust",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "array",
+       "items": {
+        "enum": [
+         "verified",
+         "likely_safe",
+         "unknown",
+         "suspicious",
+         "scam"
+        ],
+        "type": "string"
+       },
+       "default": [],
+       "title": "Trust"
+      }
+     },
+     {
+      "name": "include_expired",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "boolean",
+       "default": false,
+       "title": "Include Expired"
+      }
+     },
+     {
+      "name": "deadline_before",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string",
+         "format": "date"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Deadline Before"
+      }
+     },
+     {
+      "name": "limit",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer",
+       "maximum": 100,
+       "minimum": 1,
+       "default": 20,
+       "title": "Limit"
+      }
+     },
+     {
+      "name": "offset",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer",
+       "minimum": 0,
+       "default": 0,
+       "title": "Offset"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/OpportunityPage"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/opportunities/{opportunity_id}": {
+   "get": {
+    "tags": [
+     "opportunities"
+    ],
+    "summary": "Get Opportunity",
+    "operationId": "get_opportunity_opportunities__opportunity_id__get",
+    "parameters": [
+     {
+      "name": "opportunity_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid",
+       "title": "Opportunity Id"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/OpportunityOut"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  }
+ },
+ "components": {
+  "schemas": {
+   "AboutYouStep": {
+    "properties": {
+     "full_name": {
+      "anyOf": [
+       {
+        "type": "string",
+        "maxLength": 120
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Full Name"
+     },
+     "birth_year": {
+      "anyOf": [
+       {
+        "type": "integer",
+        "maximum": 2020.0,
+        "minimum": 1940.0
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Birth Year"
+     },
+     "nationality": {
+      "anyOf": [
+       {
+        "type": "string",
+        "maxLength": 60
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Nationality"
+     },
+     "country": {
+      "anyOf": [
+       {
+        "type": "string",
+        "maxLength": 60
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Country"
+     },
+     "wilaya": {
+      "anyOf": [
+       {
+        "type": "string",
+        "maxLength": 60
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Wilaya"
+     },
+     "languages": {
+      "anyOf": [
+       {
+        "items": {
+         "$ref": "#/components/schemas/LanguageIn"
+        },
+        "type": "array",
+        "maxItems": 10
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Languages"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "title": "AboutYouStep",
+    "description": "Step 1 \u00b7 About you."
+   },
+   "AlertsStep": {
+    "properties": {
+     "email_enabled": {
+      "anyOf": [
+       {
+        "type": "boolean"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Email Enabled"
+     },
+     "telegram_enabled": {
+      "anyOf": [
+       {
+        "type": "boolean"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Telegram Enabled"
+     },
+     "threshold": {
+      "anyOf": [
+       {
+        "type": "integer",
+        "maximum": 100.0,
+        "minimum": 50.0
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Threshold"
+     },
+     "frequency": {
+      "anyOf": [
+       {
+        "type": "string",
+        "enum": [
+         "instant",
+         "daily",
+         "weekly"
+        ]
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Frequency"
+     },
+     "quiet_start": {
+      "anyOf": [
+       {
+        "type": "string",
+        "format": "time"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Quiet Start"
+     },
+     "quiet_end": {
+      "anyOf": [
+       {
+        "type": "string",
+        "format": "time"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Quiet End"
+     },
+     "clear_quiet_hours": {
+      "type": "boolean",
+      "title": "Clear Quiet Hours",
+      "default": false
+     },
+     "consents": {
+      "anyOf": [
+       {
+        "additionalProperties": {
+         "type": "boolean"
+        },
+        "propertyNames": {
+         "enum": [
+          "terms_privacy",
+          "agent_matching",
+          "ai_cv_processing"
+         ]
+        },
+        "type": "object"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Consents"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "title": "AlertsStep",
+    "description": "Step 5 \u00b7 Alerts & consent."
+   },
+   "Body_upload_document_documents_post": {
+    "properties": {
+     "file": {
+      "type": "string",
+      "contentMediaType": "application/octet-stream",
+      "title": "File",
+      "description": "PDF, max 5 MB"
+     },
+     "consent_ai_processing": {
+      "type": "boolean",
+      "title": "Consent Ai Processing",
+      "default": false
+     },
+     "kind": {
+      "type": "string",
+      "enum": [
+       "cv",
+       "certificate",
+       "portfolio"
+      ],
+      "title": "Kind",
+      "default": "cv"
+     }
+    },
+    "type": "object",
+    "required": [
+     "file"
+    ],
+    "title": "Body_upload_document_documents_post"
+   },
+   "CVPrefill": {
+    "properties": {
+     "about": {
+      "$ref": "#/components/schemas/AboutYouStep"
+     },
+     "education": {
+      "$ref": "#/components/schemas/EducationStep"
+     },
+     "skills": {
+      "$ref": "#/components/schemas/SkillsStep"
+     },
+     "goals": {
+      "$ref": "#/components/schemas/GoalsStep"
+     },
+     "experiences": {
+      "items": {
+       "$ref": "#/components/schemas/ExperienceIn"
+      },
+      "type": "array",
+      "title": "Experiences"
+     },
+     "certificates": {
+      "items": {
+       "$ref": "#/components/schemas/CertificateIn"
+      },
+      "type": "array",
+      "title": "Certificates"
+     },
+     "needs_review": {
+      "items": {
+       "type": "string"
+      },
+      "type": "array",
+      "title": "Needs Review"
+     }
+    },
+    "type": "object",
+    "title": "CVPrefill",
+    "description": "Values found in a CV, shaped like the onboarding steps they pre-fill."
+   },
+   "Certificate": {
+    "properties": {
+     "title": {
+      "type": "string",
+      "maxLength": 150,
+      "minLength": 1,
+      "title": "Title"
+     },
+     "issuer": {
+      "type": "string",
+      "maxLength": 150,
+      "title": "Issuer",
+      "default": ""
+     },
+     "year": {
+      "anyOf": [
+       {
+        "type": "integer",
+        "maximum": 2100.0,
+        "minimum": 1950.0
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Year"
+     },
+     "credential_url": {
+      "anyOf": [
+       {
+        "type": "string",
+        "maxLength": 300
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Credential Url"
+     },
+     "id": {
+      "type": "string",
+      "format": "uuid",
+      "title": "Id"
+     }
+    },
+    "type": "object",
+    "required": [
+     "title",
+     "id"
+    ],
+    "title": "Certificate"
+   },
+   "CertificateIn": {
+    "properties": {
+     "title": {
+      "type": "string",
+      "maxLength": 150,
+      "minLength": 1,
+      "title": "Title"
+     },
+     "issuer": {
+      "type": "string",
+      "maxLength": 150,
+      "title": "Issuer",
+      "default": ""
+     },
+     "year": {
+      "anyOf": [
+       {
+        "type": "integer",
+        "maximum": 2100.0,
+        "minimum": 1950.0
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Year"
+     },
+     "credential_url": {
+      "anyOf": [
+       {
+        "type": "string",
+        "maxLength": 300
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Credential Url"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "title"
+    ],
+    "title": "CertificateIn"
+   },
+   "CertificatePatch": {
+    "properties": {
+     "title": {
+      "anyOf": [
+       {
+        "type": "string",
+        "maxLength": 150,
+        "minLength": 1
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Title"
+     },
+     "issuer": {
+      "anyOf": [
+       {
+        "type": "string",
+        "maxLength": 150
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Issuer"
+     },
+     "year": {
+      "anyOf": [
+       {
+        "type": "integer",
+        "maximum": 2100.0,
+        "minimum": 1950.0
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Year"
+     },
+     "credential_url": {
+      "anyOf": [
+       {
+        "type": "string",
+        "maxLength": 300
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Credential Url"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "title": "CertificatePatch"
+   },
+   "DemoSession": {
+    "properties": {
+     "access_token": {
+      "type": "string",
+      "title": "Access Token"
+     },
+     "refresh_token": {
+      "type": "string",
+      "title": "Refresh Token"
+     },
+     "expires_in": {
+      "type": "integer",
+      "title": "Expires In"
+     },
+     "token_type": {
+      "type": "string",
+      "title": "Token Type",
+      "default": "bearer"
+     }
+    },
+    "type": "object",
+    "required": [
+     "access_token",
+     "refresh_token",
+     "expires_in"
+    ],
+    "title": "DemoSession"
+   },
+   "Document": {
+    "properties": {
+     "id": {
+      "type": "string",
+      "format": "uuid",
+      "title": "Id"
+     },
+     "kind": {
+      "type": "string",
+      "enum": [
+       "cv",
+       "certificate",
+       "portfolio"
+      ],
+      "title": "Kind"
+     },
+     "file_name": {
+      "type": "string",
+      "title": "File Name"
+     },
+     "size_bytes": {
+      "type": "integer",
+      "title": "Size Bytes"
+     },
+     "status": {
+      "type": "string",
+      "enum": [
+       "queued",
+       "reading",
+       "extracting",
+       "done",
+       "failed"
+      ],
+      "title": "Status"
+     },
+     "read_method": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Read Method"
+     },
+     "warnings": {
+      "items": {
+       "type": "string"
+      },
+      "type": "array",
+      "title": "Warnings"
+     },
+     "extraction": {
+      "anyOf": [
+       {
+        "additionalProperties": true,
+        "type": "object"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Extraction"
+     },
+     "error": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Error"
+     },
+     "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Created At"
+     }
+    },
+    "type": "object",
+    "required": [
+     "id",
+     "kind",
+     "file_name",
+     "size_bytes",
+     "status",
+     "created_at"
+    ],
+    "title": "Document"
+   },
+   "DocumentDetail": {
+    "properties": {
+     "id": {
+      "type": "string",
+      "format": "uuid",
+      "title": "Id"
+     },
+     "kind": {
+      "type": "string",
+      "enum": [
+       "cv",
+       "certificate",
+       "portfolio"
+      ],
+      "title": "Kind"
+     },
+     "file_name": {
+      "type": "string",
+      "title": "File Name"
+     },
+     "size_bytes": {
+      "type": "integer",
+      "title": "Size Bytes"
+     },
+     "status": {
+      "type": "string",
+      "enum": [
+       "queued",
+       "reading",
+       "extracting",
+       "done",
+       "failed"
+      ],
+      "title": "Status"
+     },
+     "read_method": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Read Method"
+     },
+     "warnings": {
+      "items": {
+       "type": "string"
+      },
+      "type": "array",
+      "title": "Warnings"
+     },
+     "extraction": {
+      "anyOf": [
+       {
+        "additionalProperties": true,
+        "type": "object"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Extraction"
+     },
+     "error": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Error"
+     },
+     "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Created At"
+     },
+     "prefill": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/CVPrefill"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     }
+    },
+    "type": "object",
+    "required": [
+     "id",
+     "kind",
+     "file_name",
+     "size_bytes",
+     "status",
+     "created_at"
+    ],
+    "title": "DocumentDetail"
+   },
+   "EducationStep": {
+    "properties": {
+     "education_level": {
+      "anyOf": [
+       {
+        "type": "string",
+        "enum": [
+         "bac",
+         "licence",
+         "master",
+         "engineer",
+         "phd",
+         "other"
+        ]
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Education Level"
+     },
+     "field_of_study": {
+      "anyOf": [
+       {
+        "type": "string",
+        "maxLength": 120
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Field Of Study"
+     },
+     "institution": {
+      "anyOf": [
+       {
+        "type": "string",
+        "maxLength": 150
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Institution"
+     },
+     "current_year": {
+      "anyOf": [
+       {
+        "type": "integer",
+        "maximum": 10.0,
+        "minimum": 1.0
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Current Year"
+     },
+     "graduation_year": {
+      "anyOf": [
+       {
+        "type": "integer",
+        "maximum": 2100.0,
+        "minimum": 1950.0
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Graduation Year"
+     },
+     "gpa_value": {
+      "anyOf": [
+       {
+        "type": "number",
+        "minimum": 0.0
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Gpa Value"
+     },
+     "gpa_scale": {
+      "anyOf": [
+       {
+        "type": "integer",
+        "enum": [
+         4,
+         20
+        ]
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Gpa Scale"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "title": "EducationStep",
+    "description": "Step 2 \u00b7 Education & experience (experiences/certificates have their own CRUD)."
+   },
+   "Experience": {
+    "properties": {
+     "kind": {
+      "type": "string",
+      "enum": [
+       "internship",
+       "hackathon",
+       "job",
+       "volunteer",
+       "competition",
+       "other"
+      ],
+      "title": "Kind",
+      "default": "other"
+     },
+     "title": {
+      "type": "string",
+      "maxLength": 150,
+      "minLength": 1,
+      "title": "Title"
+     },
+     "organization": {
+      "type": "string",
+      "maxLength": 150,
+      "title": "Organization",
+      "default": ""
+     },
+     "location": {
+      "type": "string",
+      "maxLength": 100,
+      "title": "Location",
+      "default": ""
+     },
+     "year": {
+      "anyOf": [
+       {
+        "type": "integer",
+        "maximum": 2100.0,
+        "minimum": 1950.0
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Year"
+     },
+     "description": {
+      "type": "string",
+      "maxLength": 1000,
+      "title": "Description",
+      "default": ""
+     },
+     "id": {
+      "type": "string",
+      "format": "uuid",
+      "title": "Id"
+     }
+    },
+    "type": "object",
+    "required": [
+     "title",
+     "id"
+    ],
+    "title": "Experience"
+   },
+   "ExperienceIn": {
+    "properties": {
+     "kind": {
+      "type": "string",
+      "enum": [
+       "internship",
+       "hackathon",
+       "job",
+       "volunteer",
+       "competition",
+       "other"
+      ],
+      "title": "Kind",
+      "default": "other"
+     },
+     "title": {
+      "type": "string",
+      "maxLength": 150,
+      "minLength": 1,
+      "title": "Title"
+     },
+     "organization": {
+      "type": "string",
+      "maxLength": 150,
+      "title": "Organization",
+      "default": ""
+     },
+     "location": {
+      "type": "string",
+      "maxLength": 100,
+      "title": "Location",
+      "default": ""
+     },
+     "year": {
+      "anyOf": [
+       {
+        "type": "integer",
+        "maximum": 2100.0,
+        "minimum": 1950.0
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Year"
+     },
+     "description": {
+      "type": "string",
+      "maxLength": 1000,
+      "title": "Description",
+      "default": ""
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "title"
+    ],
+    "title": "ExperienceIn"
+   },
+   "ExperiencePatch": {
+    "properties": {
+     "kind": {
+      "anyOf": [
+       {
+        "type": "string",
+        "enum": [
+         "internship",
+         "hackathon",
+         "job",
+         "volunteer",
+         "competition",
+         "other"
+        ]
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Kind"
+     },
+     "title": {
+      "anyOf": [
+       {
+        "type": "string",
+        "maxLength": 150,
+        "minLength": 1
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Title"
+     },
+     "organization": {
+      "anyOf": [
+       {
+        "type": "string",
+        "maxLength": 150
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Organization"
+     },
+     "location": {
+      "anyOf": [
+       {
+        "type": "string",
+        "maxLength": 100
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Location"
+     },
+     "year": {
+      "anyOf": [
+       {
+        "type": "integer",
+        "maximum": 2100.0,
+        "minimum": 1950.0
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Year"
+     },
+     "description": {
+      "anyOf": [
+       {
+        "type": "string",
+        "maxLength": 1000
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Description"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "title": "ExperiencePatch"
+   },
+   "GoalsStep": {
+    "properties": {
+     "goal": {
+      "anyOf": [
+       {
+        "type": "string",
+        "maxLength": 300,
+        "minLength": 20
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Goal"
+     },
+     "links": {
+      "anyOf": [
+       {
+        "items": {
+         "$ref": "#/components/schemas/LinkIn"
+        },
+        "type": "array",
+        "maxItems": 8
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Links"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "title": "GoalsStep",
+    "description": "Step 4 \u00b7 Goals & links."
+   },
+   "HTTPValidationError": {
+    "properties": {
+     "detail": {
+      "items": {
+       "$ref": "#/components/schemas/ValidationError"
+      },
+      "type": "array",
+      "title": "Detail"
+     }
+    },
+    "type": "object",
+    "title": "HTTPValidationError"
+   },
+   "Language": {
+    "properties": {
+     "language": {
+      "type": "string",
+      "maxLength": 40,
+      "minLength": 1,
+      "title": "Language"
+     },
+     "level": {
+      "type": "string",
+      "enum": [
+       "basic",
+       "good",
+       "fluent"
+      ],
+      "title": "Level",
+      "default": "good"
+     },
+     "id": {
+      "anyOf": [
+       {
+        "type": "string",
+        "format": "uuid"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Id"
+     }
+    },
+    "type": "object",
+    "required": [
+     "language"
+    ],
+    "title": "Language"
+   },
+   "LanguageIn": {
+    "properties": {
+     "language": {
+      "type": "string",
+      "maxLength": 40,
+      "minLength": 1,
+      "title": "Language"
+     },
+     "level": {
+      "type": "string",
+      "enum": [
+       "basic",
+       "good",
+       "fluent"
+      ],
+      "title": "Level",
+      "default": "good"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "language"
+    ],
+    "title": "LanguageIn"
+   },
+   "Link": {
+    "properties": {
+     "kind": {
+      "type": "string",
+      "enum": [
+       "linkedin",
+       "github",
+       "portfolio",
+       "other"
+      ],
+      "title": "Kind"
+     },
+     "url": {
+      "type": "string",
+      "maxLength": 300,
+      "minLength": 1,
+      "title": "Url"
+     },
+     "id": {
+      "anyOf": [
+       {
+        "type": "string",
+        "format": "uuid"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Id"
+     }
+    },
+    "type": "object",
+    "required": [
+     "kind",
+     "url"
+    ],
+    "title": "Link"
+   },
+   "LinkIn": {
+    "properties": {
+     "kind": {
+      "type": "string",
+      "enum": [
+       "linkedin",
+       "github",
+       "portfolio",
+       "other"
+      ],
+      "title": "Kind"
+     },
+     "url": {
+      "type": "string",
+      "maxLength": 300,
+      "minLength": 1,
+      "title": "Url"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "kind",
+     "url"
+    ],
+    "title": "LinkIn"
+   },
+   "Me": {
+    "properties": {
+     "user_id": {
+      "type": "string",
+      "format": "uuid",
+      "title": "User Id"
+     },
+     "email": {
+      "type": "string",
+      "title": "Email",
+      "default": ""
+     },
+     "is_demo": {
+      "type": "boolean",
+      "title": "Is Demo",
+      "default": false
+     },
+     "full_name": {
+      "type": "string",
+      "title": "Full Name",
+      "default": ""
+     },
+     "birth_year": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Birth Year"
+     },
+     "nationality": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Nationality"
+     },
+     "country": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Country"
+     },
+     "wilaya": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Wilaya"
+     },
+     "education_level": {
+      "anyOf": [
+       {
+        "type": "string",
+        "enum": [
+         "bac",
+         "licence",
+         "master",
+         "engineer",
+         "phd",
+         "other"
+        ]
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Education Level"
+     },
+     "field_of_study": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Field Of Study"
+     },
+     "institution": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Institution"
+     },
+     "current_year": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Current Year"
+     },
+     "graduation_year": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Graduation Year"
+     },
+     "gpa_value": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Gpa Value"
+     },
+     "gpa_scale": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Gpa Scale"
+     },
+     "interests": {
+      "items": {
+       "type": "string"
+      },
+      "type": "array",
+      "title": "Interests"
+     },
+     "opportunity_types": {
+      "items": {
+       "type": "string",
+       "enum": [
+        "scholarship",
+        "job",
+        "internship",
+        "fellowship",
+        "hackathon",
+        "datathon",
+        "competition",
+        "bootcamp",
+        "research",
+        "volunteer",
+        "course",
+        "grant",
+        "other"
+       ]
+      },
+      "type": "array",
+      "title": "Opportunity Types"
+     },
+     "preferred_location": {
+      "anyOf": [
+       {
+        "type": "string",
+        "enum": [
+         "algeria",
+         "abroad",
+         "remote",
+         "anywhere"
+        ]
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Preferred Location"
+     },
+     "availability": {
+      "anyOf": [
+       {
+        "type": "string",
+        "enum": [
+         "full_time",
+         "part_time_10_20",
+         "under_10h",
+         "flexible"
+        ]
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Availability"
+     },
+     "goal": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Goal"
+     },
+     "skills": {
+      "items": {
+       "$ref": "#/components/schemas/Skill"
+      },
+      "type": "array",
+      "title": "Skills"
+     },
+     "languages": {
+      "items": {
+       "$ref": "#/components/schemas/Language"
+      },
+      "type": "array",
+      "title": "Languages"
+     },
+     "experiences": {
+      "items": {
+       "$ref": "#/components/schemas/Experience"
+      },
+      "type": "array",
+      "title": "Experiences"
+     },
+     "certificates": {
+      "items": {
+       "$ref": "#/components/schemas/Certificate"
+      },
+      "type": "array",
+      "title": "Certificates"
+     },
+     "links": {
+      "items": {
+       "$ref": "#/components/schemas/Link"
+      },
+      "type": "array",
+      "title": "Links"
+     },
+     "notifications": {
+      "$ref": "#/components/schemas/NotificationSettings"
+     },
+     "consents": {
+      "items": {
+       "type": "string",
+       "enum": [
+        "terms_privacy",
+        "agent_matching",
+        "ai_cv_processing"
+       ]
+      },
+      "type": "array",
+      "title": "Consents"
+     },
+     "completeness": {
+      "type": "number",
+      "title": "Completeness",
+      "default": 0.0
+     },
+     "completeness_suggestions": {
+      "items": {
+       "type": "string"
+      },
+      "type": "array",
+      "title": "Completeness Suggestions"
+     },
+     "onboarding": {
+      "$ref": "#/components/schemas/OnboardingStatus"
+     }
+    },
+    "type": "object",
+    "required": [
+     "user_id",
+     "onboarding"
+    ],
+    "title": "Me",
+    "description": "Everything the onboarding wizard and the profile review screen show."
+   },
+   "NotificationSettings": {
+    "properties": {
+     "email_enabled": {
+      "type": "boolean",
+      "title": "Email Enabled",
+      "default": true
+     },
+     "telegram_enabled": {
+      "type": "boolean",
+      "title": "Telegram Enabled",
+      "default": false
+     },
+     "telegram_linked": {
+      "type": "boolean",
+      "title": "Telegram Linked",
+      "default": false
+     },
+     "threshold": {
+      "type": "integer",
+      "maximum": 100.0,
+      "minimum": 50.0,
+      "title": "Threshold",
+      "default": 70
+     },
+     "frequency": {
+      "type": "string",
+      "enum": [
+       "instant",
+       "daily",
+       "weekly"
+      ],
+      "title": "Frequency",
+      "default": "instant"
+     },
+     "quiet_start": {
+      "anyOf": [
+       {
+        "type": "string",
+        "format": "time"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Quiet Start",
+      "default": "22:00:00"
+     },
+     "quiet_end": {
+      "anyOf": [
+       {
+        "type": "string",
+        "format": "time"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Quiet End",
+      "default": "07:00:00"
+     }
+    },
+    "type": "object",
+    "title": "NotificationSettings"
+   },
+   "OnboardingStatus": {
+    "properties": {
+     "step": {
+      "type": "integer",
+      "title": "Step"
+     },
+     "completed_at": {
+      "anyOf": [
+       {
+        "type": "string",
+        "format": "date-time"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Completed At"
+     },
+     "agent_started_at": {
+      "anyOf": [
+       {
+        "type": "string",
+        "format": "date-time"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Agent Started At"
+     },
+     "missing": {
+      "items": {
+       "type": "string"
+      },
+      "type": "array",
+      "title": "Missing"
+     }
+    },
+    "type": "object",
+    "required": [
+     "step"
+    ],
+    "title": "OnboardingStatus"
+   },
+   "OpportunityOut": {
+    "properties": {
+     "id": {
+      "type": "string",
+      "format": "uuid",
+      "title": "Id"
+     },
+     "external_id": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "External Id"
+     },
+     "title": {
+      "type": "string",
+      "title": "Title"
+     },
+     "organizer": {
+      "type": "string",
+      "title": "Organizer"
+     },
+     "type": {
+      "type": "string",
+      "enum": [
+       "scholarship",
+       "job",
+       "internship",
+       "fellowship",
+       "hackathon",
+       "datathon",
+       "competition",
+       "bootcamp",
+       "research",
+       "volunteer",
+       "course",
+       "grant",
+       "other"
+      ],
+      "title": "Type"
+     },
+     "mode": {
+      "anyOf": [
+       {
+        "type": "string",
+        "enum": [
+         "remote",
+         "hybrid",
+         "onsite"
+        ]
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Mode"
+     },
+     "location": {
+      "type": "string",
+      "title": "Location",
+      "default": ""
+     },
+     "country": {
+      "type": "string",
+      "title": "Country",
+      "default": ""
+     },
+     "language": {
+      "type": "string",
+      "title": "Language",
+      "default": "en"
+     },
+     "deadline": {
+      "anyOf": [
+       {
+        "type": "string",
+        "format": "date"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Deadline"
+     },
+     "funding": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Funding"
+     },
+     "eligibility": {
+      "items": {
+       "type": "string"
+      },
+      "type": "array",
+      "title": "Eligibility"
+     },
+     "benefits": {
+      "items": {
+       "type": "string"
+      },
+      "type": "array",
+      "title": "Benefits"
+     },
+     "summary": {
+      "type": "string",
+      "title": "Summary",
+      "default": ""
+     },
+     "url": {
+      "type": "string",
+      "title": "Url",
+      "default": ""
+     },
+     "source": {
+      "type": "string",
+      "title": "Source",
+      "default": ""
+     },
+     "trust_level": {
+      "type": "string",
+      "enum": [
+       "verified",
+       "likely_safe",
+       "unknown",
+       "suspicious",
+       "scam"
+      ],
+      "title": "Trust Level",
+      "default": "unknown"
+     },
+     "scam_flags": {
+      "items": {
+       "additionalProperties": true,
+       "type": "object"
+      },
+      "type": "array",
+      "title": "Scam Flags"
+     },
+     "added_via": {
+      "type": "string",
+      "title": "Added Via",
+      "default": "pipeline"
+     },
+     "created_at": {
+      "anyOf": [
+       {
+        "type": "string",
+        "format": "date-time"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Created At"
+     }
+    },
+    "type": "object",
+    "required": [
+     "id",
+     "title",
+     "organizer",
+     "type"
+    ],
+    "title": "OpportunityOut"
+   },
+   "OpportunityPage": {
+    "properties": {
+     "items": {
+      "items": {
+       "$ref": "#/components/schemas/OpportunityOut"
+      },
+      "type": "array",
+      "title": "Items"
+     },
+     "total": {
+      "type": "integer",
+      "title": "Total"
+     },
+     "limit": {
+      "type": "integer",
+      "title": "Limit"
+     },
+     "offset": {
+      "type": "integer",
+      "title": "Offset"
+     }
+    },
+    "type": "object",
+    "required": [
+     "items",
+     "total",
+     "limit",
+     "offset"
+    ],
+    "title": "OpportunityPage"
+   },
+   "Skill": {
+    "properties": {
+     "name": {
+      "type": "string",
+      "maxLength": 60,
+      "minLength": 1,
+      "title": "Name"
+     },
+     "level": {
+      "anyOf": [
+       {
+        "type": "string",
+        "enum": [
+         "beginner",
+         "intermediate",
+         "advanced"
+        ]
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Level"
+     },
+     "id": {
+      "anyOf": [
+       {
+        "type": "string",
+        "format": "uuid"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Id"
+     }
+    },
+    "type": "object",
+    "required": [
+     "name"
+    ],
+    "title": "Skill"
+   },
+   "SkillIn": {
+    "properties": {
+     "name": {
+      "type": "string",
+      "maxLength": 60,
+      "minLength": 1,
+      "title": "Name"
+     },
+     "level": {
+      "anyOf": [
+       {
+        "type": "string",
+        "enum": [
+         "beginner",
+         "intermediate",
+         "advanced"
+        ]
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Level"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "name"
+    ],
+    "title": "SkillIn"
+   },
+   "SkillsStep": {
+    "properties": {
+     "skills": {
+      "anyOf": [
+       {
+        "items": {
+         "$ref": "#/components/schemas/SkillIn"
+        },
+        "type": "array",
+        "maxItems": 40
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Skills"
+     },
+     "interests": {
+      "anyOf": [
+       {
+        "items": {
+         "type": "string"
+        },
+        "type": "array",
+        "maxItems": 30
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Interests"
+     },
+     "opportunity_types": {
+      "anyOf": [
+       {
+        "items": {
+         "type": "string",
+         "enum": [
+          "scholarship",
+          "job",
+          "internship",
+          "fellowship",
+          "hackathon",
+          "datathon",
+          "competition",
+          "bootcamp",
+          "research",
+          "volunteer",
+          "course",
+          "grant",
+          "other"
+         ]
+        },
+        "type": "array"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Opportunity Types"
+     },
+     "preferred_location": {
+      "anyOf": [
+       {
+        "type": "string",
+        "enum": [
+         "algeria",
+         "abroad",
+         "remote",
+         "anywhere"
+        ]
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Preferred Location"
+     },
+     "availability": {
+      "anyOf": [
+       {
+        "type": "string",
+        "enum": [
+         "full_time",
+         "part_time_10_20",
+         "under_10h",
+         "flexible"
+        ]
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Availability"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "title": "SkillsStep",
+    "description": "Step 3 \u00b7 Skills & interests."
+   },
+   "ValidationError": {
+    "properties": {
+     "loc": {
+      "items": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "integer"
+        }
+       ]
+      },
+      "type": "array",
+      "title": "Location"
+     },
+     "msg": {
+      "type": "string",
+      "title": "Message"
+     },
+     "type": {
+      "type": "string",
+      "title": "Error Type"
+     },
+     "input": {
+      "title": "Input"
+     },
+     "ctx": {
+      "type": "object",
+      "title": "Context"
+     }
+    },
+    "type": "object",
+    "required": [
+     "loc",
+     "msg",
+     "type"
+    ],
+    "title": "ValidationError"
+   }
+  },
+  "securitySchemes": {
+   "HTTPBearer": {
+    "type": "http",
+    "scheme": "bearer"
+   }
+  }
+ }
+}

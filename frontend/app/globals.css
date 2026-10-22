@@ -1,34 +1,157 @@
-:root {
-  --bg: #0b1020;
-  --panel: #141b2e;
-  --text: #e7ecf5;
-  --muted: #93a0b8;
-  --accent: #4f8cff;
+@import "tailwindcss";
+
+/*
+ * OppRadar design tokens — values taken from the Figma file
+ * (landing / auth / onboarding). Use the Tailwind utilities they generate
+ * (bg-page, text-ink, border-line, bg-brand, ...) instead of raw hex values.
+ */
+@theme {
+  /* Surfaces */
+  --color-page: #f6f2fc;
+  --color-surface: #ffffff;
+  --color-line: #e7e2f0;
+  --color-night: #1e113e; /* footer / dark band */
+  --color-night-raised: #2d1f55;
+
+  /* Text */
+  --color-ink: #1e113e;
+  --color-body: #4a4360;
+  --color-muted: #6b6580;
+  --color-faint: #a8a3b8;
+  --color-on-night: #b7aecf;
+  --color-on-night-strong: #e4ddf5;
+
+  /* Brand */
+  --color-brand: #8b34ff;
+  --color-brand-strong: #6b21d6;
+  --color-brand-soft: #ede0ff;
+  --color-brand-text: #9341fe;
+  --color-signal: #fafc52; /* radar blips, "New" */
+
+  /* Status */
+  --color-success: #16a34a;
+  --color-success-soft: #a3fbd2;
+  --color-warning: #d97706;
+  --color-danger: #dc2626;
+  --color-danger-soft: #fef2f2;
+  --color-danger-line: #f6d5d5;
+
+  /* Type */
+  --font-sans: var(--font-dm-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-display-face), var(--font-dm-sans), ui-sans-serif, sans-serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, monospace;
+
+  /* Shape & depth */
+  --radius-field: 12px;
+  --radius-card: 16px;
+  --shadow-card: 0 12px 16px rgb(30 17 62 / 0.08);
+  --shadow-float: 0 12px 16px rgb(30 17 62 / 0.16);
+  --shadow-focus: 0 0 0 3px var(--color-brand-soft);
 }
 
-* {
-  box-sizing: border-box;
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-page text-ink font-sans antialiased;
+    font-variation-settings: "opsz" 14;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-brand);
+    outline-offset: 2px;
+  }
 }
 
-body {
-  margin: 0;
-  background: var(--bg);
-  color: var(--text);
-  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
-    Helvetica, Arial, sans-serif;
+/* Soft lavender glow behind the auth cards. */
+.auth-backdrop {
+  background: radial-gradient(90% 40% at 50% 50%, #ede0ff 0%, #f6f2fc 100%);
 }
 
-main {
-  max-width: 720px;
-  margin: 0 auto;
-  padding: 4rem 1.5rem;
+/* Radar disc on the landing hero. */
+.radar-disc {
+  background: radial-gradient(circle at 35% 30%, #a962ff 0%, #8b34ff 55%, #6b21d6 100%);
 }
 
-h1 {
-  font-size: 2.2rem;
+/* Rotating beam: a bright leading edge fading into a trail. */
+.radar-sweep {
+  background: conic-gradient(from 0deg, rgb(255 255 255 / 0.28) 0deg, rgb(255 255 255 / 0.1) 40deg, transparent 90deg);
+  animation: radar-spin 4s linear infinite;
 }
 
-p {
-  color: var(--muted);
-  line-height: 1.6;
+/* Expanding ring behind each blip ("detected"). */
+.radar-blip::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  background: var(--color-signal);
+  animation: radar-ping 2.4s cubic-bezier(0, 0, 0.2, 1) infinite;
+  animation-delay: inherit;
+}
+
+.radar-float {
+  animation: radar-float 6s ease-in-out infinite;
+}
+
+@keyframes radar-spin {
+  to {
+    transform: rotate(-360deg);
+  }
+}
+
+@keyframes radar-ping {
+  0% {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+  80%,
+  100% {
+    transform: scale(3.2);
+    opacity: 0;
+  }
+}
+
+@keyframes radar-float {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  50% {
+    translate: 0 -8px;
+  }
+}
+
+/* Pointer parallax (--px/--py set by RadarParallax). Uses `transform`, so it
+   composes with the float animation, which uses `translate`. */
+.parallax-back,
+.parallax-front {
+  transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+}
+
+.parallax-back {
+  transform: translate(calc(var(--px, 0) * 10px), calc(var(--py, 0) * 10px));
+}
+
+.parallax-front {
+  transform: perspective(800px) translate(calc(var(--px, 0) * -18px), calc(var(--py, 0) * -14px))
+    rotateY(calc(var(--px, 0) * 6deg)) rotateX(calc(var(--py, 0) * -6deg));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .parallax-back,
+  .parallax-front {
+    transform: none;
+  }
+  .radar-sweep,
+  .radar-blip::after,
+  .radar-float {
+    animation: none;
+  }
+  .radar-blip::after {
+    display: none;
+  }
 }
