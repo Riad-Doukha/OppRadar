@@ -17,7 +17,7 @@
   --color-ink: #1e113e;
   --color-body: #4a4360;
   --color-muted: #6b6580;
-  --color-faint: #a8a3b8;
+  --color-faint: #a8a3b8; /* placeholders + decorative only (2.4:1); informative text uses muted */
   --color-on-night: #b7aecf;
   --color-on-night-strong: #e4ddf5;
 
@@ -29,9 +29,11 @@
   --color-signal: #fafc52; /* radar blips, "New" */
 
   /* Status */
-  --color-success: #16a34a;
+  /* Status colours are the design hues darkened just enough for WCAG AA
+     (4.5:1) on white and on their tinted badges: #16a34a → #11813b, #d97706 → #a75c05. */
+  --color-success: #11813b;
   --color-success-soft: #a3fbd2;
-  --color-warning: #d97706;
+  --color-warning: #a75c05;
   --color-danger: #dc2626;
   --color-danger-soft: #fef2f2;
   --color-danger-line: #f6d5d5;

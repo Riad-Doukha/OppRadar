@@ -1,6 +1,6 @@
 """Write the API's OpenAPI schema to a file (the frontend generates its types from it).
 
-    python scripts/export_openapi.py ../frontend/lib/api/openapi.json
+python scripts/export_openapi.py ../frontend/lib/api/openapi.json
 """
 
 from __future__ import annotations

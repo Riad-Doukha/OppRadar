@@ -134,5 +134,5 @@ export function ChoiceCard({ checked, onChange, children, className }: { checked
 
 /** Small mono uppercase section label ("UPLOAD YOUR CV (OPTIONAL)"). */
 export function SectionLabel({ children, className }: { children: ReactNode; className?: string }) {
-  return <p className={cn("font-mono text-[11px] tracking-[1px] text-faint uppercase", className)}>{children}</p>;
+  return <p className={cn("font-mono text-[11px] tracking-[1px] text-muted uppercase", className)}>{children}</p>;
 }

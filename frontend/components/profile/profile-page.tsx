@@ -271,7 +271,7 @@ export function ProfilePage() {
             <button type="button" onClick={download} className="text-[13px] font-bold text-brand">
               Export
             </button>{" "}
-            · <span className="text-[13px] font-bold text-faint" title="Coming soon">Delete my account (soon)</span>
+            · <span className="text-[13px] font-bold text-muted" title="Coming soon">Delete my account (soon)</span>
           </p>
         </div>
         <span className="flex shrink-0 items-center gap-1.5 self-start rounded-full bg-page px-3 py-1.5 text-xs font-bold text-body sm:self-center">
@@ -328,7 +328,7 @@ function Facts({ rows }: { rows: [string, ReactNode][] }) {
       {rows.map(([label, value]) => (
         <div key={label} className="contents">
           <dt className="text-muted">{label}</dt>
-          <dd className="min-w-0 font-bold break-words text-ink">{value || <span className="font-normal text-faint">—</span>}</dd>
+          <dd className="min-w-0 font-bold break-words text-ink">{value || <span className="font-normal text-muted">—</span>}</dd>
         </div>
       ))}
     </dl>

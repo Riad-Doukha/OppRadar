@@ -155,7 +155,7 @@ function Feed({ tab, q, type, setType, profileTypes, readOnly }: { tab: FeedTab;
           </Chip>
         )}
         {filtered && (
-          <button type="button" onClick={() => (setType(null), q && router.push("/dashboard"))} className="px-2 text-[13px] font-medium text-faint hover:text-muted">
+          <button type="button" onClick={() => (setType(null), q && router.push("/dashboard"))} className="px-2 text-[13px] font-medium text-muted hover:text-ink">
             Clear filters
           </button>
         )}

@@ -48,9 +48,10 @@ See [`ai/README.md`](ai/README.md) for running the AI part alone.
 
 ```bash
 cd backend
-python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scriptsctivate
+python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -r requirements-dev.txt    # installs ../ai in editable mode too
 pytest                                 # offline: in-memory repo + fake LLM
+ruff check app tests scripts && ruff format --check app tests scripts
 uvicorn app.main:app --reload          # http://localhost:8000/docs
 ```
 
@@ -62,27 +63,59 @@ Without a Supabase project you can still click through the API with
 ```bash
 cd frontend
 npm install
-npm run dev                            # http://localhost:3000
+npm run dev                            # http://localhost:3000 (needs the API on :8000)
+npm run lint && npm run typecheck && npm run build
+npm run gen:api                        # regenerate lib/api/schema.d.ts from the API
 ```
+
+`next.config.mjs` reads the repo-root `.env`, so there is no `frontend/.env`.
+After changing backend models, refresh the types:
+`python backend/scripts/export_openapi.py frontend/lib/api/openapi.json && npm run gen:api`.
 
 ### 4. Database (Supabase)
 
-```bash
-supabase start                         # local stack (needs Docker)
-supabase db reset                      # applies supabase/migrations/
-cd backend && python scripts/seed.py --demo   # fixtures + read-only demo account
-```
+Apply the migrations **in order** — either with the CLI
+(`supabase link --project-ref <ref> && supabase db push`) or by pasting each file
+into the dashboard's **SQL Editor** and pressing Run:
 
-No Docker? Create a free project at supabase.com, run
-`supabase link --project-ref <ref> && supabase db push`, and put its URL/keys in `.env`.
+| File | Adds |
+| --- | --- |
+| `0001_initial_schema.sql` | profiles + onboarding, documents bucket, opportunities, RLS, signup trigger |
+| `0002_user_opportunities.sql` | Save / Not interested per user |
+| `0003_settings.sql` | alert rules, extra consents, retention, agent settings |
+| `0004_notifications.sql` | general notifications (deadline, tip, system, …) |
+
+Then seed the fixtures and the read-only demo account:
+`cd backend && python scripts/seed.py --demo`.
+
 Auth settings (e-mail confirmation, 8-char passwords with a digit, 30-min reset
-links, Google) live in `supabase/config.toml`.
+links, Google) are in `supabase/config.toml`; on a hosted project set them under
+Authentication in the dashboard. Note: the npm `supabase` CLI 2.109 (Bun build)
+crashes with "Illegal instruction" on some CPUs — use the dashboard or
+`scoop install supabase` instead.
 
 ## Configuration
 
-Copy `.env.example` to `.env` and fill in the values — nothing secret lives in
-the repo. The AI reads `LLM_API_KEY`, `LLM_BASE_URL`, `LLM_MODEL` and
-`EMBEDDING_MODEL`; the backend reads the Supabase variables.
+Copy `.env.example` to `.env` at the repo root — nothing secret lives in the repo.
+Every part reads that one file: the backend (Supabase keys, demo account), the
+frontend (`NEXT_PUBLIC_*` only — never put the service-role key there) and the AI
+(`LLM_PROVIDER`, `GEMINI_API_KEY`; more options in `ai/.env.example`).
+
+## CI
+
+`.github/workflows/ci.yml` runs on pushes to `main`/`develop` and on every PR:
+backend ruff + pytest (offline, no secrets) and frontend ESLint + type-check +
+production build.
+
+## Troubleshooting (Windows)
+
+- **Python hangs on start-up (API, tests, seed).** If the Windows WMI service is
+  stuck, `platform.system()` blocks forever — Supabase, PyMuPDF and onnxruntime
+  all call it on import. Fix: `Restart-Service Winmgmt -Force` (admin) or reboot.
+- **`next build` / ESLint / tests crash with "out of memory".** Check free memory;
+  a long-running `next dev` can grow to several GB — restart it.
+- **"Failed to fetch" in the browser.** Is the API running on :8000? Unexpected
+  API errors now return a JSON 500 with details in the API log.
 
 ## Git workflow
 
@@ -97,14 +130,14 @@ All work happens on **`develop`**. `main` is reserved for stable releases.
 
 | Area                | Status                                                |
 | ------------------- | ----------------------------------------------------- |
-| Repo scaffold       | ✅ Done                                               |
-| DB schema           | ✅ Profile/onboarding, documents, opportunities, RLS  |
+| Repo scaffold       | ✅ Done · CI on push/PR                               |
+| DB schema           | ✅ Migrations 0001–0004, RLS on every table           |
 | Ingestion           | 🚧 Scaffolded — fetchers/extractor being built        |
 | CV parsing          | 🚧 Scaffolded                                         |
 | Matching            | ⬜ Not started (Ikbel)                                |
 | Chat assistant      | ⬜ Not started (Ikbel)                                |
-| Frontend            | ⬜ Not started (Riad)                                 |
-| Backend API         | 🚧 Auth, onboarding, CV upload, opportunities — matching/chat wait on AI |
+| Frontend            | ✅ Landing, auth, onboarding, dashboard, opportunity pages, profile, settings, notifications |
+| Backend API         | ✅ Auth, onboarding, CV upload, feed, settings, notifications — matching/chat/apply wait on AI |
 | Eval harness        | ⬜ Test sets being labelled                           |
 
 ## Built by

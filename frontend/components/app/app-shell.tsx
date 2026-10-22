@@ -36,6 +36,12 @@ export function AppShell({ children }: { children: ReactNode }) {
   const me = useQuery({ queryKey: ["me"], queryFn: () => api<Me>("/me") });
   return (
     <div className="min-h-dvh bg-page">
+      <a
+        href="#main"
+        className="sr-only z-50 rounded-field bg-surface px-4 py-2 text-sm font-bold text-brand shadow-float focus:not-sr-only focus:fixed focus:top-3 focus:left-3"
+      >
+        Skip to content
+      </a>
       <TopBar me={me.data} />
       <div className="mx-auto flex max-w-[1440px]">
         <aside className="sticky top-16 hidden h-[calc(100dvh-4rem)] w-[264px] shrink-0 flex-col gap-5 overflow-y-auto py-6 pr-4 pl-6 lg:flex">
@@ -50,7 +56,9 @@ export function AppShell({ children }: { children: ReactNode }) {
             <p className="pt-2 text-xs text-muted">Your profile is private. We never post or message on your behalf.</p>
           </div>
         </aside>
-        <main className="min-w-0 flex-1 px-4 pt-6 pb-12 sm:px-6 lg:pt-7 lg:pr-10 lg:pl-6">{children}</main>
+        <main id="main" tabIndex={-1} className="min-w-0 flex-1 px-4 pt-6 pb-12 outline-none sm:px-6 lg:pt-7 lg:pr-10 lg:pl-6">
+          {children}
+        </main>
       </div>
     </div>
   );

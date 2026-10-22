@@ -194,7 +194,7 @@ function Found({ prefill }: { prefill: Prefill }) {
         {rows.map(([k, v]) => (
           <div key={k}>
             <dt className="inline">{k}: </dt>
-            <dd className="inline font-bold">{v || <span className="font-normal text-faint">not found</span>}</dd>
+            <dd className="inline font-bold">{v || <span className="font-normal text-muted">not found</span>}</dd>
           </div>
         ))}
       </dl>
