@@ -30,7 +30,9 @@ export default defineConfig({
   projects: [
     { name: "public", testMatch: /public\.spec\.ts/, use: { ...devices["Desktop Chrome"], channel } },
     { name: "phone", testMatch: /public\.spec\.ts/, grep: /@phone/, use: { ...devices["Pixel 7"], channel } },
+    { name: "a11y-public", testMatch: /a11y\.spec\.ts/, grep: /@public/, use: { ...devices["Desktop Chrome"], channel } },
     { name: "journey", testMatch: /journey\.spec\.ts/, use: { ...devices["Desktop Chrome"], channel } },
+    { name: "a11y-app", testMatch: /a11y\.spec\.ts/, grep: /@signed-in/, use: { ...devices["Desktop Chrome"], channel } },
   ],
   webServer: {
     command: CI ? "npm run build && npx next start -p 3000" : "npx next dev -p 3000",

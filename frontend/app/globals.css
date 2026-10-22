@@ -35,11 +35,12 @@
 
   /* Status */
   /* Status colours are the design hues darkened just enough for WCAG AA
-     (4.5:1) on white and on their tinted badges: #16a34a → #11813b, #d97706 → #a75c05. */
-  --color-success: #11813b;
+     (4.5:1) on white and on their tinted badges: #16a34a → #0f7535, #d97706 → #a75c05,
+     #dc2626 → #c81e1e (checked with axe, e2e/a11y.spec.ts). */
+  --color-success: #0f7535;
   --color-success-soft: #a3fbd2;
   --color-warning: #a75c05;
-  --color-danger: #dc2626;
+  --color-danger: #c81e1e;
   --color-danger-soft: #fef2f2;
   --color-danger-line: #f6d5d5;
   --color-danger-strong: #b91c1c;

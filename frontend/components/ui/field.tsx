@@ -69,7 +69,7 @@ export function PasswordInput({ className, invalid, describedBy, ...props }: Inp
       <button
         type="button"
         onClick={() => setVisible((v) => !v)}
-        className="absolute inset-y-0 end-3.5 my-auto h-fit text-xs font-medium text-muted hover:text-ink"
+        className="absolute inset-y-0 end-2 my-auto flex h-fit min-h-6 min-w-6 items-center justify-center rounded-md px-1.5 py-1 text-xs font-medium text-muted hover:text-ink"
         aria-label={visible ? t("hidePassword") : t("showPassword")}
       >
         {visible ? t("hide") : t("show")}
