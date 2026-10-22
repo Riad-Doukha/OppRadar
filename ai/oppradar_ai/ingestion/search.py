@@ -1,12 +1,14 @@
 # Tavily discovery with disk caching and a hard per-run cap: cache first,
 # quota second, network last; failures are recorded as strings and never
-# raised, so one bad search cannot crash a run.
+# raised, so one bad search cannot crash a run. `cache_dir` lets demos and
+# notebooks use a throwaway cache instead of the shared one.
 # Called by: ingestion/pipeline.py, notebook 03_discovery.
 
 from __future__ import annotations
 
 import logging
 from collections.abc import Callable
+from pathlib import Path
 from typing import Any
 
 from pydantic import BaseModel
@@ -43,11 +45,12 @@ class TavilySearcher:
         settings: Settings | None = None,
         budget: RunBudget | None = None,
         api_call: ApiCall | None = None,
+        cache_dir: Path | None = None,
     ) -> None:
         self.settings = settings or get_settings()
         self.budget = budget or RunBudget(self.settings)
         self.usage = self.budget.searches
-        self.cache = DiskCache(self.settings.cache_dir / "tavily")
+        self.cache = DiskCache(cache_dir or self.settings.cache_dir / "tavily")
         self.limiter = RateLimiter(self.settings.llm_min_delay_seconds)
         self.api_call = api_call
         self.failures: list[str] = []

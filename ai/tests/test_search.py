@@ -78,3 +78,26 @@ def test_missing_key_skips_without_network() -> None:
     assert searcher.search("unique no key query") == []
     assert searcher.usage.skipped == 1 and searcher.usage.made == 0
     assert "no TAVILY_API_KEY" in searcher.failures[0]
+
+
+def test_cache_dir_override_keeps_demo_queries_out_of_the_shared_cache(
+    tmp_path: Path,
+) -> None:
+    calls: list[str] = []
+
+    def api(query: str, max_results: int) -> dict:
+        calls.append(query)
+        return SAMPLE
+
+    demo = tmp_path / "demo_tavily"
+    first = TavilySearcher(_settings(), api_call=api, cache_dir=demo)
+    first.search("unique isolated demo query")
+    assert first.usage.made == 1 and len(calls) == 1
+
+    second = TavilySearcher(_settings(), api_call=api, cache_dir=demo)
+    second.search("unique isolated demo query")
+    assert second.usage.cached == 1 and len(calls) == 1  # shares the demo cache
+
+    shared = TavilySearcher(_settings(), api_call=api)
+    shared.search("unique isolated demo query")
+    assert shared.usage.made == 1 and len(calls) == 2  # demo cache stayed private
