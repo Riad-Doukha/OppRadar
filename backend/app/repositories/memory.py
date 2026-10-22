@@ -90,6 +90,8 @@ class MemoryRepository:
         self.opportunities: dict[str, Row] = {}
         self.opportunity_states: dict[tuple[str, str], Row] = {}
         self.notifications: dict[str, Row] = {}
+        self.applications: dict[tuple[str, str], Row] = {}
+        self.chat: list[Row] = []
 
     # -- profile --------------------------------------------------------------- #
     def get_profile(self, user_id: str) -> Row | None:
@@ -121,6 +123,8 @@ class MemoryRepository:
                 self.children[table] = [r for r in self.children[table] if r["user_id"] != user_id]
             self.consents = [c for c in self.consents if c["user_id"] != user_id]
             self.documents = {k: d for k, d in self.documents.items() if d["user_id"] != user_id}
+            self.applications = {k: v for k, v in self.applications.items() if k[0] != user_id}
+            self.chat = [m for m in self.chat if m["user_id"] != user_id]
             self.notifications = {
                 k: v for k, v in self.notifications.items() if v["user_id"] != user_id
             }
@@ -275,6 +279,7 @@ class MemoryRepository:
         ids = None if filters.ids is None else set(filters.ids)
         excluded = set(filters.exclude_ids)
         after = filters.created_after
+        url_like = (filters.url_like or "").lower()
 
         def keep(r: Row) -> bool:
             deadline = _as_date(r.get("deadline"))
@@ -289,7 +294,8 @@ class MemoryRepository:
                 and (not filters.trust_levels or r["trust_level"] in filters.trust_levels)
                 and (filters.include_expired or deadline is None or deadline >= today)
                 and (before is None or (deadline is not None and deadline <= before))
-                and all(term in haystack for term in q)
+                and (not q or (any if filters.match_any else all)(t in haystack for t in q))
+                and (not url_like or url_like in (r.get("url") or "").lower())
                 and (ids is None or r["id"] in ids)
                 and r["id"] not in excluded
                 and (after is None or r["created_at"] >= after)
@@ -315,6 +321,47 @@ class MemoryRepository:
                 base.update(copy.deepcopy(row))
                 self.opportunities[key] = base
         return len(rows)
+
+    # -- applications ---------------------------------------------------------------- #
+    def list_applications(self, user_id: str) -> list[Row]:
+        with self._lock:
+            rows = [copy.deepcopy(a) for (uid, _), a in self.applications.items() if uid == user_id]
+        return sorted(rows, key=lambda a: a["updated_at"], reverse=True)
+
+    def upsert_application(self, user_id: str, opportunity_id: str, fields: Row) -> Row:
+        with self._lock:
+            if opportunity_id not in self.opportunities:
+                raise NotFoundError(f"opportunity {opportunity_id}")
+            row = self.applications.setdefault(
+                (user_id, opportunity_id),
+                {"id": str(uuid.uuid4()), "user_id": user_id, "opportunity_id": opportunity_id,
+                 "status": "submitted", "reference": None, "notes": "", "submitted_at": None,
+                 "created_at": _now()},
+            )  # fmt: skip
+            row.update(copy.deepcopy(fields), updated_at=_now())
+            return copy.deepcopy(row)
+
+    def delete_application(self, user_id: str, opportunity_id: str) -> None:
+        with self._lock:
+            if self.applications.pop((user_id, opportunity_id), None) is None:
+                raise NotFoundError(f"application for {opportunity_id}")
+
+    # -- chat ---------------------------------------------------------------------------- #
+    def list_chat(self, user_id: str, limit: int) -> list[Row]:
+        with self._lock:
+            rows = [copy.deepcopy(m) for m in self.chat if m["user_id"] == user_id]
+        return rows[-limit:]
+
+    def add_chat(self, row: Row) -> Row:
+        with self._lock:
+            new = {"id": str(uuid.uuid4()), "citations": [], "opportunity_ids": [],
+                   "created_at": _now(), **copy.deepcopy(row)}  # fmt: skip
+            self.chat.append(new)
+            return copy.deepcopy(new)
+
+    def clear_chat(self, user_id: str) -> None:
+        with self._lock:
+            self.chat = [m for m in self.chat if m["user_id"] != user_id]
 
     # -- notifications -------------------------------------------------------------- #
     def _visible(self, user_id: str, since: datetime) -> list[Row]:

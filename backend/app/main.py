@@ -10,6 +10,7 @@ from fastapi.responses import JSONResponse
 from app.config import get_settings
 from app.repositories import NotFoundError
 from app.routers import (
+    applications,
     auth,
     chat,
     documents,
@@ -77,6 +78,7 @@ app.include_router(auth.router, prefix="/auth", tags=["auth"])
 app.include_router(me.router, prefix="/me", tags=["me"])
 app.include_router(feed.router, prefix="/me", tags=["dashboard"])
 app.include_router(notifications.router, prefix="/me/notifications", tags=["notifications"])
+app.include_router(applications.router, prefix="/me/applications", tags=["applications"])
 app.include_router(documents.router, prefix="/documents", tags=["documents"])
 app.include_router(opportunities.router, prefix="/opportunities", tags=["opportunities"])
 app.include_router(matches.router, prefix="/matches", tags=["matches"])

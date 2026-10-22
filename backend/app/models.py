@@ -428,6 +428,55 @@ class OpportunityPage(_Out):
     offset: int
 
 
+# --------------------------------------------------------------------------- #
+# Applications (Apply assistant + Applications page)
+# --------------------------------------------------------------------------- #
+ApplicationStatus = Literal["draft", "submitted", "accepted", "rejected", "withdrawn"]
+
+
+class ApplicationPatch(_In):
+    status: ApplicationStatus | None = None
+    reference: str | None = Field(None, max_length=120)
+    notes: str | None = Field(None, max_length=2000)
+
+
+class ApplicationOut(_Out):
+    model_config = _READ
+
+    id: UUID
+    opportunity_id: UUID
+    status: ApplicationStatus
+    reference: str | None = None
+    notes: str = ""
+    submitted_at: datetime | None = None
+    updated_at: datetime | None = None
+    opportunity: OpportunityOut | None = None
+
+
+# --------------------------------------------------------------------------- #
+# Ask the agent (chat)
+# --------------------------------------------------------------------------- #
+class ChatRequest(_In):
+    message: str = Field(min_length=1, max_length=1000)
+
+
+class ChatMessageOut(_Out):
+    model_config = _READ
+
+    id: UUID | None = None  # None when chat history isn't kept (consent off)
+    role: Literal["user", "assistant"]
+    content: str
+    citations: list[dict[str, Any]] = Field(default_factory=list)
+    opportunities: list[OpportunityOut] = Field(default_factory=list)
+    created_at: datetime
+
+
+class ChatHistory(_Out):
+    messages: list[ChatMessageOut]
+    saved: bool  # False = chat_history consent is off; nothing is stored
+    ai_available: bool = False  # flips when the AI chat phase is wired in
+
+
 class OpportunityFilters(BaseModel):
     q: str | None = None
     types: list[OpportunityTypeName] = Field(default_factory=list)
@@ -440,6 +489,8 @@ class OpportunityFilters(BaseModel):
     ids: list[str] | None = None
     exclude_ids: list[str] = Field(default_factory=list)  # "Not interested"
     created_after: datetime | None = None  # "New" badge / new-today count
+    match_any: bool = False  # q matches ANY word (chat keyword search) instead of all
+    url_like: str | None = None  # chat: a pasted link, matched against opportunities.url
     limit: int = Field(20, ge=1, le=100)
     offset: int = Field(0, ge=0)
 

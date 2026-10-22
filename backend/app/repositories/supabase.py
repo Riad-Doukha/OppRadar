@@ -238,7 +238,9 @@ class SupabaseRepository:
         if filters.q:
             # websearch_to_tsquery as a plain filter: .text_search() returns a
             # builder that can't take the type/id filters chained after it.
-            query = query.filter("search", "wfts(simple)", filters.q)
+            words = filters.q.split()
+            text = " or ".join(words) if filters.match_any else filters.q
+            query = query.filter("search", "wfts(simple)", text)
         if filters.types:
             query = query.in_("type", filters.types)
         if filters.modes:
@@ -255,6 +257,8 @@ class SupabaseRepository:
             query = query.in_("id", filters.ids)
         if filters.exclude_ids:
             query = query.not_.in_("id", filters.exclude_ids)
+        if filters.url_like:
+            query = query.ilike("url", f"%{filters.url_like}%")
         if filters.created_after:
             query = query.gte("created_at", filters.created_after.isoformat())
         response = (
@@ -286,6 +290,59 @@ class SupabaseRepository:
             .data
         )
         return len(data)
+
+    # -- applications ---------------------------------------------------------------- #
+    def list_applications(self, user_id: str) -> list[Row]:
+        return (
+            self.db.table("applications")
+            .select("*")
+            .eq("user_id", user_id)
+            .order("updated_at", desc=True)
+            .execute()
+            .data
+        )
+
+    def upsert_application(self, user_id: str, opportunity_id: str, fields: Row) -> Row:
+        if self.get_opportunity(opportunity_id) is None:
+            raise NotFoundError(f"opportunity {opportunity_id}")
+        row = {"user_id": user_id, "opportunity_id": opportunity_id, **fields}
+        data = (
+            self.db.table("applications")
+            .upsert(_json(row), on_conflict="user_id,opportunity_id")
+            .execute()
+            .data
+        )
+        return _first(data, f"application for {opportunity_id}")
+
+    def delete_application(self, user_id: str, opportunity_id: str) -> None:
+        data = (
+            self.db.table("applications")
+            .delete()
+            .eq("user_id", user_id)
+            .eq("opportunity_id", opportunity_id)
+            .execute()
+            .data
+        )
+        _first(data, f"application for {opportunity_id}")
+
+    # -- chat ---------------------------------------------------------------------------- #
+    def list_chat(self, user_id: str, limit: int) -> list[Row]:
+        rows = (
+            self.db.table("chat_messages")
+            .select("*")
+            .eq("user_id", user_id)
+            .order("created_at", desc=True)
+            .limit(limit)
+            .execute()
+            .data
+        )
+        return list(reversed(rows))
+
+    def add_chat(self, row: Row) -> Row:
+        return _first(self.db.table("chat_messages").insert(_json(row)).execute().data, "chat")
+
+    def clear_chat(self, user_id: str) -> None:
+        self.db.table("chat_messages").delete().eq("user_id", user_id).execute()
 
     # -- notifications -------------------------------------------------------------- #
     def list_notifications(

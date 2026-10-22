@@ -1259,6 +1259,134 @@
     }
    }
   },
+  "/me/applications": {
+   "get": {
+    "tags": [
+     "applications"
+    ],
+    "summary": "List Applications",
+    "operationId": "list_applications_me_applications_get",
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "items": {
+          "$ref": "#/components/schemas/ApplicationOut"
+         },
+         "type": "array",
+         "title": "Response List Applications Me Applications Get"
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ]
+   }
+  },
+  "/me/applications/{opportunity_id}": {
+   "put": {
+    "tags": [
+     "applications"
+    ],
+    "summary": "Save Application",
+    "description": "Create or update the application for an opportunity (status, reference, notes).",
+    "operationId": "save_application_me_applications__opportunity_id__put",
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ],
+    "parameters": [
+     {
+      "name": "opportunity_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid",
+       "title": "Opportunity Id"
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/ApplicationPatch"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ApplicationOut"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   },
+   "delete": {
+    "tags": [
+     "applications"
+    ],
+    "summary": "Delete Application",
+    "operationId": "delete_application_me_applications__opportunity_id__delete",
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ],
+    "parameters": [
+     {
+      "name": "opportunity_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid",
+       "title": "Opportunity Id"
+      }
+     }
+    ],
+    "responses": {
+     "204": {
+      "description": "Successful Response"
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
   "/documents": {
    "get": {
     "tags": [
@@ -1648,6 +1776,97 @@
       }
      }
     }
+   }
+  },
+  "/chat/history": {
+   "get": {
+    "tags": [
+     "chat"
+    ],
+    "summary": "Get History",
+    "description": "Past turns, oldest first \u2014 empty when the chat-history consent is off.",
+    "operationId": "get_history_chat_history_get",
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ChatHistory"
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ]
+   },
+   "delete": {
+    "tags": [
+     "chat"
+    ],
+    "summary": "Clear History",
+    "operationId": "clear_history_chat_history_delete",
+    "responses": {
+     "204": {
+      "description": "Successful Response"
+     }
+    },
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ]
+   }
+  },
+  "/chat": {
+   "post": {
+    "tags": [
+     "chat"
+    ],
+    "summary": "Ask",
+    "description": "One question -> the new user + assistant turns. Read-only for the demo:\nit answers but stores nothing.",
+    "operationId": "ask_chat_post",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/ChatRequest"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ChatHistory"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ]
    }
   }
  },
@@ -2231,6 +2450,142 @@
     "title": "AlertsStep",
     "description": "Step 5 \u00b7 Alerts & consent."
    },
+   "ApplicationOut": {
+    "properties": {
+     "id": {
+      "type": "string",
+      "format": "uuid",
+      "title": "Id"
+     },
+     "opportunity_id": {
+      "type": "string",
+      "format": "uuid",
+      "title": "Opportunity Id"
+     },
+     "status": {
+      "type": "string",
+      "enum": [
+       "draft",
+       "submitted",
+       "accepted",
+       "rejected",
+       "withdrawn"
+      ],
+      "title": "Status"
+     },
+     "reference": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Reference"
+     },
+     "notes": {
+      "type": "string",
+      "title": "Notes",
+      "default": ""
+     },
+     "submitted_at": {
+      "anyOf": [
+       {
+        "type": "string",
+        "format": "date-time"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Submitted At"
+     },
+     "updated_at": {
+      "anyOf": [
+       {
+        "type": "string",
+        "format": "date-time"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Updated At"
+     },
+     "opportunity": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/OpportunityOut"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     }
+    },
+    "type": "object",
+    "required": [
+     "id",
+     "opportunity_id",
+     "status",
+     "reference",
+     "notes",
+     "submitted_at",
+     "updated_at",
+     "opportunity"
+    ],
+    "title": "ApplicationOut"
+   },
+   "ApplicationPatch": {
+    "properties": {
+     "status": {
+      "anyOf": [
+       {
+        "type": "string",
+        "enum": [
+         "draft",
+         "submitted",
+         "accepted",
+         "rejected",
+         "withdrawn"
+        ]
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Status"
+     },
+     "reference": {
+      "anyOf": [
+       {
+        "type": "string",
+        "maxLength": 120
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Reference"
+     },
+     "notes": {
+      "anyOf": [
+       {
+        "type": "string",
+        "maxLength": 2000
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Notes"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "title": "ApplicationPatch"
+   },
    "Body_upload_document_documents_post": {
     "properties": {
      "file": {
@@ -2518,6 +2873,107 @@
     "additionalProperties": false,
     "type": "object",
     "title": "CertificatePatch"
+   },
+   "ChatHistory": {
+    "properties": {
+     "messages": {
+      "items": {
+       "$ref": "#/components/schemas/ChatMessageOut"
+      },
+      "type": "array",
+      "title": "Messages"
+     },
+     "saved": {
+      "type": "boolean",
+      "title": "Saved"
+     },
+     "ai_available": {
+      "type": "boolean",
+      "title": "Ai Available",
+      "default": false
+     }
+    },
+    "type": "object",
+    "required": [
+     "messages",
+     "saved",
+     "ai_available"
+    ],
+    "title": "ChatHistory"
+   },
+   "ChatMessageOut": {
+    "properties": {
+     "id": {
+      "anyOf": [
+       {
+        "type": "string",
+        "format": "uuid"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Id"
+     },
+     "role": {
+      "type": "string",
+      "enum": [
+       "user",
+       "assistant"
+      ],
+      "title": "Role"
+     },
+     "content": {
+      "type": "string",
+      "title": "Content"
+     },
+     "citations": {
+      "items": {
+       "additionalProperties": true,
+       "type": "object"
+      },
+      "type": "array",
+      "title": "Citations"
+     },
+     "opportunities": {
+      "items": {
+       "$ref": "#/components/schemas/OpportunityOut"
+      },
+      "type": "array",
+      "title": "Opportunities"
+     },
+     "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Created At"
+     }
+    },
+    "type": "object",
+    "required": [
+     "id",
+     "role",
+     "content",
+     "citations",
+     "opportunities",
+     "created_at"
+    ],
+    "title": "ChatMessageOut"
+   },
+   "ChatRequest": {
+    "properties": {
+     "message": {
+      "type": "string",
+      "maxLength": 1000,
+      "minLength": 1,
+      "title": "Message"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "message"
+    ],
+    "title": "ChatRequest"
    },
    "DashboardStats": {
     "properties": {

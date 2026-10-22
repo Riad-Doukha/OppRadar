@@ -451,6 +451,44 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/me/applications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Applications */
+        get: operations["list_applications_me_applications_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/applications/{opportunity_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Save Application
+         * @description Create or update the application for an opportunity (status, reference, notes).
+         */
+        put: operations["save_application_me_applications__opportunity_id__put"];
+        post?: never;
+        /** Delete Application */
+        delete: operations["delete_application_me_applications__opportunity_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/documents": {
         parameters: {
             query?: never;
@@ -523,6 +561,48 @@ export interface paths {
         get: operations["get_opportunity_opportunities__opportunity_id__get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/chat/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get History
+         * @description Past turns, oldest first — empty when the chat-history consent is off.
+         */
+        get: operations["get_history_chat_history_get"];
+        put?: never;
+        post?: never;
+        /** Clear History */
+        delete: operations["clear_history_chat_history_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/chat": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Ask
+         * @description One question -> the new user + assistant turns. Read-only for the demo:
+         *     it answers but stores nothing.
+         */
+        post: operations["ask_chat_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -686,6 +766,45 @@ export interface components {
             /** Bundle Non Urgent */
             bundle_non_urgent?: boolean | null;
         };
+        /** ApplicationOut */
+        ApplicationOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Opportunity Id
+             * Format: uuid
+             */
+            opportunity_id: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "draft" | "submitted" | "accepted" | "rejected" | "withdrawn";
+            /** Reference */
+            reference: string | null;
+            /**
+             * Notes
+             * @default
+             */
+            notes: string;
+            /** Submitted At */
+            submitted_at: string | null;
+            /** Updated At */
+            updated_at: string | null;
+            opportunity: components["schemas"]["OpportunityOut"] | null;
+        };
+        /** ApplicationPatch */
+        ApplicationPatch: {
+            /** Status */
+            status?: ("draft" | "submitted" | "accepted" | "rejected" | "withdrawn") | null;
+            /** Reference */
+            reference?: string | null;
+            /** Notes */
+            notes?: string | null;
+        };
         /** Body_upload_document_documents_post */
         Body_upload_document_documents_post: {
             /**
@@ -778,6 +897,46 @@ export interface components {
             year?: number | null;
             /** Credential Url */
             credential_url?: string | null;
+        };
+        /** ChatHistory */
+        ChatHistory: {
+            /** Messages */
+            messages: components["schemas"]["ChatMessageOut"][];
+            /** Saved */
+            saved: boolean;
+            /**
+             * Ai Available
+             * @default false
+             */
+            ai_available: boolean;
+        };
+        /** ChatMessageOut */
+        ChatMessageOut: {
+            /** Id */
+            id: string | null;
+            /**
+             * Role
+             * @enum {string}
+             */
+            role: "user" | "assistant";
+            /** Content */
+            content: string;
+            /** Citations */
+            citations: {
+                [key: string]: unknown;
+            }[];
+            /** Opportunities */
+            opportunities: components["schemas"]["OpportunityOut"][];
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /** ChatRequest */
+        ChatRequest: {
+            /** Message */
+            message: string;
         };
         /** DashboardStats */
         DashboardStats: {
@@ -2434,6 +2593,90 @@ export interface operations {
             };
         };
     };
+    list_applications_me_applications_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApplicationOut"][];
+                };
+            };
+        };
+    };
+    save_application_me_applications__opportunity_id__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                opportunity_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ApplicationPatch"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApplicationOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_application_me_applications__opportunity_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                opportunity_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_documents_documents_get: {
         parameters: {
             query?: never;
@@ -2605,6 +2848,77 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["OpportunityOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_history_chat_history_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChatHistory"];
+                };
+            };
+        };
+    };
+    clear_history_chat_history_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ask_chat_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChatRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChatHistory"];
                 };
             };
             /** @description Validation Error */

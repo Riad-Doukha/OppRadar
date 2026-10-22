@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Pill, SectionLabel } from "@/components/ui/inputs";
 import { Loading, Skeleton } from "@/components/ui/skeleton";
 import { ApiError, api, type Me } from "@/lib/api/client";
+import { STATUS, useApplications } from "@/lib/applications";
 import { useOpportunityAction } from "@/lib/hooks/use-opportunity-actions";
 import {
   SCAM_FLAG_TEXT,
@@ -176,6 +177,7 @@ export function OpportunityDetail({ id }: { id: string }) {
 function NextSteps({ o, readOnly }: { o: MyOpportunity; readOnly: boolean }) {
   const router = useRouter();
   const action = useOpportunityAction();
+  const applied = useApplications().data?.find((a) => a.opportunity_id === o.id);
   const busy = action.isPending;
   const soon = "Coming with the AI agent";
 
@@ -189,9 +191,16 @@ function NextSteps({ o, readOnly }: { o: MyOpportunity; readOnly: boolean }) {
       ) : (
         <p className="text-sm text-muted">No official link yet.</p>
       )}
-      <Button variant="outline" size="md" disabled title={soon}>
-        Fill application with agent · soon
-      </Button>
+      {applied ? (
+        <Link href="/applications" className="flex h-12 items-center justify-center gap-2 rounded-field border border-line px-4 text-[15px] font-bold text-ink hover:bg-page">
+          <span className={cn("rounded-full px-2.5 py-0.5 text-xs", STATUS[applied.status].tone)}>{STATUS[applied.status].label}</span>
+          View my application
+        </Link>
+      ) : (
+        <Link href={`/apply/${o.id}`} className="flex h-12 items-center justify-center rounded-field border border-brand px-4 text-[15px] font-bold text-brand hover:bg-brand-soft">
+          Apply assistant
+        </Link>
+      )}
       <p className="flex items-center justify-center gap-1.5 rounded-field bg-page px-3 py-2 text-xs font-bold text-body">
         <Image src="/icons/lock-dark.svg" alt="" width={12} height={12} />
         Nothing is sent until you press Submit

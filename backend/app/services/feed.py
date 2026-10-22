@@ -150,6 +150,7 @@ def dashboard(repo: Repository, user: CurrentUser) -> DashboardStats:
         closing_this_week=lambda: count("closing"),
         saved=lambda: count("saved"),
         new_today=lambda: count("for_you", created_after=_now() - timedelta(days=1)),
+        applications=lambda: len(repo.list_applications(user.id)),
     )
     return DashboardStats(**counts, agent_started_at=profile.get("agent_started_at"))
 

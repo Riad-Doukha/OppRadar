@@ -1,0 +1,163 @@
+"""Ask the agent — the chat behind /agent.
+
+The conversational AI agent isn't shipped yet (AI chat phase). Until it is,
+answers are honest look-ups in OppRadar's own data:
+  - a pasted link that matches an opportunity -> that opportunity's card
+  - words -> opportunities matching any of the keywords
+and every answer says what the full agent will add. When the AI phase lands,
+`answer()` calls services/ai.py instead and stores its citations/eligibility.
+
+History is stored only with the `chat_history` consent (Settings → Privacy & AI).
+"""
+
+from __future__ import annotations
+
+import re
+from datetime import datetime, timezone
+from urllib.parse import urlparse
+
+from app.auth import CurrentUser
+from app.models import ChatHistory, ChatMessageOut, OpportunityFilters, OpportunityOut
+from app.repositories import Repository
+from app.repositories.base import Row
+
+HISTORY_LIMIT = 100
+MAX_CARDS = 3
+URL_RE = re.compile(r"https?://\S+|\b[\w-]+(?:\.[\w-]+)+/\S*", re.IGNORECASE)
+# Small EN/FR stop-word list so "what documents do I need for X" searches for X.
+_STOP_WORDS = """
+    a an and are can do does for from how i in is it me my need of on or show the this to what
+    when where which who why with you your about any am be will would le la les de des du un une
+    et pour quel quelle quels est ce que qui dans sur avec mon ma mes
+"""
+STOP = frozenset(_STOP_WORDS.split())
+# Words that name an opportunity type (EN/FR, singular/plural). The search
+# index covers title/organizer/summary/location only, so "hackathons" must
+# become a type filter rather than a keyword.
+TYPE_WORDS: dict[str, str] = {
+    **dict.fromkeys(["hackathon", "hackathons"], "hackathon"),
+    **dict.fromkeys(["datathon", "datathons"], "datathon"),
+    **dict.fromkeys(["internship", "internships", "intern", "stage", "stages"], "internship"),
+    **dict.fromkeys(["scholarship", "scholarships", "bourse", "bourses"], "scholarship"),
+    **dict.fromkeys(["competition", "competitions", "contest", "concours"], "competition"),
+    **dict.fromkeys(["job", "jobs", "emploi"], "job"),
+    **dict.fromkeys(["fellowship", "fellowships"], "fellowship"),
+    **dict.fromkeys(["bootcamp", "bootcamps"], "bootcamp"),
+    **dict.fromkeys(["volunteer", "volunteering", "bénévolat"], "volunteer"),
+    **dict.fromkeys(["grant", "grants"], "grant"),
+    **dict.fromkeys(["course", "courses", "formation"], "course"),
+    **dict.fromkeys(["research"], "research"),
+}
+NOT_YET = "Conversational answers and eligibility checks arrive with the AI agent."
+
+
+def _now() -> datetime:
+    return datetime.now(timezone.utc)
+
+
+def _keeps_history(repo: Repository, user: CurrentUser) -> bool:
+    return not user.is_demo and "chat_history" in repo.active_consents(user.id)
+
+
+def _cards(repo: Repository, ids: list[str]) -> list[OpportunityOut]:
+    if not ids:
+        return []
+    rows, _ = repo.list_opportunities(OpportunityFilters(ids=ids, include_expired=True, limit=10))
+    by_id = {str(r["id"]): r for r in rows}
+    return [OpportunityOut.model_validate(by_id[i]) for i in ids if i in by_id]
+
+
+def _out(repo: Repository, row: Row) -> ChatMessageOut:
+    ids = [str(i) for i in row.get("opportunity_ids") or []]
+    return ChatMessageOut.model_validate({**row, "opportunities": _cards(repo, ids)})
+
+
+def history(repo: Repository, user: CurrentUser) -> ChatHistory:
+    saved = _keeps_history(repo, user)
+    rows = repo.list_chat(user.id, HISTORY_LIMIT) if saved else []
+    return ChatHistory(messages=[_out(repo, r) for r in rows], saved=saved)
+
+
+def answer(repo: Repository, message: str) -> tuple[str, list[str], list[dict]]:
+    """(text, opportunity ids, citations) for one question, without the AI."""
+    link = URL_RE.search(message)
+    if link:
+        url = link.group(0).rstrip(").,;")
+        parsed = urlparse(url if "://" in url else f"https://{url}")
+        host = (parsed.hostname or "").removeprefix("www.")
+        path = parsed.path.rstrip("/")
+        rows, _ = repo.list_opportunities(
+            OpportunityFilters(url_like=f"{host}{path}", include_expired=True, limit=MAX_CARDS)
+        )
+        if not rows and host:
+            rows, _ = repo.list_opportunities(
+                OpportunityFilters(url_like=host, include_expired=True, limit=MAX_CARDS)
+            )
+        if rows:
+            text = (
+                f"I found {'this opportunity' if len(rows) == 1 else 'these opportunities'} from "
+                f"{host} in OppRadar. The requirements are on the opportunity page — compare them "
+                f"with your profile. {NOT_YET}"
+            )
+            return text, [str(r["id"]) for r in rows], _citations(rows)
+        return (
+            f"I can't read {host or 'that page'} yet, and it isn't in OppRadar's sources. "
+            f"Open it and compare its requirements with your profile. {NOT_YET}",
+            [],
+            [],
+        )
+
+    words = [w for w in re.findall(r"[\w'-]+", message.lower()) if len(w) > 2 and w not in STOP]
+    if not words:
+        return (
+            "Tell me what you're looking for — a type (internship, hackathon, scholarship…), "
+            f"a field or an organisation. {NOT_YET}",
+            [],
+            [],
+        )
+    types = list(dict.fromkeys(TYPE_WORDS[w] for w in words if w in TYPE_WORDS))
+    terms = [w for w in words if w not in TYPE_WORDS][:8]
+    keywords = " ".join(words[:8])
+    rows, total = repo.list_opportunities(
+        OpportunityFilters(q=" ".join(terms) or None, match_any=True, types=types, limit=MAX_CARDS)
+    )
+    if not rows and types and terms:  # the words narrowed too much: try the type alone
+        rows, total = repo.list_opportunities(OpportunityFilters(types=types, limit=MAX_CARDS))
+    if not rows:
+        return (
+            f"I didn't find open opportunities matching “{keywords}”. Try a type "
+            f"(internship, hackathon, scholarship…) or a field. {NOT_YET}",
+            [],
+            [],
+        )
+    more = f" Showing {len(rows)} of {total}." if total > len(rows) else ""
+    text = f"Here's what I found in OppRadar for “{keywords}”.{more} {NOT_YET}"
+    return text, [str(r["id"]) for r in rows], _citations(rows)
+
+
+def _citations(rows: list[Row]) -> list[dict]:
+    return [{"url": r.get("url") or "", "title": r["title"], "quote": ""} for r in rows]
+
+
+def ask(repo: Repository, user: CurrentUser, message: str) -> ChatHistory:
+    """Answer one message; returns just the new turn (user + assistant)."""
+    saved = _keeps_history(repo, user)
+    text, ids, citations = answer(repo, message.strip())
+    turns: list[ChatMessageOut] = []
+    for row in (
+        {"user_id": user.id, "role": "user", "content": message.strip()},
+        {
+            "user_id": user.id,
+            "role": "assistant",
+            "content": text,
+            "citations": citations,
+            "opportunity_ids": ids,
+        },
+    ):
+        stored = repo.add_chat(row) if saved else {**row, "id": None, "created_at": _now()}
+        turns.append(_out(repo, stored))
+    return ChatHistory(messages=turns, saved=saved)
+
+
+def clear(repo: Repository, user: CurrentUser) -> None:
+    repo.clear_chat(user.id)

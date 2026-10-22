@@ -18,10 +18,10 @@ type NavItem = { label: string; icon: string; href?: string; soon?: boolean };
 
 const NAV: NavItem[] = [
   { label: "Dashboard", icon: "nav-dashboard", href: "/dashboard" },
-  { label: "Ask the agent", icon: "nav-ask", soon: true },
+  { label: "Ask the agent", icon: "nav-ask", href: "/agent" },
   { label: "Notifications", icon: "nav-notifications", href: "/notifications" },
   { label: "My profile", icon: "nav-profile", href: "/profile" },
-  { label: "Applications", icon: "nav-applications", soon: true },
+  { label: "Applications", icon: "nav-applications", href: "/applications" },
 ];
 const NAV_MORE: NavItem[] = [
   { label: "Premium", icon: "nav-premium", soon: true },

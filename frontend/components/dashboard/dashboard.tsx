@@ -16,6 +16,8 @@ import { isComplete } from "@/lib/onboarding/status";
 import { TYPE_LABELS, type FeedTab, type OpportunityType } from "@/lib/opportunities";
 import { cn } from "@/lib/utils";
 
+import { ApplicationList } from "@/components/applications/application-list";
+
 import { OpportunityCard } from "./opportunity-card";
 
 type Stats = Schemas["DashboardStats"];
@@ -113,7 +115,9 @@ export function Dashboard() {
       </div>
 
       {tab === "applications" ? (
-        <Empty title="No applications yet" body="When the Apply assistant ships, applications you submit through OppRadar will be tracked here." />
+        <div className="pt-[18px]">
+          <ApplicationList readOnly={me.data.is_demo} />
+        </div>
       ) : (
         <Feed tab={tab} q={q} type={type} setType={setType} profileTypes={me.data.opportunity_types} readOnly={me.data.is_demo} />
       )}
@@ -201,21 +205,30 @@ function Feed({ tab, q, type, setType, profileTypes, readOnly }: { tab: FeedTab;
   );
 }
 
+/** Opens Ask the agent with the question (the agent page sends it). */
 function AskBar() {
+  const router = useRouter();
+  const [q, setQ] = useState("");
   return (
-    <div className="mx-auto mt-4 flex max-w-[820px] items-center gap-2.5 rounded-card border border-line bg-surface px-3 py-2.5 opacity-80" title="Ask the agent — coming soon">
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        router.push(q.trim() ? `/agent?q=${encodeURIComponent(q.trim())}` : "/agent");
+      }}
+      className="mx-auto mt-4 flex max-w-[820px] items-center gap-2.5 rounded-card border border-line bg-surface px-3 py-2.5 focus-within:shadow-focus"
+    >
       <Image src="/icons/ask-sparkle.svg" alt="" width={18} height={18} />
       <input
-        disabled
-        placeholder="Ask the agent anything: paste a link or name an opportunity to check eligibility."
-        aria-label="Ask the agent (coming soon)"
-        className="min-w-0 flex-1 bg-transparent text-[15px] placeholder:text-faint"
+        value={q}
+        onChange={(e) => setQ(e.target.value)}
+        placeholder="Ask the agent: paste a link or name an opportunity, a type or a field."
+        aria-label="Ask the agent"
+        className="min-w-0 flex-1 bg-transparent text-[15px] text-ink outline-none placeholder:text-faint"
       />
-      <span className="hidden h-[26px] items-center rounded-full bg-brand-soft px-3 font-mono text-xs font-semibold text-brand-strong sm:flex">coming soon</span>
-      <span className="flex size-11 shrink-0 items-center justify-center rounded-field bg-brand opacity-60">
+      <button type="submit" aria-label="Ask" className="flex size-11 shrink-0 items-center justify-center rounded-field bg-brand hover:bg-brand-strong">
         <Image src="/icons/arrow-right-white.svg" alt="" width={18} height={18} />
-      </span>
-    </div>
+      </button>
+    </form>
   );
 }
 
