@@ -65,8 +65,21 @@ cd frontend
 npm install
 npm run dev                            # http://localhost:3000 (needs the API on :8000)
 npm run lint && npm run typecheck && npm run build
+npm run i18n:check                     # en/fr/ar message files have the same keys
 npm run gen:api                        # regenerate lib/api/schema.d.ts from the API
+npm run e2e                            # Playwright: public pages, API mocked (what CI runs)
+npm run e2e:full                       # + signed-in journey against your Supabase (see below)
 ```
+
+The UI is in **English, French and Arabic** (right-to-left), with light, dark
+and "system" themes. Text lives in `messages/<locale>/<section>.json` — add every
+new key in all three files; `npm run i18n:check` (also in CI) catches gaps. The
+language is a cookie (`NEXT_LOCALE`), so URLs don't change.
+
+`npm run e2e:full` needs the API on :8000 and the root `.env`: it creates a
+throwaway account with the service-role key, walks log in → 5-step setup →
+dashboard → save → apply → Applications → Premium → delete account, and always
+removes the account. Locally it uses your installed Chrome.
 
 `next.config.mjs` reads the repo-root `.env`, so there is no `frontend/.env`.
 After changing backend models, refresh the types:
@@ -84,15 +97,33 @@ into the dashboard's **SQL Editor** and pressing Run:
 | `0002_user_opportunities.sql` | Save / Not interested per user |
 | `0003_settings.sql` | alert rules, extra consents, retention, agent settings |
 | `0004_notifications.sql` | general notifications (deadline, tip, system, …) |
+| `0005_applications_chat.sql` | tracked applications, chat history links |
+| `0006_premium_reservations.sql` | Premium early-access reservations (no payments) |
+| `0007_opportunity_review.sql` | admin review notes, organisation contact, "own submissions" |
 
 Then seed the fixtures and the read-only demo account:
 `cd backend && python scripts/seed.py --demo`.
+
+**Admins** review organisation submissions and manage opportunities at `/admin`.
+Make someone an admin (they log out and back in afterwards):
+`cd backend && python scripts/make_admin.py you@example.com` (`--revoke` to undo).
+The role is in `app_metadata`, which users can't change themselves.
 
 Auth settings (e-mail confirmation, 8-char passwords with a digit, 30-min reset
 links, Google) are in `supabase/config.toml`; on a hosted project set them under
 Authentication in the dashboard. Note: the npm `supabase` CLI 2.109 (Bun build)
 crashes with "Illegal instruction" on some CPUs — use the dashboard or
 `scoop install supabase` instead.
+
+### 5. Everything in Docker (optional)
+
+```bash
+docker compose up --build              # API on :8000, web on :3000
+```
+
+Uses the root `.env` (the web image bakes in the `NEXT_PUBLIC_*` values at build
+time) and your Supabase project — apply the migrations first. The API image
+installs CPU-only PyTorch for the AI package.
 
 ## Configuration
 
@@ -103,9 +134,12 @@ frontend (`NEXT_PUBLIC_*` only — never put the service-role key there) and the
 
 ## CI
 
-`.github/workflows/ci.yml` runs on pushes to `main`/`develop` and on every PR:
-backend ruff + pytest (offline, no secrets) and frontend ESLint + type-check +
-production build.
+`.github/workflows/ci.yml` runs on pushes to `main`/`develop` and on every PR,
+with no secrets:
+- **backend** — ruff (lint + format) and pytest (in-memory repository, fake LLM);
+- **frontend** — ESLint, translation check, type-check, production build;
+- **e2e** — Playwright on the public pages of a production build (API mocked);
+- **docker** — builds both images.
 
 ## Troubleshooting (Windows)
 
@@ -131,13 +165,14 @@ All work happens on **`develop`**. `main` is reserved for stable releases.
 | Area                | Status                                                |
 | ------------------- | ----------------------------------------------------- |
 | Repo scaffold       | ✅ Done · CI on push/PR                               |
-| DB schema           | ✅ Migrations 0001–0004, RLS on every table           |
+| DB schema           | ✅ Migrations 0001–0007, RLS on every table           |
 | Ingestion           | 🚧 Scaffolded — fetchers/extractor being built        |
 | CV parsing          | 🚧 Scaffolded                                         |
 | Matching            | ⬜ Not started (Ikbel)                                |
 | Chat assistant      | ⬜ Not started (Ikbel)                                |
-| Frontend            | ✅ Landing, auth, onboarding, dashboard, opportunity pages, profile, settings, notifications |
-| Backend API         | ✅ Auth, onboarding, CV upload, feed, settings, notifications — matching/chat/apply wait on AI |
+| Frontend            | ✅ Landing + public Explore, auth, onboarding, dashboard, opportunity pages, Ask the agent (search-based), Apply assistant, Applications, profile, settings, notifications, Premium (coming soon), organisation submissions, admin · EN/FR/AR · light/dark |
+| Backend API         | ✅ Auth, onboarding, CV upload, feed, settings, notifications, applications, chat (search fallback), Premium reservations, submissions + admin review — matching, AI chat and drafting wait on the AI phases |
+| Tests               | ✅ 88 backend tests · Playwright public suite in CI · full journey locally |
 | Eval harness        | ⬜ Test sets being labelled                           |
 
 ## Built by
