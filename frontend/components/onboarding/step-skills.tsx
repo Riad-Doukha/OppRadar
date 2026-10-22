@@ -1,21 +1,24 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 
 import { Field } from "@/components/ui/field";
 import { ChoiceCard, Pill, Segmented, Select, TagInput } from "@/components/ui/inputs";
 import type { Schemas } from "@/lib/api/client";
 import { defined } from "@/lib/onboarding/body";
-import { AVAILABILITY, INTEREST_SUGGESTIONS, OPPORTUNITY_TYPES, PREFERRED_LOCATIONS, SKILL_LEVELS, SKILL_SUGGESTIONS } from "@/lib/onboarding/options";
+import { useOptions } from "@/lib/onboarding/options";
 import { useAutosave } from "@/lib/onboarding/save-status";
 
 import { Row, StepFrame, useWizard } from "./frame";
 
 const MIN_SKILLS = 3;
-type SkillLevel = (typeof SKILL_LEVELS)[number]["value"];
+type SkillLevel = "beginner" | "intermediate" | "advanced";
 type OppType = Schemas["OpportunityOut"]["type"];
 
 export function StepSkills() {
+  const t = useTranslations("onboarding");
+  const { AVAILABILITY, INTEREST_SUGGESTIONS, OPPORTUNITY_TYPES, PREFERRED_LOCATIONS, SKILL_LEVELS, SKILL_SUGGESTIONS } = useOptions();
   const { me } = useWizard();
   const [skills, setSkills] = useState(() => me.skills.map((s) => ({ name: s.name, level: (s.level ?? null) as SkillLevel | null })));
   const [interests, setInterests] = useState<string[]>(() => me.interests);
@@ -37,10 +40,10 @@ export function StepSkills() {
   const { flush } = useAutosave("/me/onboarding/skills", body, { enabled: !me.is_demo });
 
   const errors = {
-    skills: skills.length >= MIN_SKILLS ? null : `Add at least ${MIN_SKILLS} skills.`,
-    interests: interests.length ? null : "Add at least one interest.",
-    types: types.length ? null : "Pick at least one type.",
-    location: location ? null : "Required.",
+    skills: skills.length >= MIN_SKILLS ? null : t("skills.needSkills", { n: MIN_SKILLS }),
+    interests: interests.length ? null : t("skills.needInterest"),
+    types: types.length ? null : t("skills.needType"),
+    location: location ? null : t("required"),
   };
 
   const setSkillNames = (names: string[]) =>
@@ -54,23 +57,23 @@ export function StepSkills() {
           <div className="flex flex-col gap-5">
             <div>
               <label htmlFor="skills" className="text-[13px] font-bold text-ink">
-                Skills * <span className="font-normal text-muted">add at least {MIN_SKILLS}</span>
+                {t("skills.label")} <span className="font-normal text-muted">{t("skills.min", { n: MIN_SKILLS })}</span>
               </label>
               <div className="pt-1.5">
-                <TagInput id="skills" values={skills.map((s) => s.name)} onChange={setSkillNames} placeholder="Type a skill" suggestions={SKILL_SUGGESTIONS} invalid={Boolean(err("skills"))} />
+                <TagInput id="skills" values={skills.map((s) => s.name)} onChange={setSkillNames} placeholder={t("skills.placeholder")} suggestions={SKILL_SUGGESTIONS} invalid={Boolean(err("skills"))} />
               </div>
               {err("skills") && <p className="pt-1.5 text-xs text-danger">{err("skills")}</p>}
             </div>
 
             {skills.length > 0 && (
               <div>
-                <p className="text-[13px] font-bold text-ink">Level per skill</p>
+                <p className="text-[13px] font-bold text-ink">{t("skills.levelPer")}</p>
                 <ul className="flex flex-col gap-2 pt-1.5">
                   {skills.map((s, i) => (
                     <li key={s.name} className="flex flex-wrap items-center gap-x-3.5 gap-y-1.5">
                       <Pill className="h-8 w-[120px] justify-center truncate">{s.name}</Pill>
                       <Segmented
-                        label={`${s.name} level`}
+                        label={t("about.levelOf", { name: s.name })}
                         value={s.level}
                         options={SKILL_LEVELS}
                         onChange={(level) => setSkills((cur) => cur.map((x, j) => (j === i ? { ...x, level } : x)))}
@@ -83,22 +86,22 @@ export function StepSkills() {
 
             <div>
               <label htmlFor="interests" className="text-[13px] font-bold text-ink">
-                Interests * <span className="font-normal text-muted">(tags)</span>
+                {t("skills.interests")} <span className="font-normal text-muted">{t("skills.tags")}</span>
               </label>
               <div className="pt-1.5">
-                <TagInput id="interests" values={interests} onChange={setInterests} placeholder="Add an interest…" suggestions={INTEREST_SUGGESTIONS} max={30} invalid={Boolean(err("interests"))} />
+                <TagInput id="interests" values={interests} onChange={setInterests} placeholder={t("skills.interestPlaceholder")} suggestions={INTEREST_SUGGESTIONS} max={30} invalid={Boolean(err("interests"))} />
               </div>
               {err("interests") && <p className="pt-1.5 text-xs text-danger">{err("interests")}</p>}
             </div>
 
             <fieldset>
-              <legend className="text-[13px] font-bold text-ink">Opportunity types wanted *</legend>
+              <legend className="text-[13px] font-bold text-ink">{t("skills.types")}</legend>
               <div className="grid grid-cols-2 gap-2.5 pt-1.5 sm:grid-cols-3">
-                {OPPORTUNITY_TYPES.map((t) => {
-                  const on = types.includes(t.value);
+                {OPPORTUNITY_TYPES.map((o) => {
+                  const on = types.includes(o.value);
                   return (
-                    <ChoiceCard key={t.value} checked={on} onChange={(v) => setTypes((cur) => (v ? [...cur, t.value] : cur.filter((x) => x !== t.value)))}>
-                      <span className={on ? "text-sm font-bold text-ink" : "text-sm font-medium text-muted"}>{t.label}</span>
+                    <ChoiceCard key={o.value} checked={on} onChange={(v) => setTypes((cur) => (v ? [...cur, o.value] : cur.filter((x) => x !== o.value)))}>
+                      <span className={on ? "text-sm font-bold text-ink" : "text-sm font-medium text-muted"}>{o.label}</span>
                     </ChoiceCard>
                   );
                 })}
@@ -107,18 +110,18 @@ export function StepSkills() {
             </fieldset>
 
             <Row>
-              <Field label="Preferred location *" error={err("location") ?? undefined}>
+              <Field label={t("skills.location")} error={err("location") ?? undefined}>
                 {(p) => (
                   <Select {...p} value={location} onChange={(e) => setLocation(e.target.value)}>
-                    <option value="">Choose…</option>
+                    <option value="">{t("choose")}</option>
                     {PREFERRED_LOCATIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
                   </Select>
                 )}
               </Field>
-              <Field label="Availability (optional)">
+              <Field label={t("skills.availability")}>
                 {(p) => (
                   <Select {...p} value={availability} onChange={(e) => setAvailability(e.target.value)}>
-                    <option value="">Not specified</option>
+                    <option value="">{t("skills.notSpecified")}</option>
                     {AVAILABILITY.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
                   </Select>
                 )}

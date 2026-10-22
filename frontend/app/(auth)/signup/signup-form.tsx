@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 
@@ -11,28 +12,30 @@ import { Alert } from "@/components/ui/alert";
 import { Button, Spinner } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Field, Input, PasswordInput } from "@/components/ui/field";
-import { authErrorMessage, passwordProblem, passwordStrength } from "@/lib/auth";
+import { authError, passwordProblem, passwordStrength, type AuthError } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 
 export function SignupForm() {
+  const t = useTranslations("auth");
   const router = useRouter();
   const [form, setForm] = useState({ fullName: "", email: "", password: "", confirm: "" });
   const [terms, setTerms] = useState(false);
   const [touched, setTouched] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<AuthError | null>(null);
   const [loading, setLoading] = useState<"email" | "google" | null>(null);
 
   const set = (key: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm((f) => ({ ...f, [key]: e.target.value }));
 
   const strength = passwordStrength(form.password);
+  const rule = passwordProblem(form.password);
   const problems = {
-    fullName: form.fullName.trim().length < 2 ? "Enter your full name." : null,
-    email: /^\S+@\S+\.\S+$/.test(form.email.trim()) ? null : "Enter a valid email.",
-    password: passwordProblem(form.password),
-    confirm: form.confirm && form.confirm === form.password ? null : "Passwords don't match.",
-    terms: terms ? null : "Please accept the Terms and Privacy Policy.",
+    fullName: form.fullName.trim().length < 2 ? t("signup.needName") : null,
+    email: /^\S+@\S+\.\S+$/.test(form.email.trim()) ? null : t("signup.needEmail"),
+    password: rule && t(`rules.${rule}`),
+    confirm: form.confirm && form.confirm === form.password ? null : t("rules.mismatch"),
+    terms: terms ? null : t("signup.needTerms"),
   };
   const valid = Object.values(problems).every((p) => p === null);
   const show = (key: keyof typeof problems) => (touched ? problems[key] ?? undefined : undefined);
@@ -53,11 +56,11 @@ export function SignupForm() {
       },
     });
     setLoading(null);
-    if (error) return setError(authErrorMessage(error));
+    if (error) return setError(authError(error));
     // With e-mail confirmation on, Supabase hides existing accounts behind an
     // empty identities list instead of an error.
     if (data.user && data.user.identities?.length === 0)
-      return setError("An account with this email already exists. Log in instead.");
+      return setError("exists");
     router.push(`/check-email?email=${encodeURIComponent(email)}`);
   }
 
@@ -73,48 +76,48 @@ export function SignupForm() {
     });
     if (error) {
       setLoading(null);
-      setError(authErrorMessage(error));
+      setError(authError(error));
     }
   }
 
   return (
     <>
       <Logo />
-      <AuthTitle title="Create your account" subtitle="Free forever for students in Algeria. Takes about 2 minutes." />
+      <AuthTitle title={t("signup.title")} subtitle={t("signup.subtitle")} />
 
-      {error && <Alert className="mt-6">{error}</Alert>}
+      {error && <Alert className="mt-6">{t(`errors.${error}`)}</Alert>}
 
       <form onSubmit={onSubmit} className="flex flex-col gap-4 pt-6" noValidate>
-        <Field label="Full name" error={show("fullName")}>
-          {(f) => <Input {...f} autoComplete="name" value={form.fullName} onChange={set("fullName")} placeholder="Amine Benali" />}
+        <Field label={t("signup.fullName")} error={show("fullName")}>
+          {(f) => <Input {...f} autoComplete="name" value={form.fullName} onChange={set("fullName")} placeholder={t("signup.fullNamePlaceholder")} />}
         </Field>
-        <Field label="Email" error={show("email")}>
-          {(f) => <Input {...f} type="email" autoComplete="email" value={form.email} onChange={set("email")} placeholder="you@university.dz" />}
+        <Field label={t("email")} error={show("email")}>
+          {(f) => <Input {...f} type="email" autoComplete="email" value={form.email} onChange={set("email")} placeholder={t("emailPlaceholder")} />}
         </Field>
-        <Field label="Password" error={show("password")}>
+        <Field label={t("password")} error={show("password")}>
           {(f) => (
             <>
               <PasswordInput {...f} autoComplete="new-password" value={form.password} onChange={set("password")} />
               <div className="flex gap-1.5 pt-2" aria-hidden>
                 {[1, 2, 3, 4].map((i) => (
-                  <span key={i} className={cn("h-1 flex-1 rounded-sm", i <= strength.score ? "bg-brand" : "bg-line")} />
+                  <span key={i} className={cn("h-1 flex-1 rounded-sm", i <= (strength ?? 0) ? "bg-brand" : "bg-line")} />
                 ))}
               </div>
               {!show("password") && (
                 <p className="pt-1.5 text-xs text-muted" aria-live="polite">
-                  8+ characters with a number{strength.label && ` — strength: ${strength.label}`}
+                  {strength === null ? t("rules.hint") : t("rules.hintStrength", { strength: t(`rules.strength.${strength}`) })}
                 </p>
               )}
             </>
           )}
         </Field>
-        <Field label="Confirm password" error={show("confirm")}>
+        <Field label={t("confirmPassword")} error={show("confirm")}>
           {(f) => <PasswordInput {...f} autoComplete="new-password" value={form.confirm} onChange={set("confirm")} />}
         </Field>
 
         <div className="pt-1">
           <Checkbox checked={terms} onChange={(e) => setTerms(e.target.checked)}>
-            I agree to the <strong className="text-ink">Terms</strong> and <strong className="text-ink">Privacy Policy</strong>
+            {t.rich("signup.agree", { strong: (c) => <strong className="text-ink">{c}</strong> })}
           </Checkbox>
           {show("terms") && <p className="pt-1.5 text-xs text-danger">{problems.terms}</p>}
         </div>
@@ -122,30 +125,30 @@ export function SignupForm() {
         <Button type="submit" block className="mt-1" disabled={loading !== null}>
           {loading === "email" ? (
             <>
-              <Spinner /> Creating account…
+              <Spinner /> {t("signup.creating")}
             </>
           ) : (
-            "Create account"
+            t("signup.create")
           )}
         </Button>
       </form>
 
       <div className="flex items-center gap-3 py-5 text-xs text-muted">
         <span className="h-px flex-1 bg-line" />
-        or
+        {t("signup.or")}
         <span className="h-px flex-1 bg-line" />
       </div>
 
       <Button type="button" variant="neutral" size="md" block onClick={google} disabled={loading !== null}>
         {/* eslint-disable-next-line @next/next/no-img-element -- fixed-size brand mark */}
         <img src="/icons/google.svg" alt="" width={18} height={18} />
-        Continue with Google
+        {t("signup.google")}
       </Button>
 
       <p className="pt-5 text-center text-sm text-muted">
-        Already have an account?{" "}
+        {t("signup.haveAccount")}{" "}
         <Link href="/login" className="font-bold text-brand hover:text-brand-strong">
-          Log in
+          {t("logIn")}
         </Link>
       </p>
       <DemoLink />

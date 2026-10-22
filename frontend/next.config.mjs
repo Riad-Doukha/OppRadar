@@ -2,6 +2,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import nextEnv from "@next/env";
+import createNextIntlPlugin from "next-intl/plugin";
 
 // The repo keeps one .env at its root (shared with the backend and AI), but
 // Next.js only looks in frontend/. Read the root file and pass the public
@@ -23,4 +24,4 @@ const nextConfig = {
   },
 };
 
-export default nextConfig;
+export default createNextIntlPlugin("./i18n/request.ts")(nextConfig);

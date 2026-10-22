@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* Dark mode follows a `dark` class on <html> (set by lib/theme.ts). */
+@custom-variant dark (&:where(.dark, .dark *));
+
 /*
  * OppRadar design tokens — values taken from the Figma file
  * (landing / auth / onboarding). Use the Tailwind utilities they generate
@@ -27,6 +30,8 @@
   --color-brand-soft: #ede0ff;
   --color-brand-text: #9341fe;
   --color-signal: #fafc52; /* radar blips, "New" */
+  --color-signal-hover: #eef03c;
+  --color-on-signal: #1e113e; /* text on yellow — stays dark in both themes */
 
   /* Status */
   /* Status colours are the design hues darkened just enough for WCAG AA
@@ -37,11 +42,20 @@
   --color-danger: #dc2626;
   --color-danger-soft: #fef2f2;
   --color-danger-line: #f6d5d5;
+  --color-danger-strong: #b91c1c;
+  --color-success-tint: #ecfdf5;
+  --color-warning-tint: #fffbeb;
+  --color-warning-line: #fde68a;
+  --color-raised: #fbfafe; /* subtle inset panels inside cards */
+  --color-scrollbar: #d3c6ea; /* lavender thumb on the lavender page */
+  --color-scrollbar-hover: #a77bf0;
 
   /* Type */
-  --font-sans: var(--font-dm-sans), ui-sans-serif, system-ui, sans-serif;
-  --font-display: var(--font-display-face), var(--font-dm-sans), ui-sans-serif, sans-serif;
-  --font-mono: var(--font-plex-mono), ui-monospace, monospace;
+  /* --font-arabic follows each Latin face: browsers fall back per glyph, so
+     Arabic text gets IBM Plex Sans Arabic while Latin keeps the design fonts. */
+  --font-sans: var(--font-dm-sans), var(--font-arabic), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-display-face), var(--font-dm-sans), var(--font-arabic), ui-sans-serif, sans-serif;
+  --font-mono: var(--font-plex-mono), var(--font-arabic), ui-monospace, monospace;
 
   /* Shape & depth */
   --radius-field: 12px;
@@ -49,6 +63,44 @@
   --shadow-card: 0 12px 16px rgb(30 17 62 / 0.08);
   --shadow-float: 0 12px 16px rgb(30 17 62 / 0.16);
   --shadow-focus: 0 0 0 3px var(--color-brand-soft);
+}
+
+/*
+ * Dark theme: the same tokens, redefined. Every utility (bg-page, text-ink…)
+ * reads these variables, so components need no dark: variants. The night band
+ * and signal yellow keep their light-theme values on purpose.
+ */
+.dark {
+  color-scheme: dark;
+  --color-page: #120c22;
+  --color-surface: #1b1430;
+  --color-line: #2f2648;
+  --color-raised: #211938;
+  --color-scrollbar: #3d3160;
+  --color-scrollbar-hover: #6a54a3;
+
+  --color-ink: #f2eefb;
+  --color-body: #cbc3de;
+  --color-muted: #a39bba; /* 6.4:1 on surface */
+  --color-faint: #6b6385;
+
+  --color-brand-strong: #c9a6ff; /* used as text on brand-soft (active nav, pills) */
+  --color-brand-soft: #2c1d52;
+  --color-brand-text: #b98aff;
+
+  --color-success: #4ade80;
+  --color-success-soft: #14532d;
+  --color-success-tint: #0f2a1d;
+  --color-warning: #fbbf24;
+  --color-warning-tint: #2a2010;
+  --color-warning-line: #5c4512;
+  --color-danger: #f87171;
+  --color-danger-soft: #2c1215;
+  --color-danger-line: #5a2227;
+  --color-danger-strong: #ef4444;
+
+  --shadow-card: 0 12px 16px rgb(0 0 0 / 0.35);
+  --shadow-float: 0 12px 24px rgb(0 0 0 / 0.5);
 }
 
 @layer base {
@@ -61,6 +113,50 @@
     font-variation-settings: "opsz" 14;
   }
 
+  /*
+   * Scrollbars: a slim rounded purple-tinted thumb on a transparent track, in both
+   * themes (the colours are tokens). Chrome/Edge/Safari use the ::-webkit rules —
+   * setting scrollbar-color there would switch Chrome to plain native bars — and
+   * Firefox, which has no ::-webkit support, gets scrollbar-color/width instead.
+   */
+  ::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+  }
+  ::-webkit-scrollbar-track,
+  ::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    border: 3px solid transparent; /* inset the thumb so it looks 6px wide */
+    border-radius: 9999px;
+    background: var(--color-scrollbar) padding-box;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: var(--color-scrollbar-hover);
+  }
+  ::-webkit-scrollbar-thumb:active {
+    background-color: var(--color-brand);
+  }
+  @supports (-moz-appearance: none) {
+    * {
+      scrollbar-width: thin;
+      scrollbar-color: var(--color-scrollbar) transparent;
+    }
+  }
+
+  /* Letter-spacing breaks the joins between Arabic letters (mono labels use tracking). */
+  [dir="rtl"] body * {
+    letter-spacing: normal !important;
+  }
+
+  /* User content (titles, CV text, opportunity summaries) is often English inside
+     the Arabic UI: each block takes its direction from its own first letters, so
+     "Built dashboards in SQL." doesn't render as ".Built dashboards in SQL". */
+  [dir="rtl"] :is(p, li, dd, td, h1, h2, h3, h4) {
+    unicode-bidi: plaintext;
+  }
+
   :focus-visible {
     outline: 2px solid var(--color-brand);
     outline-offset: 2px;
@@ -69,7 +165,18 @@
 
 /* Soft lavender glow behind the auth cards. */
 .auth-backdrop {
-  background: radial-gradient(90% 40% at 50% 50%, #ede0ff 0%, #f6f2fc 100%);
+  background: radial-gradient(90% 40% at 50% 50%, var(--color-brand-soft) 0%, var(--color-page) 100%);
+}
+
+/* The brand purple fills buttons in both themes (white text stays AA), but as
+   text on a dark surface it's too dim, so text-brand switches to a lighter tint. */
+.dark .text-brand {
+  color: var(--color-brand-text);
+}
+
+/* Single-colour grey icons drawn as <img> keep their baked stroke; flip them in dark. */
+.dark .icon-adapt {
+  filter: invert(1) hue-rotate(180deg) brightness(1.1);
 }
 
 /* Radar disc on the landing hero. */
@@ -163,6 +270,9 @@
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b6580' stroke-width='2.5'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
   background-position: right 14px center;
   background-repeat: no-repeat;
+}
+[dir="rtl"] .select-chevron {
+  background-position: left 14px center;
 }
 
 /* Alert threshold slider (step 5). --fill is set inline from the value. */

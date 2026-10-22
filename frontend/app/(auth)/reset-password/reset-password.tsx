@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 
@@ -9,19 +10,21 @@ import { Logo } from "@/components/brand/logo";
 import { Alert } from "@/components/ui/alert";
 import { Button, Spinner } from "@/components/ui/button";
 import { Field, PasswordInput } from "@/components/ui/field";
-import { authErrorMessage, passwordProblem } from "@/lib/auth";
+import { authError, passwordProblem, type AuthError } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/client";
 
 export function ResetPassword() {
+  const t = useTranslations("auth");
   const router = useRouter();
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [touched, setTouched] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<AuthError | "resetExpired" | null>(null);
 
-  const problem = passwordProblem(password);
-  const mismatch = confirm !== password ? "Passwords don't match." : null;
+  const rule = passwordProblem(password);
+  const problem = rule && t(`rules.${rule}`);
+  const mismatch = confirm !== password ? t("rules.mismatch") : null;
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -33,9 +36,7 @@ export function ResetPassword() {
     setLoading(false);
     if (error) {
       setError(
-        error.code === "session_not_found" || error.status === 401
-          ? "This reset link has expired. Request a new one."
-          : authErrorMessage(error),
+        error.code === "session_not_found" || error.status === 401 ? "resetExpired" : authError(error),
       );
       return;
     }
@@ -46,31 +47,31 @@ export function ResetPassword() {
   return (
     <>
       <Logo />
-      <AuthTitle title="Choose a new password" subtitle="8+ characters with a number." />
+      <AuthTitle title={t("reset.title")} subtitle={t("rules.hint")} />
       {error && (
         <Alert className="mt-6">
-          {error}{" "}
-          {error.includes("expired") && (
+          {t(`errors.${error}`)}{" "}
+          {error === "resetExpired" && (
             <Link href="/forgot-password" className="font-bold underline">
-              Send a new link
+              {t("reset.sendNew")}
             </Link>
           )}
         </Alert>
       )}
       <form onSubmit={onSubmit} className="flex flex-col gap-4 pt-6" noValidate>
-        <Field label="New password" error={touched ? problem ?? undefined : undefined}>
+        <Field label={t("newPassword")} error={touched ? problem ?? undefined : undefined}>
           {(f) => <PasswordInput {...f} autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} />}
         </Field>
-        <Field label="Confirm password" error={touched ? mismatch ?? undefined : undefined}>
+        <Field label={t("confirmPassword")} error={touched ? mismatch ?? undefined : undefined}>
           {(f) => <PasswordInput {...f} autoComplete="new-password" value={confirm} onChange={(e) => setConfirm(e.target.value)} />}
         </Field>
         <Button type="submit" block className="mt-2" disabled={loading}>
           {loading ? (
             <>
-              <Spinner /> Saving…
+              <Spinner /> {t("reset.saving")}
             </>
           ) : (
-            "Save password"
+            t("reset.save")
           )}
         </Button>
       </form>

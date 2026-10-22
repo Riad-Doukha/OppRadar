@@ -2,6 +2,7 @@
 
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
 
@@ -11,9 +12,9 @@ import { Button, ButtonLink } from "@/components/ui/button";
 import { Pill } from "@/components/ui/inputs";
 import { Loading, OpportunityCardSkeleton, Skeleton } from "@/components/ui/skeleton";
 import { api, type Me, type Schemas } from "@/lib/api/client";
-import { CURRENT_YEARS, EDUCATION_LEVELS, labelOf } from "@/lib/onboarding/options";
+import { labelOf, useOptions } from "@/lib/onboarding/options";
 import { isComplete } from "@/lib/onboarding/status";
-import { TYPE_LABELS, type FeedTab, type OpportunityType } from "@/lib/opportunities";
+import { type FeedTab, type OpportunityType } from "@/lib/opportunities";
 import { cn } from "@/lib/utils";
 
 import { ApplicationList } from "@/components/applications/application-list";
@@ -26,10 +27,11 @@ const PAGE = 10;
 
 function greeting() {
   const h = new Date().getHours();
-  return h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening";
+  return h < 12 ? "morning" : h < 18 ? "afternoon" : "evening";
 }
 
 export function Dashboard() {
+  const t = useTranslations("dashboard");
   const router = useRouter();
   const params = useSearchParams();
   const q = params.get("q") ?? "";
@@ -48,7 +50,7 @@ export function Dashboard() {
   };
 
   if (me.isError) {
-    return <Alert>We couldn&apos;t load your dashboard: {me.error.message}. Is the API running?</Alert>;
+    return <Alert>{t("loadError", { error: me.error.message })}</Alert>;
   }
   // Render as soon as the profile is here; counts fill in when they arrive.
   if (!me.data) return <DashboardSkeleton />;
@@ -56,57 +58,56 @@ export function Dashboard() {
   const s = stats.data;
   const firstName = (me.data.full_name || "").split(" ")[0];
   const tabs: { key: FeedTab | "applications"; label: string; count?: number }[] = [
-    { key: "for_you", label: "For you", count: s?.for_you },
-    { key: "closing", label: "Closing soon", count: s?.closing_this_week },
-    { key: "saved", label: "Saved", count: s?.saved },
-    { key: "applications", label: "My applications", count: s?.applications },
+    { key: "for_you", label: t("tabs.for_you"), count: s?.for_you },
+    { key: "closing", label: t("tabs.closing"), count: s?.closing_this_week },
+    { key: "saved", label: t("tabs.saved"), count: s?.saved },
+    { key: "applications", label: t("tabs.applications"), count: s?.applications },
   ];
 
   return (
     <div className="mx-auto max-w-[1112px]">
       <h1 className="font-display text-2xl leading-tight font-bold tracking-[-0.5px] text-ink sm:text-[28px]">
-        {greeting()}
-        {firstName && `, ${firstName}`}
+        {firstName ? t("greeting.named", { greeting: t(`greeting.${greeting()}`), name: firstName }) : t(`greeting.${greeting()}`)}
       </h1>
       <p className="pt-1 text-sm text-body">
-        {s?.matching_available ? "Your agent is scanning for you." : "Matching launches soon — for now we show open opportunities of the types you chose."}
+        {s?.matching_available ? t("scanning") : t("matchingSoon")}
       </p>
 
       {me.data.is_demo && (
         <Alert tone="info" className="mt-4">
-          You&apos;re viewing the read-only demo. Saving is turned off.
+          {t("demo")}
         </Alert>
       )}
 
-      {stats.isError && <Alert className="mt-4">We couldn&apos;t load your counts: {stats.error.message}</Alert>}
+      {stats.isError && <Alert className="mt-4">{t("countsError", { error: stats.error.message })}</Alert>}
 
       <AskBar />
 
-      <div className="grid gap-4 pt-5 lg:grid-cols-[1fr_400px]">
+      <div className="grid grid-cols-1 gap-4 pt-5 lg:grid-cols-[minmax(0,1fr)_400px]">
         <ProfileCard me={me.data} />
         <RadarCard stats={s} />
       </div>
 
       <div className="grid grid-cols-2 gap-3 pt-5 sm:flex sm:flex-wrap">
-        <StatTile value={s?.for_you} label="open for you" />
-        <StatTile value={s?.closing_this_week} label="closing this week" tone="warning" />
-        <StatTile value={s?.saved} label="saved" />
-        <StatTile value={s?.applications} label="my applications" tone="brand" />
+        <StatTile value={s?.for_you} label={t("stats.forYou")} />
+        <StatTile value={s?.closing_this_week} label={t("stats.closing")} tone="warning" />
+        <StatTile value={s?.saved} label={t("stats.saved")} />
+        <StatTile value={s?.applications} label={t("stats.applications")} tone="brand" />
       </div>
 
-      <div role="tablist" aria-label="Opportunities" className="mt-5 flex gap-7 overflow-x-auto border-b border-line">
-        {tabs.map((t) => (
+      <div role="tablist" aria-label={t("tabs.label")} className="mt-5 flex gap-7 overflow-x-auto border-b border-line">
+        {tabs.map((x) => (
           <button
-            key={t.key}
+            key={x.key}
             role="tab"
             type="button"
-            aria-selected={tab === t.key}
-            onClick={() => setTab(t.key)}
-            className={cn("flex shrink-0 items-center gap-1.5 border-b-[3px] pt-3 pb-3 text-[15px]", tab === t.key ? "border-brand font-bold text-ink" : "border-transparent font-medium text-muted hover:text-ink")}
+            aria-selected={tab === x.key}
+            onClick={() => setTab(x.key)}
+            className={cn("flex shrink-0 items-center gap-1.5 border-b-[3px] pt-3 pb-3 text-[15px]", tab === x.key ? "border-brand font-bold text-ink" : "border-transparent font-medium text-muted hover:text-ink")}
           >
-            {t.label}
-            {t.count !== undefined ? (
-              <span className="rounded-full bg-brand-soft px-[7px] py-0.5 font-mono text-[11px] font-bold text-brand-strong">{t.count}</span>
+            {x.label}
+            {x.count !== undefined ? (
+              <span className="rounded-full bg-brand-soft px-[7px] py-0.5 font-mono text-[11px] font-bold text-brand-strong">{x.count}</span>
             ) : (
               <Skeleton className="h-[17px] w-5 rounded-full" />
             )}
@@ -126,6 +127,8 @@ export function Dashboard() {
 }
 
 function Feed({ tab, q, type, setType, profileTypes, readOnly }: { tab: FeedTab; q: string; type: OpportunityType | null; setType: (t: OpportunityType | null) => void; profileTypes: OpportunityType[]; readOnly: boolean }) {
+  const t = useTranslations("dashboard.feed");
+  const { typeLabel } = useOptions();
   const router = useRouter();
   const feed = useInfiniteQuery({
     queryKey: ["feed", tab, q, type],
@@ -146,11 +149,11 @@ function Feed({ tab, q, type, setType, profileTypes, readOnly }: { tab: FeedTab;
     <>
       <div className="flex flex-wrap gap-2 pt-3.5">
         <Chip active={!type} onClick={() => setType(null)}>
-          All types
+          {t("allTypes")}
         </Chip>
-        {profileTypes.map((t) => (
-          <Chip key={t} active={type === t} onClick={() => setType(type === t ? null : t)}>
-            {TYPE_LABELS[t]}
+        {profileTypes.map((pt) => (
+          <Chip key={pt} active={type === pt} onClick={() => setType(type === pt ? null : pt)}>
+            {typeLabel(pt)}
           </Chip>
         ))}
         {q && (
@@ -160,44 +163,38 @@ function Feed({ tab, q, type, setType, profileTypes, readOnly }: { tab: FeedTab;
         )}
         {filtered && (
           <button type="button" onClick={() => (setType(null), q && router.push("/dashboard"))} className="px-2 text-[13px] font-medium text-muted hover:text-ink">
-            Clear filters
+            {t("clear")}
           </button>
         )}
       </div>
 
       <div className="flex flex-col gap-4 pt-[18px]">
         {feed.isPending && (
-          <Loading label="Loading opportunities…" className="flex flex-col gap-4">
+          <Loading label={t("loading")} className="flex flex-col gap-4">
             <OpportunityCardSkeleton />
             <OpportunityCardSkeleton />
             <OpportunityCardSkeleton />
           </Loading>
         )}
-        {feed.isError && <Alert>We couldn&apos;t load opportunities: {feed.error.message}</Alert>}
+        {feed.isError && <Alert>{t("error", { error: feed.error.message })}</Alert>}
         {feed.isSuccess && items.length === 0 && (
           <Empty
-            title={tab === "saved" ? "Nothing saved yet" : filtered ? "No results" : "Nothing open right now"}
-            body={
-              tab === "saved"
-                ? "Press Save on an opportunity to keep it here."
-                : filtered
-                  ? "Try another search or clear the filters."
-                  : "New opportunities are added as sources are scanned. Check back soon."
-            }
+            title={tab === "saved" ? t("emptySavedTitle") : filtered ? t("noResultsTitle") : t("emptyTitle")}
+            body={tab === "saved" ? t("emptySaved") : filtered ? t("noResults") : t("empty")}
           />
         )}
         {items.map((item) => (
           <OpportunityCard key={item.id} item={item} readOnly={readOnly} />
         ))}
         {feed.isFetchingNextPage && (
-          <Loading label="Loading more…" className="flex flex-col gap-4">
+          <Loading label={t("loadingMore")} className="flex flex-col gap-4">
             <OpportunityCardSkeleton />
             <OpportunityCardSkeleton />
           </Loading>
         )}
         {feed.hasNextPage && !feed.isFetchingNextPage && (
           <Button variant="outline" size="md" className="self-center" onClick={() => feed.fetchNextPage()} disabled={feed.isFetchingNextPage}>
-            Show more ({total - items.length} left)
+            {t("more", { left: total - items.length })}
           </Button>
         )}
       </div>
@@ -207,6 +204,7 @@ function Feed({ tab, q, type, setType, profileTypes, readOnly }: { tab: FeedTab;
 
 /** Opens Ask the agent with the question (the agent page sends it). */
 function AskBar() {
+  const t = useTranslations("dashboard.ask");
   const router = useRouter();
   const [q, setQ] = useState("");
   return (
@@ -221,25 +219,28 @@ function AskBar() {
       <input
         value={q}
         onChange={(e) => setQ(e.target.value)}
-        placeholder="Ask the agent: paste a link or name an opportunity, a type or a field."
-        aria-label="Ask the agent"
+        placeholder={t("placeholder")}
+        aria-label={t("label")}
         className="min-w-0 flex-1 bg-transparent text-[15px] text-ink outline-none placeholder:text-faint"
       />
-      <button type="submit" aria-label="Ask" className="flex size-11 shrink-0 items-center justify-center rounded-field bg-brand hover:bg-brand-strong">
-        <Image src="/icons/arrow-right-white.svg" alt="" width={18} height={18} />
+      <button type="submit" aria-label={t("submit")} className="flex size-11 shrink-0 items-center justify-center rounded-field bg-brand hover:bg-brand-strong">
+        <Image src="/icons/arrow-right-white.svg" alt="" width={18} height={18} className="rtl:-scale-x-100" />
       </button>
     </form>
   );
 }
 
 function ProfileCard({ me }: { me: Me }) {
+  const t = useTranslations("dashboard.profile");
+  const { CURRENT_YEARS, EDUCATION_LEVELS, wilayaLabel } = useOptions();
   const pct = Math.round((me.completeness ?? 0) * 100);
   const level = labelOf(EDUCATION_LEVELS, me.education_level);
   const year = me.current_year ? labelOf(CURRENT_YEARS, me.current_year) : null;
-  const headline = [[level, me.field_of_study].filter(Boolean).join(" "), year, me.wilaya].filter(Boolean).join(" · ");
-  const tip = me.completeness_suggestions[0] ?? nextTip(me);
+  const headline = [[level, me.field_of_study].filter(Boolean).join(" · "), year, wilayaLabel(me.wilaya)].filter(Boolean).join(" · ");
+  const tipKey = nextTip(me);
+  const tip = me.completeness_suggestions[0] ?? (tipKey && t(`tips.${tipKey}`));
   return (
-    <section className="rounded-card border border-line bg-surface px-[22px] py-5 shadow-[0_1px_1.5px_rgb(30_17_62/0.05)]" aria-label="Your profile">
+    <section className="rounded-card border border-line bg-surface px-[22px] py-5 shadow-[0_1px_1.5px_rgb(30_17_62/0.05)]" aria-label={t("label")}>
       <div className="flex items-center gap-3.5">
         <div className="flex size-[52px] shrink-0 items-center justify-center rounded-full bg-brand-soft text-lg font-bold text-brand-strong">{initialsOf(me.full_name || me.email)}</div>
         <div className="min-w-0 flex-1">
@@ -247,7 +248,7 @@ function ProfileCard({ me }: { me: Me }) {
           {headline && <p className="truncate pt-1 text-[13px] text-muted">{headline}</p>}
         </div>
         <ButtonLink href={isComplete(me) ? "/profile" : "/onboarding"} variant="outline" className="h-9 px-4 text-[13px]">
-          Edit profile
+          {t("edit")}
         </ButtonLink>
       </div>
       {me.skills.length > 0 && (
@@ -256,59 +257,60 @@ function ProfileCard({ me }: { me: Me }) {
         </div>
       )}
       <div className="flex items-center gap-3 pt-4">
-        <div className="h-2 flex-1 overflow-hidden rounded bg-line" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label="Profile completeness">
+        <div className="h-2 flex-1 overflow-hidden rounded bg-line" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label={t("completeness")}>
           <div className="h-full rounded bg-brand" style={{ width: `${pct}%` }} />
         </div>
         <span className="font-mono text-xs font-semibold text-muted">{pct}%</span>
       </div>
       <p className="pt-1.5 text-xs text-muted">
-        {!isComplete(me) ? "Finish setting up your profile so the agent can match you." : tip && pct < 100 ? `Almost there — ${tip}` : "Your profile is complete."}
+        {!isComplete(me) ? t("finish") : tip && pct < 100 ? t("almost", { tip }) : t("complete")}
       </p>
     </section>
   );
 }
 
 /** First optional section still empty (mirrors completeness() in backend/app/services/profiles.py). */
-function nextTip(me: Me): string | null {
-  if (!me.links.length) return "add a portfolio or GitHub link — agents match better with links.";
-  if (!me.experiences.length && !me.certificates.length) return "add an experience or a certificate.";
-  if (!me.skills.some((s) => s.level)) return "set a level for your skills.";
-  if (!me.languages.length) return "add the languages you speak.";
-  if (!me.institution) return "add your institution to find campus opportunities.";
+function nextTip(me: Me) {
+  if (!me.links.length) return "links";
+  if (!me.experiences.length && !me.certificates.length) return "experience";
+  if (!me.skills.some((s) => s.level)) return "skillLevels";
+  if (!me.languages.length) return "languages";
+  if (!me.institution) return "institution";
   return null;
 }
 
 function RadarCard({ stats }: { stats?: Stats }) {
+  const t = useTranslations("dashboard.radar");
   if (!stats) return <RadarCardSkeleton />;
   const live = stats.matching_available;
   return (
-    <section className="rounded-card border border-line bg-[linear-gradient(153deg,#fff_60%,#f6f2fc_100%)] px-[22px] py-5 shadow-[0_1px_1.5px_rgb(30_17_62/0.05)]" aria-label="Your agent">
+    <section className="rounded-card border border-line bg-[linear-gradient(153deg,var(--color-surface)_60%,var(--color-page)_100%)] px-[22px] py-5 shadow-[0_1px_1.5px_rgb(30_17_62/0.05)]" aria-label={t("label")}>
       <div className="flex items-center justify-between gap-3">
         <p className="flex items-center gap-2.5 text-[15px] font-bold text-ink">
-          <span className={cn("size-2.5 rounded-full", live ? "bg-success shadow-[0_0_0_4px_#ecfdf5]" : "bg-warning shadow-[0_0_0_4px_#fffbeb]")} />
-          {live ? "Radar active" : stats.agent_started_at ? "Agent ready" : "Agent not started"}
+          <span className={cn("size-2.5 rounded-full", live ? "bg-success shadow-[0_0_0_4px_var(--color-success-tint)]" : "bg-warning shadow-[0_0_0_4px_var(--color-warning-tint)]")} />
+          {live ? t("active") : stats.agent_started_at ? t("ready") : t("notStarted")}
         </p>
-        <span className="font-mono text-xs text-muted">{live ? "scanning" : "matching soon"}</span>
+        <span className="font-mono text-xs text-muted">{live ? t("scanningShort") : t("soonShort")}</span>
       </div>
       <div className="mt-3 rounded-field bg-night px-[18px] py-4 font-mono text-[11px] leading-[20.9px] text-on-night-strong">
         <p>
-          <span className="text-[#8b7fb0]">now :</span> {stats.for_you} open opportunities fit your types
+          <span className="text-[#8b7fb0]">{t("now")}</span> {t("fit", { count: stats.for_you })}
         </p>
         <p>
-          <span className="text-[#8b7fb0]">now :</span> {stats.closing_this_week} close in the next 7 days
+          <span className="text-[#8b7fb0]">{t("now")}</span> {t("close", { count: stats.closing_this_week })}
         </p>
         {!live && (
           <p>
-            <span className="text-[#8b7fb0]">soon:</span> match scores + eligibility checks
+            <span className="text-[#8b7fb0]">{t("soon")}</span> {t("scores")}
           </p>
         )}
       </div>
       <div className="flex gap-2.5 pt-3.5">
-        <Button className="h-10 flex-1 text-sm" disabled title="Available when matching launches">
-          Run scan now
+        <Button className="h-10 flex-1 text-sm" disabled title={t("whenMatching")}>
+          {t("run")}
         </Button>
-        <Button variant="ghost" className="h-10 text-sm" disabled title="Available when matching launches">
-          History
+        <Button variant="ghost" className="h-10 text-sm" disabled title={t("whenMatching")}>
+          {t("history")}
         </Button>
       </div>
     </section>
@@ -347,8 +349,9 @@ function Empty({ title, body }: { title: string; body: string }) {
 }
 
 function RadarCardSkeleton() {
+  const t = useTranslations("dashboard.radar");
   return (
-    <Loading label="Loading your agent…" className="rounded-card border border-line bg-surface px-[22px] py-5">
+    <Loading label={t("loading")} className="rounded-card border border-line bg-surface px-[22px] py-5">
       <div className="flex justify-between">
         <Skeleton className="h-5 w-32" />
         <Skeleton className="h-4 w-24" />
@@ -364,12 +367,13 @@ function RadarCardSkeleton() {
 
 /** First load: the dashboard's shape before the profile arrives. */
 function DashboardSkeleton() {
+  const t = useTranslations("dashboard");
   return (
-    <Loading label="Loading your dashboard…" className="mx-auto max-w-[1112px]">
+    <Loading label={t("loading")} className="mx-auto max-w-[1112px]">
       <Skeleton className="h-8 w-72" />
       <Skeleton className="mt-2.5 h-4 w-96 max-w-full" />
       <Skeleton className="mx-auto mt-5 h-[66px] max-w-[820px] rounded-card" />
-      <div className="grid gap-4 pt-5 lg:grid-cols-[1fr_400px]">
+      <div className="grid grid-cols-1 gap-4 pt-5 lg:grid-cols-[minmax(0,1fr)_400px]">
         <div className="rounded-card border border-line bg-surface px-[22px] py-5">
           <div className="flex items-center gap-3.5">
             <Skeleton className="size-[52px] rounded-full" />

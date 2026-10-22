@@ -1,0 +1,23 @@
+{
+  "status": {
+    "draft": "Brouillon",
+    "submitted": "Envoyée",
+    "accepted": "Acceptée",
+    "rejected": "Non retenue",
+    "withdrawn": "Retirée"
+  },
+  "title": "Candidatures",
+  "subtitle": "Suivez où vous avez postulé et mettez à jour le statut quand vous avez une réponse.",
+  "loadError": "Impossible de charger vos candidatures : {error}",
+  "loading": "Chargement des candidatures…",
+  "emptyTitle": "Aucune candidature pour l'instant",
+  "empty": "Ouvrez une opportunité et utilisez l'<strong>Assistant de candidature</strong> : il prépare vos réponses, vous envoie vers le formulaire officiel et enregistre la candidature ici.",
+  "removed": "Opportunité retirée",
+  "submittedOn": "envoyée le {date}",
+  "statusLabel": "Statut de la candidature",
+  "confirmRemove": "Arrêter de suivre cette candidature ?",
+  "remove": "Retirer",
+  "reference": "Référence",
+  "official": "Page officielle",
+  "updateFailed": "Mise à jour impossible. Réessayez."
+}

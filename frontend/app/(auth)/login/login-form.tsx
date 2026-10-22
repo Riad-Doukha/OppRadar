@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, type FormEvent } from "react";
 
@@ -10,20 +11,19 @@ import { Logo } from "@/components/brand/logo";
 import { Alert } from "@/components/ui/alert";
 import { Button, Spinner } from "@/components/ui/button";
 import { Field, Input, PasswordInput } from "@/components/ui/field";
-import { authErrorMessage } from "@/lib/auth";
+import { authError, type AuthError } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/client";
 import { safeNext } from "@/lib/utils";
 
 export function LoginForm() {
+  const t = useTranslations("auth");
   const router = useRouter();
   const params = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(
-    params.get("error") === "link" ? "That link is invalid or has expired. Log in or request a new one." : null,
-  );
+  const [error, setError] = useState<AuthError | "badLink" | null>(params.get("error") === "link" ? "badLink" : null);
   const [loading, setLoading] = useState(false);
-  const credentialsError = error?.startsWith("Wrong email");
+  const credentialsError = error === "invalidCredentials";
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -36,7 +36,7 @@ export function LoginForm() {
         router.push(`/check-email?email=${encodeURIComponent(email.trim())}`);
         return;
       }
-      setError(authErrorMessage(error));
+      setError(authError(error));
       return;
     }
     router.push(safeNext(params.get("next")));
@@ -46,12 +46,12 @@ export function LoginForm() {
   return (
     <>
       <Logo />
-      <AuthTitle title="Welcome back" subtitle="Log in to see what your agent found." />
+      <AuthTitle title={t("login.title")} subtitle={t("login.subtitle")} />
 
-      {error && <Alert className="mt-6">{error}</Alert>}
+      {error && <Alert className="mt-6">{t(`errors.${error}`)}</Alert>}
 
       <form onSubmit={onSubmit} className="flex flex-col gap-4 pt-5" noValidate>
-        <Field label="Email" error={credentialsError}>
+        <Field label={t("email")} error={credentialsError}>
           {(f) => (
             <Input
               {...f}
@@ -60,16 +60,16 @@ export function LoginForm() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@university.dz"
+              placeholder={t("emailPlaceholder")}
             />
           )}
         </Field>
         <Field
-          label="Password"
+          label={t("password")}
           error={credentialsError}
           aside={
             <Link href="/forgot-password" className="text-xs font-bold text-brand hover:text-brand-strong">
-              Forgot password?
+              {t("login.forgot")}
             </Link>
           }
         >
@@ -86,18 +86,18 @@ export function LoginForm() {
         <Button type="submit" block className="mt-2" disabled={loading || !email || !password}>
           {loading ? (
             <>
-              <Spinner /> Logging in…
+              <Spinner /> {t("login.loggingIn")}
             </>
           ) : (
-            "Log in"
+            t("logIn")
           )}
         </Button>
       </form>
 
       <p className="pt-5 text-center text-sm text-muted">
-        New here?{" "}
+        {t("login.newHere")}{" "}
         <Link href="/signup" className="font-bold text-brand hover:text-brand-strong">
-          Create an account
+          {t("login.create")}
         </Link>
       </p>
       <DemoLink />

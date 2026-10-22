@@ -1,34 +1,19 @@
 // Display helpers for opportunities (dashboard cards + detail page).
 
+import { useLocale, useTranslations } from "next-intl";
+import { useMemo } from "react";
+
+import { intlLocale, type Locale } from "@/i18n/config";
 import type { Schemas } from "@/lib/api/client";
+import { useOptions } from "@/lib/onboarding/options";
 
 export type MyOpportunity = Schemas["MyOpportunity"];
 export type OpportunityType = MyOpportunity["type"];
 export type FeedTab = Schemas["MyOpportunityPage"]["tab"];
 
-export const TYPE_LABELS: Record<OpportunityType, string> = {
-  scholarship: "Scholarship",
-  job: "Job",
-  internship: "Internship",
-  fellowship: "Fellowship",
-  hackathon: "Hackathon",
-  datathon: "Datathon",
-  competition: "Competition",
-  bootcamp: "Bootcamp",
-  research: "Research",
-  volunteer: "Volunteering",
-  course: "Course",
-  grant: "Grant",
-  other: "Other",
-};
-
-const MODES: Record<string, string> = { remote: "Remote", hybrid: "Hybrid", onsite: "On-site" };
-export const modeLabel = (mode: string | null) => (mode ? MODES[mode] ?? mode : null);
-
-const LANGUAGES: Record<string, string> = { en: "English", fr: "French", ar: "Arabic" };
-export const languageLabel = (code: string) => LANGUAGES[code] ?? code.toUpperCase();
-
 const DAY = 24 * 60 * 60 * 1000;
+const MODES = ["remote", "hybrid", "onsite"];
+const LANGUAGES = ["en", "fr", "ar"];
 
 /** Whole days from today to the deadline (negative once it has passed). */
 export function daysLeft(deadline: string | null): number | null {
@@ -36,19 +21,6 @@ export function daysLeft(deadline: string | null): number | null {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   return Math.round((new Date(`${deadline}T00:00:00`).getTime() - today.getTime()) / DAY);
-}
-
-export function formatDate(iso: string, withYear = false) {
-  return new Date(`${iso}T00:00:00`).toLocaleDateString("en-GB", { day: "numeric", month: "short", ...(withYear && { year: "numeric" }) });
-}
-
-/** "Closes 12 Mar · 8 days left" + whether it is urgent (≤ 7 days). */
-export function deadlineText(deadline: string | null): { text: string; urgent: boolean } {
-  const days = daysLeft(deadline);
-  if (!deadline || days === null) return { text: "Rolling deadline", urgent: false };
-  if (days < 0) return { text: `Closed ${formatDate(deadline)}`, urgent: false };
-  const left = days === 0 ? "closes today" : days === 1 ? "1 day left" : `${days} days left`;
-  return { text: `Closes ${formatDate(deadline)} · ${left}`, urgent: days <= 7 };
 }
 
 /** "Organizer · Algiers, Algeria · $5,000/mo" */
@@ -65,12 +37,27 @@ export function sourceHost(url: string) {
   }
 }
 
-export const SCAM_FLAG_TEXT: Record<string, string> = {
-  application_fee: "Asks for an application fee",
-  bank_or_id_request: "Asks for bank or ID details",
-  free_email_organizer: "Organizer uses a free email address",
-  domain_mismatch: "Link domain doesn't match the organizer",
-  unverifiable_organizer: "Organizer couldn't be verified",
-  urgency_pressure: "Uses pressure or urgency tactics",
-  too_good_to_be_true: "Offer looks too good to be true",
-};
+/** Labels, dates and deadline copy in the visitor's language. */
+export function useOpportunityText() {
+  const t = useTranslations("opportunity");
+  const locale = intlLocale(useLocale() as Locale);
+  const { typeLabel } = useOptions();
+  return useMemo(() => {
+    const formatDate = (iso: string, withYear = false) =>
+      new Date(`${iso}T00:00:00`).toLocaleDateString(locale, { day: "numeric", month: "short", ...(withYear && { year: "numeric" }) });
+    return {
+      typeLabel,
+      formatDate,
+      modeLabel: (mode: string | null) => (mode ? (MODES.includes(mode) ? t(`mode.${mode as "remote"}`) : mode) : null),
+      languageLabel: (code: string) => (LANGUAGES.includes(code) ? t(`language.${code as "en"}`) : code.toUpperCase()),
+      scamFlag: (flag: string) => (t.has(`flags.${flag as "application_fee"}`) ? t(`flags.${flag as "application_fee"}`) : flag),
+      /** "Closes 12 Mar · 8 days left" + whether it is urgent (≤ 7 days). */
+      deadlineText: (deadline: string | null): { text: string; urgent: boolean } => {
+        const days = daysLeft(deadline);
+        if (!deadline || days === null) return { text: t("deadline.rolling"), urgent: false };
+        if (days < 0) return { text: t("deadline.closed", { date: formatDate(deadline) }), urgent: false };
+        return { text: t("deadline.closes", { date: formatDate(deadline), left: t("deadline.left", { days }) }), urgent: days <= 7 };
+      },
+    };
+  }, [t, locale, typeLabel]);
+}

@@ -1,10 +1,10 @@
-import type { Metadata } from "next";
 import { Suspense } from "react";
 
 import { AppShell } from "@/components/app/app-shell";
 import { ProfilePage } from "@/components/profile/profile-page";
+import { titled } from "@/i18n/metadata";
 
-export const metadata: Metadata = { title: "My profile" };
+export const generateMetadata = titled("profile");
 
 export default function Page() {
   return (

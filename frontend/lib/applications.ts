@@ -7,12 +7,13 @@ import { api, type Schemas } from "@/lib/api/client";
 export type Application = Schemas["ApplicationOut"];
 export type ApplicationStatus = Application["status"];
 
-export const STATUS: Record<ApplicationStatus, { label: string; tone: string }> = {
-  draft: { label: "Draft", tone: "bg-page text-body" },
-  submitted: { label: "Submitted", tone: "bg-brand-soft text-brand-strong" },
-  accepted: { label: "Accepted", tone: "bg-[#ecfdf5] text-success" },
-  rejected: { label: "Not selected", tone: "bg-danger-soft text-danger" },
-  withdrawn: { label: "Withdrawn", tone: "bg-page text-muted" },
+/** Badge colours per status; labels are applications.status.<status>. */
+export const STATUS: Record<ApplicationStatus, { tone: string }> = {
+  draft: { tone: "bg-page text-body" },
+  submitted: { tone: "bg-brand-soft text-brand-strong" },
+  accepted: { tone: "bg-success-tint text-success" },
+  rejected: { tone: "bg-danger-soft text-danger" },
+  withdrawn: { tone: "bg-page text-muted" },
 };
 
 export function useApplications() {

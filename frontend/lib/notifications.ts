@@ -9,25 +9,25 @@ export type NotificationList = Schemas["NotificationList"];
 export type NotificationTab = "all" | "matches" | "deadlines" | "applications" | "system";
 
 /** Icon + tinted tile per kind (Figma Notifications page). */
-export const KIND_STYLE: Record<Notification["kind"], { icon: string; tile: string }> = {
+export const KIND_STYLE: Record<Notification["kind"], { icon: string; tile: string; grey?: boolean }> = {
   match: { icon: "notif-match", tile: "bg-brand-soft" },
-  deadline: { icon: "notif-deadline", tile: "bg-[#fffbeb]" },
-  application: { icon: "notif-application", tile: "bg-[#ecfdf5]" },
-  digest: { icon: "notif-digest", tile: "bg-page" },
-  tip: { icon: "notif-tip", tile: "bg-page" },
-  security: { icon: "notif-security", tile: "bg-page" },
-  system: { icon: "notif-digest", tile: "bg-page" },
+  deadline: { icon: "notif-deadline", tile: "bg-warning-tint" },
+  application: { icon: "notif-application", tile: "bg-success-tint" },
+  digest: { icon: "notif-digest", tile: "bg-page", grey: true },
+  tip: { icon: "notif-tip", tile: "bg-page", grey: true },
+  security: { icon: "notif-security", tile: "bg-page", grey: true },
+  system: { icon: "notif-digest", tile: "bg-page", grey: true },
 };
 
-/** "09:41" today, "Yesterday", "Mon" this week, else "12 Mar". */
-export function when(iso: string) {
+/** "09:41" today, "Yesterday", "Mon" this week, else "12 Mar" (in `locale`). */
+export function when(iso: string, locale: string, yesterday: string) {
   const d = new Date(iso);
   const now = new Date();
   const days = Math.floor((new Date(now.toDateString()).getTime() - new Date(d.toDateString()).getTime()) / 86_400_000);
-  if (days === 0) return d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
-  if (days === 1) return "Yesterday";
-  if (days < 7) return d.toLocaleDateString("en-GB", { weekday: "short" });
-  return d.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+  if (days === 0) return d.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" });
+  if (days === 1) return yesterday;
+  if (days < 7) return d.toLocaleDateString(locale, { weekday: "short" });
+  return d.toLocaleDateString(locale, { day: "numeric", month: "short" });
 }
 
 /** Latest few + unread count, for the bell and the sidebar badge (refreshes every minute). */

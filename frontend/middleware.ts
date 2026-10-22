@@ -4,7 +4,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { env } from "@/lib/env";
 
 // Pages that need a signed-in user, and auth pages a signed-in user skips.
-const PROTECTED = ["/onboarding", "/dashboard", "/scan", "/opportunities", "/profile", "/settings", "/notifications", "/agent", "/apply", "/applications"];
+const PROTECTED = ["/onboarding", "/dashboard", "/scan", "/opportunities", "/profile", "/settings", "/notifications", "/agent", "/apply", "/applications", "/premium"];
 const GUEST_ONLY = ["/login", "/signup"];
 
 export async function middleware(request: NextRequest) {

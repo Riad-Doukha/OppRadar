@@ -2,11 +2,13 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
+import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
 
 import { Button, Spinner } from "@/components/ui/button";
 import { Pill } from "@/components/ui/inputs";
 import { Skeleton } from "@/components/ui/skeleton";
+import { intlLocale, type Locale } from "@/i18n/config";
 import { api, type Me, type Schemas } from "@/lib/api/client";
 
 import { Choice, SettingRow, SettingsCard, Status, Toggle } from "./ui";
@@ -15,18 +17,12 @@ import { useSave } from "./use-save";
 type Doc = Schemas["Document"];
 type Consent = "agent_matching" | "ai_drafts" | "chat_history" | "anonymized_stats";
 
-const CONSENTS: { key: Consent; title: string; description: string }[] = [
-  {
-    key: "agent_matching",
-    title: "Use my profile to judge eligibility",
-    description: "Your profile answers and CV fields are sent to the AI model to score opportunities. Turning this off turns matching off.",
-  },
-  { key: "ai_drafts", title: "AI-draft applications for me", description: "The agent may write drafts; you review every answer before anything is submitted. Nothing sends automatically." },
-  { key: "chat_history", title: "Remember my chat history with the agent", description: "Kept 90 days, visible only to you · clear it anytime from Ask the agent" },
-  { key: "anonymized_stats", title: "Improve OppRadar with anonymized data", description: "Anonymous match statistics only — never your name, CV or answers. Off by default." },
-];
+const CONSENTS: Consent[] = ["agent_matching", "ai_drafts", "chat_history", "anonymized_stats"];
 
 export function PrivacyTab({ me }: { me: Me }) {
+  const t = useTranslations("settings.privacy");
+  const ts = useTranslations("settings");
+  const locale = intlLocale(useLocale() as Locale);
   const ro = me.is_demo;
   const qc = useQueryClient();
   const consents = useSave("/me/onboarding/alerts");
@@ -67,14 +63,14 @@ export function PrivacyTab({ me }: { me: Me }) {
 
   return (
     <>
-      <SettingsCard label="Your data">
+      <SettingsCard label={t("data")}>
         {docs.isPending && <Skeleton className="h-[86px] w-full rounded-field" />}
         {docs.data?.length === 0 && (
           <p className="rounded-field border border-dashed border-line px-4 py-4 text-sm text-muted">
-            No CV uploaded.{" "}
+            {t("noCv")}{" "}
             {!ro && (
               <Link href="/onboarding?step=1" className="font-bold text-brand">
-                Upload one
+                {t("upload")}
               </Link>
             )}
           </p>
@@ -88,7 +84,10 @@ export function PrivacyTab({ me }: { me: Me }) {
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm text-ink">{d.file_name}</p>
                   <p className="text-[15px] text-ink">
-                    {d.kind === "cv" ? "Your CV" : d.kind} · uploaded {new Date(d.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })} · private storage, deleted on request
+                    {t("uploaded", {
+                      kind: d.kind === "cv" ? t("yourCv") : d.kind,
+                      date: new Date(d.created_at).toLocaleDateString(locale, { day: "numeric", month: "short", year: "numeric" }),
+                    })}
                   </p>
                   {skills.length > 0 && (
                     <div className="flex flex-wrap gap-1.5 pt-1.5">
@@ -101,59 +100,59 @@ export function PrivacyTab({ me }: { me: Me }) {
                     variant="ghost"
                     className="h-9 text-sm"
                     disabled={remove.isPending}
-                    onClick={() => window.confirm(`Delete ${d.file_name}? Your profile stays as it is.`) && remove.mutate(d.id)}
+                    onClick={() => window.confirm(t("confirmDelete", { name: d.file_name })) && remove.mutate(d.id)}
                   >
-                    {remove.isPending && remove.variables === d.id && <Spinner />} Delete file
+                    {remove.isPending && remove.variables === d.id && <Spinner />} {t("deleteFile")}
                   </Button>
                 )}
               </div>
             );
           })}
         </div>
-        <Status text={remove.isError ? `Couldn't delete: ${remove.error.message}` : null} error />
+        <Status text={remove.isError ? t("deleteError", { error: remove.error.message }) : null} error />
 
         <div className="mt-3 border-t border-line">
-          <SettingRow title="Export everything" description="Profile, saved opportunities and uploaded-file details as one JSON file">
+          <SettingRow title={t("export")} description={t("exportHint")}>
             <Button variant="outline" className="h-10 text-sm" onClick={exportAll} disabled={exporting}>
-              {exporting && <Spinner />} Download
+              {exporting && <Spinner />} {t("download")}
             </Button>
           </SettingRow>
-          <SettingRow title="Application history retention" description="Auto-delete submitted application records after this period" last>
+          <SettingRow title={t("retention")} description={t("retentionHint")} last>
             <Choice
-              label="Application history retention"
+              label={t("retention")}
               value={me.history_retention}
               disabled={ro}
               onChange={(v) => settings.mutate({ body: { history_retention: v }, optimistic: (m) => ({ ...m, history_retention: v }) })}
               options={[
-                { value: "12_months", label: "12 months" },
-                { value: "never", label: "Never" },
+                { value: "12_months", label: t("months12") },
+                { value: "never", label: t("never") },
               ]}
             />
           </SettingRow>
         </div>
       </SettingsCard>
 
-      <SettingsCard label="AI processing — your consents">
+      <SettingsCard label={t("consents")}>
         {CONSENTS.map((c, i) => (
-          <SettingRow key={c.key} title={c.title} description={c.description} last={i === CONSENTS.length - 1}>
-            <Toggle label={c.title} checked={me.consents.includes(c.key)} onChange={(v) => setConsent(c.key, v)} disabled={ro} />
+          <SettingRow key={c} title={t(`consent.${c}`)} description={t(`consent.${c}_hint`)} last={i === CONSENTS.length - 1}>
+            <Toggle label={t(`consent.${c}`)} checked={me.consents.includes(c)} onChange={(v) => setConsent(c, v)} disabled={ro} />
           </SettingRow>
         ))}
         {!me.consents.includes("agent_matching") && (
-          <p className="pt-2 text-xs text-warning">Matching is off: your agent won&apos;t score opportunities until you turn this back on.</p>
+          <p className="pt-2 text-xs text-warning">{t("matchingOff")}</p>
         )}
       </SettingsCard>
 
-      <SettingsCard label="Third parties">
-        <SettingRow title="Opportunity sources" description="Public pages from universities, organisations and event sites. No social-media scraping.">
+      <SettingsCard label={t("thirdParties")}>
+        <SettingRow title={t("sources")} description={t("sourcesHint")}>
           <Link href="/settings?tab=agent" className="px-2 text-sm font-bold text-body hover:text-ink">
-            Manage
+            {t("manage")}
           </Link>
         </SettingRow>
-        <SettingRow title="AI model provider" description="AI features (CV reading, matching, the agent) use the Google Gemini API, only for the features you turn on above." />
-        <SettingRow title="Organizer forms" description="When the apply assistant launches, a form is filled only in your session. Organizers see their normal form and your answers." last />
+        <SettingRow title={t("provider")} description={t("providerHint")} />
+        <SettingRow title={t("forms")} description={t("formsHint")} last />
       </SettingsCard>
-      <Status text={consents.isError || settings.isError ? `Couldn't save: ${(consents.error ?? settings.error)?.message}` : null} error />
+      <Status text={consents.isError || settings.isError ? ts("saveError", { error: (consents.error ?? settings.error)?.message ?? "" }) : null} error />
     </>
   );
 }

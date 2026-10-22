@@ -3,29 +3,33 @@
 import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 
 import { Logo } from "@/components/brand/logo";
+import { LanguageMenu } from "@/components/app/language-menu";
+import { ThemeToggle } from "@/components/app/theme-toggle";
 import { NotificationBell } from "@/components/notifications/bell";
+import { UpgradeCard } from "@/components/premium/upgrade-card";
 import { useNotificationSummary } from "@/lib/notifications";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api, type Me } from "@/lib/api/client";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 
-type NavItem = { label: string; icon: string; href?: string; soon?: boolean };
+type NavItem = { key: "dashboard" | "agent" | "notifications" | "profile" | "applications" | "premium" | "settings"; icon: string; href?: string; soon?: boolean };
 
 const NAV: NavItem[] = [
-  { label: "Dashboard", icon: "nav-dashboard", href: "/dashboard" },
-  { label: "Ask the agent", icon: "nav-ask", href: "/agent" },
-  { label: "Notifications", icon: "nav-notifications", href: "/notifications" },
-  { label: "My profile", icon: "nav-profile", href: "/profile" },
-  { label: "Applications", icon: "nav-applications", href: "/applications" },
+  { key: "dashboard", icon: "nav-dashboard", href: "/dashboard" },
+  { key: "agent", icon: "nav-ask", href: "/agent" },
+  { key: "notifications", icon: "nav-notifications", href: "/notifications" },
+  { key: "profile", icon: "nav-profile", href: "/profile" },
+  { key: "applications", icon: "nav-applications", href: "/applications" },
 ];
 const NAV_MORE: NavItem[] = [
-  { label: "Premium", icon: "nav-premium", soon: true },
-  { label: "Settings", icon: "nav-settings", href: "/settings" },
+  { key: "premium", icon: "nav-premium", href: "/premium", soon: true },
+  { key: "settings", icon: "nav-settings", href: "/settings" },
 ];
 
 export const initialsOf = (name: string) =>
@@ -33,30 +37,25 @@ export const initialsOf = (name: string) =>
 
 /** Signed-in layout from the Figma dashboard: top bar + left nav (desktop). */
 export function AppShell({ children }: { children: ReactNode }) {
+  const t = useTranslations("shell");
   const me = useQuery({ queryKey: ["me"], queryFn: () => api<Me>("/me") });
   return (
     <div className="min-h-dvh bg-page">
       <a
         href="#main"
-        className="sr-only z-50 rounded-field bg-surface px-4 py-2 text-sm font-bold text-brand shadow-float focus:not-sr-only focus:fixed focus:top-3 focus:left-3"
+        className="sr-only z-50 rounded-field bg-surface px-4 py-2 text-sm font-bold text-brand shadow-float focus:not-sr-only focus:fixed focus:top-3 focus:start-3"
       >
-        Skip to content
+        {t("skip")}
       </a>
       <TopBar me={me.data} />
       <div className="mx-auto flex max-w-[1440px]">
-        <aside className="sticky top-16 hidden h-[calc(100dvh-4rem)] w-[264px] shrink-0 flex-col gap-5 overflow-y-auto py-6 pr-4 pl-6 lg:flex">
+        <aside className="sticky top-16 hidden h-[calc(100dvh-4rem)] w-[264px] shrink-0 flex-col gap-5 overflow-y-auto py-6 pe-4 ps-6 lg:flex">
           <Nav items={NAV} />
           <div className="h-px bg-line" />
           <Nav items={NAV_MORE} />
-          <div className="rounded-card border border-line bg-surface p-4 shadow-[0_1px_1.5px_rgb(30_17_62/0.05)]">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-signal px-3 py-1.5 text-xs font-bold text-body">
-              <Image src="/icons/lock-dark.svg" alt="" width={13} height={13} />
-              Only you can see this
-            </span>
-            <p className="pt-2 text-xs text-muted">Your profile is private. We never post or message on your behalf.</p>
-          </div>
+          <UpgradeCard />
         </aside>
-        <main id="main" tabIndex={-1} className="min-w-0 flex-1 px-4 pt-6 pb-12 outline-none sm:px-6 lg:pt-7 lg:pr-10 lg:pl-6">
+        <main id="main" tabIndex={-1} className="min-w-0 flex-1 px-4 pt-6 pb-12 outline-none sm:px-6 lg:pt-7 lg:pe-10 lg:ps-6">
           {children}
         </main>
       </div>
@@ -65,29 +64,31 @@ export function AppShell({ children }: { children: ReactNode }) {
 }
 
 function Nav({ items }: { items: NavItem[] }) {
+  const t = useTranslations("shell");
   const pathname = usePathname();
   const unread = useNotificationSummary().data?.unread ?? 0;
   return (
-    <nav className="flex flex-col gap-1" aria-label="Main">
+    <nav className="flex flex-col gap-1" aria-label={t("mainNav")}>
       {items.map((item) => {
-        const active = item.href && pathname === item.href.split("?")[0];
+        const base = item.href?.split("?")[0];
+        const active = !!base && (pathname === base || pathname.startsWith(`${base}/`));
         const body = (
           <>
             <NavIcon name={item.icon} className={active ? "text-brand-strong" : "text-body"} />
-            <span className={cn("text-[15px]", active ? "font-bold text-brand-strong" : "font-medium text-body")}>{item.label}</span>
-            {item.soon && <span className="ml-auto rounded-full bg-surface px-2 py-0.5 font-mono text-[10px] text-muted">soon</span>}
+            <span className={cn("text-[15px]", active ? "font-bold text-brand-strong" : "font-medium text-body")}>{t(`nav.${item.key}`)}</span>
+            {item.soon && <span className="ms-auto rounded-full bg-surface px-2 py-0.5 font-mono text-[10px] text-muted">{t("soon")}</span>}
             {item.href === "/notifications" && unread > 0 && (
-              <span className={cn("ml-auto rounded-full bg-surface px-[7px] py-0.5 font-mono text-[11px]", active ? "font-bold text-brand-strong" : "text-body")}>{unread}</span>
+              <span className={cn("ms-auto rounded-full bg-surface px-[7px] py-0.5 font-mono text-[11px]", active ? "font-bold text-brand-strong" : "text-body")}>{unread}</span>
             )}
           </>
         );
         const cls = cn("flex h-11 items-center gap-3 rounded-field px-3.5", active ? "bg-brand-soft" : item.href && "hover:bg-surface");
         return item.href ? (
-          <Link key={item.label} href={item.href} className={cls} aria-current={active ? "page" : undefined}>
+          <Link key={item.key} href={item.href} className={cls} aria-current={active ? "page" : undefined}>
             {body}
           </Link>
         ) : (
-          <span key={item.label} className={cn(cls, "cursor-default opacity-70")} title="Coming soon">
+          <span key={item.key} className={cn(cls, "cursor-default opacity-70")}>
             {body}
           </span>
         );
@@ -113,6 +114,7 @@ function NavIcon({ name, className }: { name: string; className?: string }) {
 }
 
 function TopBar({ me }: { me?: Me }) {
+  const t = useTranslations("shell");
   const router = useRouter();
   const params = useSearchParams();
   const [q, setQ] = useState(params.get("q") ?? "");
@@ -131,15 +133,17 @@ function TopBar({ me }: { me?: Me }) {
         <input
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder="Search opportunities"
-          aria-label="Search opportunities"
+          placeholder={t("search")}
+          aria-label={t("search")}
           className="h-10 min-w-0 flex-1 bg-transparent text-sm text-ink outline-none placeholder:text-faint"
         />
       </form>
-      <div className="ml-auto flex items-center gap-2">
+      <div className="ms-auto flex items-center gap-2">
+        <LanguageMenu className="hidden sm:block" />
+        <ThemeToggle />
         <NotificationBell me={me} />
-        <Link href="/settings" className="hidden size-10 items-center justify-center rounded-field hover:bg-page sm:flex" aria-label="Settings">
-          <Image src="/icons/gear.svg" alt="" width={20} height={20} />
+        <Link href="/settings" className="hidden size-10 items-center justify-center rounded-field hover:bg-page sm:flex" aria-label={t("nav.settings")}>
+          <Image src="/icons/gear.svg" alt="" width={20} height={20} className="icon-adapt" />
         </Link>
         <AccountMenu me={me} />
       </div>
@@ -148,6 +152,7 @@ function TopBar({ me }: { me?: Me }) {
 }
 
 function AccountMenu({ me }: { me?: Me }) {
+  const t = useTranslations("shell");
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const box = useRef<HTMLDivElement>(null);
@@ -177,30 +182,30 @@ function AccountMenu({ me }: { me?: Me }) {
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
         aria-haspopup="menu"
-        aria-label="Account menu"
+        aria-label={t("account.menu")}
         className="flex size-[38px] items-center justify-center rounded-full bg-brand-soft text-sm font-bold text-brand-strong"
       >
         {me ? initialsOf(me.full_name || me.email) : <Skeleton className="size-5 rounded-full bg-brand/20" />}
       </button>
       {open && (
-        <div role="menu" className="absolute right-0 mt-2 w-60 rounded-card border border-line bg-surface p-2 shadow-float">
+        <div role="menu" className="absolute end-0 mt-2 w-60 rounded-card border border-line bg-surface p-2 shadow-float">
           {me && (
             <div className="border-b border-line px-3 pt-1 pb-2.5">
-              <p className="truncate text-sm font-bold text-ink">{me.full_name || "Your account"}</p>
-              <p className="truncate text-xs text-muted">{me.is_demo ? "Read-only demo" : me.email}</p>
+              <p className="truncate text-sm font-bold text-ink">{me.full_name || t("account.yours")}</p>
+              <p className="truncate text-xs text-muted">{me.is_demo ? t("readOnly") : me.email}</p>
             </div>
           )}
           <Link role="menuitem" href="/dashboard" className="block rounded-lg px-3 py-2 text-sm text-body hover:bg-page lg:hidden" onClick={() => setOpen(false)}>
-            Dashboard
+            {t("nav.dashboard")}
           </Link>
           <Link role="menuitem" href="/profile" className="block rounded-lg px-3 py-2 text-sm text-body hover:bg-page" onClick={() => setOpen(false)}>
-            My profile
+            {t("nav.profile")}
           </Link>
           <Link role="menuitem" href="/settings" className="block rounded-lg px-3 py-2 text-sm text-body hover:bg-page" onClick={() => setOpen(false)}>
-            Settings
+            {t("nav.settings")}
           </Link>
-          <button role="menuitem" type="button" onClick={logOut} className="block w-full rounded-lg px-3 py-2 text-left text-sm text-body hover:bg-page">
-            {me?.is_demo ? "Leave the demo" : "Log out"}
+          <button role="menuitem" type="button" onClick={logOut} className="block w-full rounded-lg px-3 py-2 text-start text-sm text-body hover:bg-page">
+            {me?.is_demo ? t("account.leaveDemo") : t("account.logOut")}
           </button>
         </div>
       )}

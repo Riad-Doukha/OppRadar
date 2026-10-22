@@ -1,19 +1,22 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 
 import { Field, Input } from "@/components/ui/field";
 import { Pill, Segmented, Select } from "@/components/ui/inputs";
 import { defined, intIn, orNull } from "@/lib/onboarding/body";
-import { COUNTRIES, LANGUAGE_LEVELS, LANGUAGE_SUGGESTIONS, NATIONALITIES, WILAYAS } from "@/lib/onboarding/options";
+import { useOptions } from "@/lib/onboarding/options";
 import { useAutosave } from "@/lib/onboarding/save-status";
 
 import { CvUpload, type Prefill } from "./cv-upload";
 import { Row, StepFrame, useWizard } from "./frame";
 
-type Level = (typeof LANGUAGE_LEVELS)[number]["value"];
+type Level = "basic" | "good" | "fluent";
 
 export function StepAbout({ onApplyPrefill }: { onApplyPrefill: (p: Prefill) => Promise<void> }) {
+  const t = useTranslations("onboarding");
+  const { COUNTRIES, LANGUAGE_LEVELS, LANGUAGE_SUGGESTIONS, NATIONALITIES, WILAYAS } = useOptions();
   const { me } = useWizard();
   const [f, setF] = useState(() => ({
     fullName: me.full_name ?? "",
@@ -41,13 +44,13 @@ export function StepAbout({ onApplyPrefill }: { onApplyPrefill: (p: Prefill) => 
   const { flush } = useAutosave("/me/onboarding/about", body, { enabled: !me.is_demo });
 
   const errors = {
-    fullName: f.fullName.trim().length < 2 ? "Enter your full name." : null,
-    birthYear: intIn(f.birthYear, 1940, 2020) ? null : "Enter a year between 1940 and 2020.",
-    nationality: f.nationality.trim() ? null : "Required.",
-    country: f.country.trim() ? null : "Required.",
-    wilaya: f.wilaya.trim() ? null : "Required.",
+    fullName: f.fullName.trim().length < 2 ? t("about.needName") : null,
+    birthYear: intIn(f.birthYear, 1940, 2020) ? null : t("about.birthYearError"),
+    nationality: f.nationality.trim() ? null : t("required"),
+    country: f.country.trim() ? null : t("required"),
+    wilaya: f.wilaya.trim() ? null : t("required"),
   };
-  const inAlgeria = f.country.trim().toLowerCase() === "algeria";
+  const inAlgeria = ["algeria", COUNTRIES[0].label.toLowerCase()].includes(f.country.trim().toLowerCase());
 
   function addLanguage(name: string) {
     const v = name.trim();
@@ -66,30 +69,30 @@ export function StepAbout({ onApplyPrefill }: { onApplyPrefill: (p: Prefill) => 
 
             <div className="flex flex-col gap-4 pt-[26px]">
               <div className="grid gap-4 sm:grid-cols-[1fr_200px]">
-                <Field label="Full name *" error={err("fullName")}>
+                <Field label={t("about.fullName")} error={err("fullName")}>
                   {(p) => <Input {...p} autoComplete="name" value={f.fullName} onChange={set("fullName")} />}
                 </Field>
-                <Field label="Birth year *" error={err("birthYear")} hint="Many opportunities have age limits">
+                <Field label={t("about.birthYear")} error={err("birthYear")} hint={t("about.birthYearHint")}>
                   {(p) => <Input {...p} inputMode="numeric" maxLength={4} placeholder="2003" value={f.birthYear} onChange={set("birthYear")} />}
                 </Field>
               </div>
               <Row>
-                <Field label="Nationality *" error={err("nationality")}>
-                  {(p) => <Input {...p} list="nationalities" value={f.nationality} onChange={set("nationality")} placeholder="Algerian" />}
+                <Field label={t("about.nationality")} error={err("nationality")}>
+                  {(p) => <Input {...p} list="nationalities" value={f.nationality} onChange={set("nationality")} placeholder={t("about.nationalityPlaceholder")} />}
                 </Field>
-                <Field label="Country *" error={err("country")}>
-                  {(p) => <Input {...p} list="countries" autoComplete="country-name" value={f.country} onChange={set("country")} placeholder="Algeria" />}
+                <Field label={t("about.country")} error={err("country")}>
+                  {(p) => <Input {...p} list="countries" autoComplete="country-name" value={f.country} onChange={set("country")} placeholder={t("about.countryPlaceholder")} />}
                 </Field>
               </Row>
               <Row>
-                <Field label={inAlgeria ? "Wilaya *" : "City / region *"} error={err("wilaya")}>
+                <Field label={inAlgeria ? t("about.wilaya") : t("about.city")} error={err("wilaya")}>
                   {(p) =>
                     inAlgeria ? (
                       <Select {...p} value={f.wilaya} onChange={set("wilaya")}>
-                        <option value="">Choose your wilaya</option>
+                        <option value="">{t("about.chooseWilaya")}</option>
                         {WILAYAS.map((w, i) => (
-                          <option key={w} value={w}>
-                            {String(i + 1).padStart(2, "0")} · {w}
+                          <option key={w.value} value={w.value}>
+                            {String(i + 1).padStart(2, "0")} · {w.label}
                           </option>
                         ))}
                       </Select>
@@ -99,14 +102,14 @@ export function StepAbout({ onApplyPrefill }: { onApplyPrefill: (p: Prefill) => 
                   }
                 </Field>
               </Row>
-              <datalist id="nationalities">{NATIONALITIES.map((n) => <option key={n} value={n} />)}</datalist>
-              <datalist id="countries">{COUNTRIES.map((c) => <option key={c} value={c} />)}</datalist>
+              <datalist id="nationalities">{NATIONALITIES.map((n) => <option key={n.value} value={n.label} />)}</datalist>
+              <datalist id="countries">{COUNTRIES.map((c) => <option key={c.value} value={c.label} />)}</datalist>
 
               <div>
                 <p className="text-[13px] font-bold text-ink">
-                  Languages: <span className="font-normal text-muted">with your level</span>
+                  {t("about.languages")} <span className="font-normal text-muted">{t("about.withLevel")}</span>
                 </p>
-                <p className="pt-1.5 text-xs text-muted">Used when an opportunity requires a language level.</p>
+                <p className="pt-1.5 text-xs text-muted">{t("about.languagesHint")}</p>
                 <ul className="flex flex-col gap-2.5 pt-2.5">
                   {f.languages.map((l, i) => (
                     <li key={l.language} className="flex flex-wrap items-center gap-x-3.5 gap-y-2">
@@ -114,7 +117,7 @@ export function StepAbout({ onApplyPrefill }: { onApplyPrefill: (p: Prefill) => 
                         {l.language}
                       </Pill>
                       <Segmented
-                        label={`${l.language} level`}
+                        label={t("about.levelOf", { name: l.language })}
                         value={l.level}
                         options={LANGUAGE_LEVELS}
                         onChange={(level) => setF((s) => ({ ...s, languages: s.languages.map((x, j) => (j === i ? { ...x, level } : x)) }))}
@@ -133,9 +136,9 @@ export function StepAbout({ onApplyPrefill }: { onApplyPrefill: (p: Prefill) => 
                         }
                       }}
                       onBlur={() => newLang && addLanguage(newLang)}
-                      placeholder="+ Add language"
-                      aria-label="Add a language"
-                      className="h-8 w-[130px] rounded-full border border-line bg-surface px-3.5 text-center text-[13px] font-medium text-ink outline-none placeholder:text-faint focus:border-brand focus:text-left"
+                      placeholder={t("about.addLanguage")}
+                      aria-label={t("about.addLanguageLabel")}
+                      className="h-8 w-[130px] rounded-full border border-line bg-surface px-3.5 text-center text-[13px] font-medium text-ink outline-none placeholder:text-faint focus:border-brand focus:text-start"
                     />
                     <datalist id="languages">{LANGUAGE_SUGGESTIONS.map((l) => <option key={l} value={l} />)}</datalist>
                   </li>

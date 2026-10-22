@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 
 import { Field, Input } from "@/components/ui/field";
@@ -14,14 +15,15 @@ import { Row, StepFrame, useWizard } from "./frame";
 type LinkKind = Schemas["LinkIn"]["kind"];
 const GOAL_MIN = 20;
 const GOAL_MAX = 300;
-const LINKS: { kind: LinkKind; label: string; placeholder: string }[] = [
-  { kind: "linkedin", label: "LinkedIn profile", placeholder: "linkedin.com/in/your-name" },
-  { kind: "github", label: "GitHub", placeholder: "github.com/your-name" },
-  { kind: "portfolio", label: "Portfolio", placeholder: "your-site.com" },
-  { kind: "other", label: "Other link", placeholder: "https://" },
+const LINKS: { kind: LinkKind; placeholder: string }[] = [
+  { kind: "linkedin", placeholder: "linkedin.com/in/your-name" },
+  { kind: "github", placeholder: "github.com/your-name" },
+  { kind: "portfolio", placeholder: "your-site.com" },
+  { kind: "other", placeholder: "https://" },
 ];
 
 export function StepGoals() {
+  const t = useTranslations("onboarding.goals");
   const { me } = useWizard();
   const [goal, setGoal] = useState(me.goal ?? "");
   const [links, setLinks] = useState<Record<LinkKind, string>>(() => {
@@ -43,7 +45,7 @@ export function StepGoals() {
   const { flush } = useAutosave("/me/onboarding/goals", body, { enabled: !me.is_demo });
 
   const errors = {
-    goal: trimmed.length < GOAL_MIN ? `Write at least ${GOAL_MIN} characters.` : trimmed.length > GOAL_MAX ? `Keep it under ${GOAL_MAX} characters.` : null,
+    goal: trimmed.length < GOAL_MIN ? t("tooShort", { n: GOAL_MIN }) : trimmed.length > GOAL_MAX ? t("tooLong", { n: GOAL_MAX }) : null,
   };
 
   return (
@@ -52,7 +54,7 @@ export function StepGoals() {
         <>
           <div>
             <label htmlFor="goal" className="text-[13px] font-bold text-ink">
-              Goal * <span className="font-normal text-muted">{GOAL_MIN} to {GOAL_MAX} characters</span>
+              {t("goal")} <span className="font-normal text-muted">{t("range", { min: GOAL_MIN, max: GOAL_MAX })}</span>
             </label>
             <textarea
               id="goal"
@@ -62,7 +64,7 @@ export function StepGoals() {
               aria-invalid={(show && Boolean(errors.goal)) || undefined}
               aria-describedby="goal-hint"
               rows={4}
-              placeholder="I want to join international hackathons and find a data internship."
+              placeholder={t("placeholder")}
               className={cn(
                 "mt-1.5 block w-full resize-none rounded-field border bg-surface px-3.5 py-3 text-[15px] leading-[22.5px] text-ink outline-none placeholder:text-faint focus:border-brand focus:shadow-focus",
                 show && errors.goal ? "border-danger" : "border-line",
@@ -70,7 +72,7 @@ export function StepGoals() {
             />
             <div id="goal-hint" className="flex justify-between gap-3 pt-1.5 text-xs">
               <p className={show && errors.goal ? "text-danger" : "text-muted"}>
-                {show && errors.goal ? errors.goal : 'Example: "I want to join international hackathons and find a data internship."'}
+                {show && errors.goal ? errors.goal : t("example")}
               </p>
               <p className="shrink-0 font-mono text-muted">
                 {trimmed.length} / {GOAL_MAX}
@@ -78,11 +80,11 @@ export function StepGoals() {
             </div>
           </div>
 
-          <SectionLabel className="pt-7">Links (all optional)</SectionLabel>
-          <p className="pt-1.5 text-xs text-muted">Links only. We never log in to your accounts.</p>
+          <SectionLabel className="pt-7">{t("links")}</SectionLabel>
+          <p className="pt-1.5 text-xs text-muted">{t("linksHint")}</p>
           <Row className="pt-3.5">
             {LINKS.map((l) => (
-              <Field key={l.kind} label={l.label}>
+              <Field key={l.kind} label={t(l.kind)}>
                 {(p) => <Input {...p} type="url" inputMode="url" value={links[l.kind]} onChange={(e) => setLinks((s) => ({ ...s, [l.kind]: e.target.value }))} placeholder={l.placeholder} />}
               </Field>
             ))}

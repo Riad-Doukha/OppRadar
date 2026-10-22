@@ -1,0 +1,32 @@
+{
+  "title": "Demander à l'agent",
+  "subtitle": "Posez une question sur les opportunités ou collez un lien — l'agent cherche parmi ce qu'OppRadar a trouvé.",
+  "notice": "L'agent complet — verdicts d'éligibilité sourcés, documents requis, réponses en arabe, français ou anglais — arrive avec la phase IA. D'ici là, les réponses viennent de la recherche d'opportunités d'OppRadar.",
+  "suggestions": {
+    "scholarships": "Bourses qui clôturent ce mois-ci",
+    "internships": "Stages en data science",
+    "hackathons": "Hackathons à Alger",
+    "paste": "Coller le lien d'une opportunité"
+  },
+  "loading": "Chargement de votre conversation…",
+  "loadError": "Impossible de charger votre conversation : {error}",
+  "searching": "Recherche d'opportunités…",
+  "sendError": "Impossible de répondre : {error}",
+  "placeholder": "Collez un lien ou posez une question sur une opportunité…",
+  "send": "Envoyer",
+  "mistakes": "L'agent peut se tromper. <strong>Vérifiez toujours sur la page officielle.</strong>",
+  "recent": "Questions récentes",
+  "recentEmpty": "Vos questions apparaîtront ici.",
+  "notKept": "L'historique n'est pas conservé.",
+  "turnOn": "L'activer",
+  "clear": "Effacer l'historique",
+  "howTo": "Comment demander",
+  "tips": {
+    "type": "Citez un type : stage, hackathon, bourse…",
+    "field": "Ajoutez un domaine ou un lieu : « data », « Oran », « à distance »",
+    "link": "Collez un lien officiel pour le retrouver dans OppRadar"
+  },
+  "details": "Voir les détails",
+  "assistant": "Assistant de candidature",
+  "official": "Page officielle"
+}

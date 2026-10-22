@@ -1,0 +1,67 @@
+{
+  "loading": "Loading…",
+  "home": "OppRadar home",
+  "soon": "soon",
+  "comingSoon": "Coming soon",
+  "close": "Close",
+  "cancel": "Cancel",
+  "save": "Save",
+  "saving": "Saving…",
+  "saved": "Saved",
+  "edit": "Edit",
+  "remove": "Remove",
+  "removeItem": "Remove {item}",
+  "back": "Back",
+  "continue": "Continue",
+  "retry": "Try again",
+  "show": "Show",
+  "hide": "Hide",
+  "showPassword": "Show password",
+  "hidePassword": "Hide password",
+  "optional": "optional",
+  "yes": "Yes",
+  "no": "No",
+  "on": "On",
+  "off": "Off",
+  "theme": {
+    "toLight": "Switch to light mode",
+    "toDark": "Switch to dark mode",
+    "system": "System",
+    "light": "Light",
+    "dark": "Dark"
+  },
+  "language": {
+    "label": "Language",
+    "change": "Change language (current: {name})"
+  },
+  "errors": {
+    "generic": "Something went wrong. Please try again.",
+    "network": "Can't reach OppRadar. Check your connection and try again."
+  },
+  "demo": {
+    "readOnly": "Read-only demo"
+  },
+  "time": {
+    "yesterday": "Yesterday"
+  },
+  "titles": {
+    "checkEmail": "Check your email",
+    "forgotPassword": "Reset your password",
+    "login": "Log in",
+    "resetPassword": "Choose a new password",
+    "signup": "Create your account",
+    "agent": "Ask the agent",
+    "applications": "Applications",
+    "apply": "Apply assistant",
+    "dashboard": "Dashboard",
+    "notifications": "Notifications",
+    "onboarding": "Set up your profile",
+    "opportunity": "Opportunity",
+    "premiumCheckout": "Reserve Premium",
+    "premium": "Premium (coming soon)",
+    "premiumReserved": "Your Premium reservation",
+    "profile": "My profile",
+    "scan": "Starting your agent",
+    "settings": "Settings"
+  }
+}

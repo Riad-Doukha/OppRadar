@@ -1,11 +1,11 @@
-import type { Metadata } from "next";
 import { Suspense } from "react";
 
 import { AuthCard } from "@/components/auth/auth-card";
 
 import { CheckEmail } from "./check-email";
+import { titled } from "@/i18n/metadata";
 
-export const metadata: Metadata = { title: "Check your email" };
+export const generateMetadata = titled("checkEmail");
 
 export default function CheckEmailPage() {
   return (

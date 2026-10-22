@@ -1,0 +1,36 @@
+{
+  "title": "Notifications",
+  "markAll": "Tout marquer comme lu",
+  "preferences": "Préférences",
+  "tabsLabel": "Types de notifications",
+  "tabs": {
+    "all": "Toutes",
+    "matches": "Correspondances",
+    "deadlines": "Échéances",
+    "applications": "Candidatures",
+    "system": "Système"
+  },
+  "empty": {
+    "all": "Rien pour l'instant. Vous recevrez ici les rappels d'échéance de vos opportunités enregistrées, puis les nouvelles correspondances.",
+    "matches": "Les alertes de correspondance arrivent avec la mise en correspondance.",
+    "deadlines": "Enregistrez une opportunité et vous serez prévenu(e) 3 jours avant la clôture.",
+    "applications": "Les mises à jour de candidature arrivent avec l'assistant de candidature.",
+    "system": "Résumés hebdomadaires, conseils de profil et messages du compte apparaissent ici."
+  },
+  "loadError": "Impossible de charger les notifications : {error}",
+  "loading": "Chargement des notifications…",
+  "caughtUp": "Vous êtes à jour",
+  "archived": "Les notifications de plus de 30 jours sont archivées automatiquement.",
+  "item": {
+    "applyNow": "Postuler",
+    "later": "Plus tard",
+    "remindLater": "Me le rappeler plus tard",
+    "viewMatch": "Voir la correspondance",
+    "save": "Enregistrer",
+    "dismiss": "Ignorer",
+    "improveProfile": "Améliorer mon profil",
+    "openApplications": "Ouvrir mes candidatures",
+    "open": "Ouvrir",
+    "unread": "Non lue"
+  }
+}

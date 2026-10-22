@@ -1,0 +1,23 @@
+{
+  "status": {
+    "draft": "Draft",
+    "submitted": "Submitted",
+    "accepted": "Accepted",
+    "rejected": "Not selected",
+    "withdrawn": "Withdrawn"
+  },
+  "title": "Applications",
+  "subtitle": "Track where you applied and update the status when you hear back.",
+  "loadError": "We couldn't load your applications: {error}",
+  "loading": "Loading applications…",
+  "emptyTitle": "No applications yet",
+  "empty": "Open an opportunity and use the <strong>Apply assistant</strong>: it prepares your answers, sends you to the official form, and records the application here.",
+  "removed": "Opportunity removed",
+  "submittedOn": "submitted {date}",
+  "statusLabel": "Application status",
+  "confirmRemove": "Stop tracking this application?",
+  "remove": "Remove",
+  "reference": "Reference",
+  "official": "Official page",
+  "updateFailed": "Couldn't update. Try again."
+}

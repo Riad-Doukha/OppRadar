@@ -1,0 +1,92 @@
+{
+  "greeting": {
+    "morning": "Good morning",
+    "afternoon": "Good afternoon",
+    "evening": "Good evening",
+    "named": "{greeting}, {name}"
+  },
+  "loadError": "We couldn't load your dashboard: {error}. Is the API running?",
+  "scanning": "Your agent is scanning for you.",
+  "matchingSoon": "Matching launches soon — for now we show open opportunities of the types you chose.",
+  "demo": "You're viewing the read-only demo. Saving is turned off.",
+  "countsError": "We couldn't load your counts: {error}",
+  "tabs": {
+    "label": "Opportunities",
+    "for_you": "For you",
+    "closing": "Closing soon",
+    "saved": "Saved",
+    "applications": "My applications"
+  },
+  "stats": {
+    "forYou": "open for you",
+    "closing": "closing this week",
+    "saved": "saved",
+    "applications": "my applications"
+  },
+  "feed": {
+    "allTypes": "All types",
+    "clear": "Clear filters",
+    "loading": "Loading opportunities…",
+    "loadingMore": "Loading more…",
+    "error": "We couldn't load opportunities: {error}",
+    "emptySavedTitle": "Nothing saved yet",
+    "emptySaved": "Press Save on an opportunity to keep it here.",
+    "noResultsTitle": "No results",
+    "noResults": "Try another search or clear the filters.",
+    "emptyTitle": "Nothing open right now",
+    "empty": "New opportunities are added as sources are scanned. Check back soon.",
+    "more": "Show more ({left} left)"
+  },
+  "ask": {
+    "placeholder": "Ask the agent: paste a link or name an opportunity, a type or a field.",
+    "label": "Ask the agent",
+    "submit": "Ask"
+  },
+  "profile": {
+    "label": "Your profile",
+    "edit": "Edit profile",
+    "completeness": "Profile completeness",
+    "finish": "Finish setting up your profile so the agent can match you.",
+    "almost": "Almost there — {tip}",
+    "complete": "Your profile is complete.",
+    "tips": {
+      "links": "add a portfolio or GitHub link — agents match better with links.",
+      "experience": "add an experience or a certificate.",
+      "skillLevels": "set a level for your skills.",
+      "languages": "add the languages you speak.",
+      "institution": "add your institution to find campus opportunities."
+    }
+  },
+  "radar": {
+    "label": "Your agent",
+    "active": "Radar active",
+    "ready": "Agent ready",
+    "notStarted": "Agent not started",
+    "scanningShort": "scanning",
+    "soonShort": "matching soon",
+    "now": "now :",
+    "soon": "soon:",
+    "fit": "{count} open opportunities fit your types",
+    "close": "{count} close in the next 7 days",
+    "scores": "match scores + eligibility checks",
+    "whenMatching": "Available when matching launches",
+    "run": "Run scan now",
+    "history": "History",
+    "loading": "Loading your agent…"
+  },
+  "loading": "Loading your dashboard…",
+  "scan": {
+    "loaded": "Loaded profile: {name}",
+    "started": "Agent started",
+    "fit": "{count} open opportunities fit the types you chose",
+    "close": "{count} close in the next 7 days",
+    "deadlineSort": "Match scores arrive when matching launches — sorting by deadline for now",
+    "title": "Your agent is starting its first scan",
+    "body": "Checking which open opportunities fit the types and preferences you chose. Match scores and alerts follow as soon as matching launches.",
+    "working": "working…",
+    "error": "We couldn't start your agent: {error}",
+    "toDashboard": "Go to the dashboard",
+    "taking": "Taking you to your Dashboard…",
+    "starting": "Starting…"
+  }
+}

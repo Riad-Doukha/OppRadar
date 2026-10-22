@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 
 import { Skeleton } from "@/components/ui/skeleton";
@@ -12,6 +13,7 @@ import { NotificationItem } from "./notification-item";
 
 /** Header bell with the unread dot and the dropdown panel (Figma "Bell panel"). */
 export function NotificationBell({ me }: { me?: Me }) {
+  const t = useTranslations("shell.bell");
   const [open, setOpen] = useState(false);
   const box = useRef<HTMLDivElement>(null);
   const summary = useNotificationSummary();
@@ -32,7 +34,7 @@ export function NotificationBell({ me }: { me?: Me }) {
   }, [open]);
 
   const n = me?.notifications;
-  const channels = n ? [n.email_enabled && "Email", n.telegram_enabled && "Telegram"].filter(Boolean).join(" + ") || "in-app only" : "";
+  const channels = n ? [n.email_enabled && t("email"), n.telegram_enabled && t("telegram")].filter(Boolean).join(" + ") || t("inAppOnly") : "";
 
   return (
     <div ref={box} className="relative">
@@ -41,26 +43,26 @@ export function NotificationBell({ me }: { me?: Me }) {
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
         aria-haspopup="dialog"
-        aria-label={unread ? `Notifications, ${unread} unread` : "Notifications"}
+        aria-label={unread ? t("labelUnread", { count: unread }) : t("label")}
         className="relative flex size-10 items-center justify-center rounded-field hover:bg-page aria-expanded:bg-page"
       >
-        <Image src="/icons/bell.svg" alt="" width={20} height={20} />
-        {unread > 0 && <span className="absolute top-2 left-[23px] size-2 rounded-full border border-white bg-signal" />}
+        <Image src="/icons/bell.svg" alt="" width={20} height={20} className="icon-adapt" />
+        {unread > 0 && <span className="absolute top-2 start-[23px] size-2 rounded-full border border-white bg-signal" />}
       </button>
 
       {open && (
-        <div role="dialog" aria-label="Notifications" className="fixed inset-x-2 top-[70px] z-30 overflow-hidden rounded-card border border-line bg-surface shadow-float sm:absolute sm:inset-x-auto sm:top-auto sm:right-0 sm:mt-2 sm:w-[400px]">
+        <div role="dialog" aria-label={t("label")} className="fixed inset-x-2 top-[70px] z-30 overflow-hidden rounded-card border border-line bg-surface shadow-float sm:absolute sm:inset-x-auto sm:top-auto sm:end-0 sm:mt-2 sm:w-[400px]">
           <div className="flex items-center gap-2 border-b border-line px-4 py-3.5">
-            <p className="text-[15px] font-bold text-ink">Notifications</p>
-            {unread > 0 && <span className="rounded-full bg-brand-soft px-2 py-0.5 font-mono text-xs font-bold text-brand-strong">{unread} new</span>}
-            <span className="ml-auto flex gap-3 text-xs font-bold">
+            <p className="text-[15px] font-bold text-ink">{t("label")}</p>
+            {unread > 0 && <span className="rounded-full bg-brand-soft px-2 py-0.5 font-mono text-xs font-bold text-brand-strong">{t("new", { count: unread })}</span>}
+            <span className="ms-auto flex gap-3 text-xs font-bold">
               {unread > 0 && !readOnly && (
                 <button type="button" className="text-brand hover:text-brand-strong" onClick={() => read.mutate(undefined)}>
-                  Mark all read
+                  {t("markAll")}
                 </button>
               )}
               <Link href="/settings?tab=notifications" className="text-brand hover:text-brand-strong" onClick={() => setOpen(false)}>
-                Preferences
+                {t("preferences")}
               </Link>
             </span>
           </div>
@@ -72,7 +74,7 @@ export function NotificationBell({ me }: { me?: Me }) {
           )}
           {summary.data?.items.length === 0 && (
             <p className="px-5 py-8 text-center text-sm text-muted">
-              You&apos;re all caught up. Deadline reminders for saved opportunities and, soon, new matches will show up here.
+              {t("empty")}
             </p>
           )}
           {summary.data && summary.data.items.length > 0 && (
@@ -85,9 +87,9 @@ export function NotificationBell({ me }: { me?: Me }) {
 
           <div className="border-t border-line px-4 py-3 text-center">
             <Link href="/notifications" className="text-[13px] font-bold text-brand hover:text-brand-strong" onClick={() => setOpen(false)}>
-              Open all notifications →
+              {t("openAll")} <span className="inline-block rtl:-scale-x-100">→</span>
             </Link>
-            {channels && <p className="pt-1 text-[11px] text-muted">Delivery: {channels} · per your rules</p>}
+            {channels && <p className="pt-1 text-[11px] text-muted">{t("delivery", { channels })}</p>}
           </div>
         </div>
       )}

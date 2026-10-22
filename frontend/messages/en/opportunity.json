@@ -1,0 +1,84 @@
+{
+  "mode": {
+    "remote": "Remote",
+    "hybrid": "Hybrid",
+    "onsite": "On-site"
+  },
+  "language": {
+    "en": "English",
+    "fr": "French",
+    "ar": "Arabic"
+  },
+  "deadline": {
+    "rolling": "Rolling deadline",
+    "closed": "Closed {date}",
+    "closes": "Closes {date} · {left}",
+    "left": "{days, plural, =0 {closes today} one {# day left} other {# days left}}"
+  },
+  "flags": {
+    "application_fee": "Asks for an application fee",
+    "bank_or_id_request": "Asks for bank or ID details",
+    "free_email_organizer": "Organizer uses a free email address",
+    "domain_mismatch": "Link domain doesn't match the organizer",
+    "unverifiable_organizer": "Organizer couldn't be verified",
+    "urgency_pressure": "Uses pressure or urgency tactics",
+    "too_good_to_be_true": "Offer looks too good to be true"
+  },
+  "trust": {
+    "verified": "Verified source",
+    "likely_safe": "Looks legitimate",
+    "unknown": "Source not verified yet",
+    "suspicious": "Suspicious — check carefully",
+    "scam": "Likely scam — don't share personal data",
+    "check": "Check this source",
+    "likelyScam": "Likely scam"
+  },
+  "card": {
+    "new": "New",
+    "source": "source: {host}",
+    "save": "Save",
+    "saved": "Saved",
+    "details": "View details",
+    "updateFailed": "Couldn't update. Try again."
+  },
+  "detail": {
+    "missing": "This opportunity doesn't exist or was removed.",
+    "loadError": "We couldn't load it: {error}",
+    "back": "Back to the dashboard",
+    "breadcrumb": "Breadcrumb",
+    "dashboard": "Dashboard",
+    "organizedBy": "Organized by {organizer}",
+    "official": "Official page",
+    "about": "About this opportunity",
+    "noDescription": "No description yet — open the official page for details.",
+    "requirements": "Requirements (from the official page)",
+    "checkSoon": "check soon",
+    "noRequirements": "No requirements listed. Check the official page.",
+    "compareYourself": "The agent will check each requirement against your profile once matching launches. For now, compare them yourself.",
+    "benefits": "What you get",
+    "facts": "Key facts",
+    "deadline": "Deadline",
+    "rolling": "Rolling",
+    "location": "Location",
+    "benefit": "Benefit",
+    "type": "Type",
+    "language": "Language",
+    "safety": "Source & safety",
+    "neverPay": "OppRadar never asks for payment or bank details. Always verify dates and requirements on the official page before applying.",
+    "verify": "Always verify on the official page.",
+    "nextSteps": "Your next steps",
+    "applyOfficial": "Apply on official site",
+    "noLink": "No official link yet.",
+    "viewApplication": "View my application",
+    "assistant": "Apply assistant",
+    "nothingSent": "Nothing is sent until you press Submit",
+    "savedRemove": "Saved — remove",
+    "save": "Save",
+    "soonTitle": "Coming with the AI agent",
+    "remind": "Remind me 3 days before · soon",
+    "askAgent": "Ask the agent about this · soon",
+    "showAgain": "Show it again in my feed",
+    "notInterested": "Not interested",
+    "loading": "Loading the opportunity…"
+  }
+}

@@ -1,5 +1,11 @@
 import type { Metadata, Viewport } from "next";
-import { DM_Sans, IBM_Plex_Mono, Nunito } from "next/font/google";
+import { DM_Sans, IBM_Plex_Mono, IBM_Plex_Sans_Arabic, Nunito } from "next/font/google";
+import { NextIntlClientProvider } from "next-intl";
+import { getLocale, getTranslations } from "next-intl/server";
+
+import { dirOf, type Locale } from "@/i18n/config";
+
+import { THEME_SCRIPT } from "@/lib/theme-script";
 
 import { Providers } from "./providers";
 import "./globals.css";
@@ -24,21 +30,39 @@ const display = Nunito({
   variable: "--font-display-face",
 });
 
-export const metadata: Metadata = {
-  title: { default: "OppRadar", template: "%s · OppRadar" },
-  description:
-    "Scholarships, internships, hackathons and camps — scanned daily, ranked by your profile.",
-};
+// Arabic glyphs: DM Sans / Nunito / Plex Mono have none, so the font stacks in
+// globals.css fall through to this face for Arabic text only.
+const arabic = IBM_Plex_Sans_Arabic({
+  subsets: ["arabic"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-arabic",
+  preload: false,
+});
+
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("landing.meta");
+  return { title: { default: "OppRadar", template: "%s · OppRadar" }, description: t("description") };
+}
 
 export const viewport: Viewport = {
-  themeColor: "#8b34ff",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f6f2fc" },
+    { media: "(prefers-color-scheme: dark)", color: "#120c22" },
+  ],
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const locale = (await getLocale()) as Locale;
   return (
-    <html lang="en" className={`${dmSans.variable} ${plexMono.variable} ${display.variable}`}>
+    // suppressHydrationWarning: THEME_SCRIPT adds the `dark` class before React hydrates.
+    <html lang={locale} dir={dirOf(locale)} className={`${dmSans.variable} ${plexMono.variable} ${display.variable} ${arabic.variable}`} suppressHydrationWarning>
       <body>
-        <Providers>{children}</Providers>
+        {/* First in <body>, not <head>: still runs before anything paints, and browser
+            extensions (e.g. antivirus) that inject scripts into <head> can't shift it. */}
+        <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
+        <NextIntlClientProvider>
+          <Providers>{children}</Providers>
+        </NextIntlClientProvider>
       </body>
     </html>
   );

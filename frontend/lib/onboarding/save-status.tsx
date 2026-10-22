@@ -1,6 +1,7 @@
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 
 import { api, type Me } from "@/lib/api/client";
@@ -29,6 +30,7 @@ export const useSaveStatus = () => useContext(SaveStatusContext);
  * false when the save failed.
  */
 export function useAutosave(path: string, body: object, { delay = 800, enabled = true } = {}) {
+  const t = useTranslations("onboarding.save");
   const queryClient = useQueryClient();
   const { setState, setError } = useSaveStatus();
   const json = JSON.stringify(body);
@@ -49,11 +51,11 @@ export function useAutosave(path: string, body: object, { delay = 800, enabled =
         return true;
       } catch (e) {
         setState("error");
-        setError(e instanceof Error ? e.message : "Couldn't save");
+        setError(e instanceof Error ? e.message : t("failed"));
         return false;
       }
     },
-    [path, queryClient, setState, setError],
+    [path, queryClient, setState, setError, t],
   );
 
   useEffect(() => {

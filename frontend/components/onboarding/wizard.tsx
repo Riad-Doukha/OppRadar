@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useMemo, useRef, useState } from "react";
 
@@ -26,6 +27,7 @@ import { StepSkills } from "./step-skills";
  * refresh and browser back work; every step autosaves to PATCH /me/onboarding/*.
  */
 export function OnboardingWizard() {
+  const t = useTranslations("onboarding");
   const router = useRouter();
   const params = useSearchParams();
   const queryClient = useQueryClient();
@@ -89,7 +91,7 @@ export function OnboardingWizard() {
   if (me.isPending) {
     return (
       <Shell>
-        <Loading label="Loading your profile…">
+        <Loading label={t("loadingProfile")}>
           <Skeleton className="h-4 w-60" />
           <Skeleton className="mt-3 h-2 w-full rounded" />
           <div className="mt-7 flex flex-col gap-5 rounded-card border border-line bg-surface px-5 py-7 sm:px-9 sm:py-8">
@@ -114,7 +116,7 @@ export function OnboardingWizard() {
   if (me.isError) {
     return (
       <Shell>
-        <Alert className="mt-10">We couldn&apos;t load your profile: {me.error.message}. Is the API running?</Alert>
+        <Alert className="mt-10">{t("loadError", { error: me.error.message })}</Alert>
       </Shell>
     );
   }
@@ -125,9 +127,9 @@ export function OnboardingWizard() {
         <Shell wide={step === "review"} exit={step !== "review"}>
           {me.data.is_demo && (
             <Alert tone="info" className="mb-5">
-              You&apos;re exploring the read-only demo profile, so nothing is saved and CV upload is off.{" "}
+              {t("demo.notice")}{" "}
               <button type="button" onClick={leaveDemo} className="font-bold text-brand underline hover:text-brand-strong">
-                Create your account
+                {t("demo.create")}
               </button>
             </Alert>
           )}

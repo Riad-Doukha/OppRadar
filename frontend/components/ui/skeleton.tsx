@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
@@ -8,10 +9,11 @@ export function Skeleton({ className }: { className?: string }) {
 }
 
 /** Wraps a skeleton layout so screen readers hear "Loading…" once instead of empty boxes. */
-export function Loading({ label = "Loading…", children, className }: { label?: string; children: ReactNode; className?: string }) {
+export function Loading({ label, children, className }: { label?: string; children: ReactNode; className?: string }) {
+  const t = useTranslations("common");
   return (
     <div role="status" aria-busy className={className}>
-      <span className="sr-only">{label}</span>
+      <span className="sr-only">{label ?? t("loading")}</span>
       {children}
     </div>
   );

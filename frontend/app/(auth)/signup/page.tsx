@@ -1,10 +1,10 @@
-import type { Metadata } from "next";
 
 import { AuthCard } from "@/components/auth/auth-card";
 
 import { SignupForm } from "./signup-form";
+import { titled } from "@/i18n/metadata";
 
-export const metadata: Metadata = { title: "Create your account" };
+export const generateMetadata = titled("signup");
 
 export default function SignupPage() {
   return (

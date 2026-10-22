@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useId, useState, type ComponentProps, type ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
@@ -54,6 +55,7 @@ export function Input({ className, invalid, describedBy, ...props }: InputProps)
 
 /** Password input with the design's "Show / Hide" toggle. */
 export function PasswordInput({ className, invalid, describedBy, ...props }: InputProps) {
+  const t = useTranslations("common");
   const [visible, setVisible] = useState(false);
   return (
     <div className="relative">
@@ -61,16 +63,16 @@ export function PasswordInput({ className, invalid, describedBy, ...props }: Inp
         type={visible ? "text" : "password"}
         invalid={invalid}
         describedBy={describedBy}
-        className={cn("pr-16", className)}
+        className={cn("pe-16", className)}
         {...props}
       />
       <button
         type="button"
         onClick={() => setVisible((v) => !v)}
-        className="absolute inset-y-0 right-3.5 my-auto h-fit text-xs font-medium text-muted hover:text-ink"
-        aria-label={visible ? "Hide password" : "Show password"}
+        className="absolute inset-y-0 end-3.5 my-auto h-fit text-xs font-medium text-muted hover:text-ink"
+        aria-label={visible ? t("hidePassword") : t("showPassword")}
       >
-        {visible ? "Hide" : "Show"}
+        {visible ? t("hide") : t("show")}
       </button>
     </div>
   );

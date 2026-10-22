@@ -1,15 +1,17 @@
 "use client";
 
+import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { Logo } from "@/components/brand/logo";
 import { Alert } from "@/components/ui/alert";
 import { ButtonLink } from "@/components/ui/button";
+import { intlLocale, type Locale } from "@/i18n/config";
 import { api, type Me, type Schemas } from "@/lib/api/client";
 
 type Line = { at: string; text: string };
-const clock = () => new Date().toLocaleTimeString("en-GB", { hour12: false });
+const clock = (locale: string) => new Date().toLocaleTimeString(locale, { hour12: false });
 
 /**
  * "Your agent is starting its first scan" (Figma). Every line is a real step:
@@ -17,6 +19,8 @@ const clock = () => new Date().toLocaleTimeString("en-GB", { hour12: false });
  * dashboard. Match scores join once the AI matcher ships.
  */
 export function FirstScan() {
+  const t = useTranslations("dashboard.scan");
+  const locale = intlLocale(useLocale() as Locale);
   const router = useRouter();
   const [lines, setLines] = useState<Line[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -26,29 +30,31 @@ export function FirstScan() {
     let cancelled = false;
     const say = async (text: string) => {
       if (cancelled) return;
-      setLines((l) => [...l, { at: clock(), text }]);
+      setLines((l) => [...l, { at: clock(locale), text }]);
       await new Promise((r) => setTimeout(r, 700)); // keep each step readable
     };
     (async () => {
       try {
         const me = await api<Me>("/me");
-        await say(`Loaded profile: ${me.full_name || me.email}`);
+        await say(t("loaded", { name: me.full_name || me.email }));
         if (!me.is_demo) await api("/me/agent/start", { method: "POST" });
-        await say("Agent started");
+        await say(t("started"));
         const stats = await api<Schemas["DashboardStats"]>("/me/dashboard");
-        await say(`${stats.for_you} open opportunities fit the types you chose`);
-        await say(`${stats.closing_this_week} close in the next 7 days`);
-        await say("Match scores arrive when matching launches — sorting by deadline for now");
+        await say(t("fit", { count: stats.for_you }));
+        await say(t("close", { count: stats.closing_this_week }));
+        await say(t("deadlineSort"));
         if (cancelled) return;
         setDone(true);
         setTimeout(() => !cancelled && router.push("/dashboard"), 1500);
       } catch (e) {
-        if (!cancelled) setError(e instanceof Error ? e.message : "Something went wrong.");
+        if (!cancelled) setError(e instanceof Error ? e.message : String(e));
       }
     })();
     return () => {
       cancelled = true;
     };
+    // Runs once: the scan log must not restart when the language object identity changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router]);
 
   return (
@@ -65,39 +71,39 @@ export function FirstScan() {
             <div className="absolute inset-x-0 top-1/2 h-0.5 -translate-y-1/2 bg-white/25" />
           </div>
           <div className="radar-sweep absolute inset-0 rounded-full" />
-          <span className="radar-blip absolute top-[27.5%] left-[65%] size-4 rounded-full bg-signal shadow-[0_0_0_6px_rgb(250_252_82/0.35)]" />
-          <span className="radar-blip absolute top-[64%] left-[28.75%] size-[11px] rounded-full bg-signal shadow-[0_0_0_5px_rgb(250_252_82/0.28)] [animation-delay:0.8s]" />
+          <span className="radar-blip absolute top-[27.5%] start-[65%] size-4 rounded-full bg-signal shadow-[0_0_0_6px_rgb(250_252_82/0.35)]" />
+          <span className="radar-blip absolute top-[64%] start-[28.75%] size-[11px] rounded-full bg-signal shadow-[0_0_0_5px_rgb(250_252_82/0.28)] [animation-delay:0.8s]" />
         </div>
 
-        <h1 className="pt-9 font-display text-2xl font-bold tracking-[-0.5px] text-ink md:text-[28px]">Your agent is starting its first scan</h1>
+        <h1 className="pt-9 font-display text-2xl font-bold tracking-[-0.5px] text-ink md:text-[28px]">{t("title")}</h1>
         <p className="max-w-[460px] pt-2.5 text-base leading-6 text-body">
-          Checking which open opportunities fit the types and preferences you chose. Match scores and alerts follow as soon as matching launches.
+          {t("body")}
         </p>
 
-        <div className="mt-7 w-full max-w-[520px] rounded-field bg-night px-[18px] py-4 text-left font-mono text-xs leading-6" aria-live="polite">
+        <div className="mt-7 w-full max-w-[520px] rounded-field bg-night px-[18px] py-4 text-start font-mono text-xs leading-6" aria-live="polite">
           {lines.map((l, i) => (
             <p key={i} className={i === lines.length - 1 && !done ? "text-[#d9d2ea]" : "text-[#8b7fb0]"}>
-              {l.at} → {l.text}
+              {l.at} <span className="inline-block rtl:-scale-x-100">→</span> {l.text}
             </p>
           ))}
           {!done && !error && (
             <p className="flex items-center gap-2 text-[#d9d2ea]">
-              {clock()} → <span className="size-[7px] animate-pulse rounded-full bg-signal" /> working…
+              {clock(locale)} <span className="inline-block rtl:-scale-x-100">→</span> <span className="size-[7px] animate-pulse rounded-full bg-signal" /> {t("working")}
             </p>
           )}
         </div>
 
         {error ? (
           <div className="mt-6 w-full max-w-[520px]">
-            <Alert>We couldn&apos;t start your agent: {error}</Alert>
+            <Alert>{t("error", { error })}</Alert>
             <ButtonLink href="/dashboard" size="md" className="mt-4">
-              Go to the dashboard
+              {t("toDashboard")}
             </ButtonLink>
           </div>
         ) : (
           <p className="flex items-center gap-3 pt-6 text-sm text-body">
             <span className="size-5 animate-spin rounded-full border-2 border-brand-soft border-t-brand" aria-hidden />
-            {done ? "Taking you to your Dashboard…" : "Starting…"}
+            {done ? t("taking") : t("starting")}
           </p>
         )}
       </main>

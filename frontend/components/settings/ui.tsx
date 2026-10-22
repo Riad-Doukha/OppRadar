@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 
 import { SectionLabel } from "@/components/ui/inputs";
@@ -50,14 +51,14 @@ export function Toggle({ checked, onChange, disabled, label }: { checked: boolea
         checked ? "bg-brand" : "bg-line",
       )}
     >
-      <span className={cn("absolute top-[3px] size-[22px] rounded-full bg-white shadow-[0_1px_4px_rgb(0_0_0/0.2)] transition-[left]", checked ? "left-[25px]" : "left-[3px]")} />
+      <span className={cn("absolute top-[3px] size-[22px] rounded-full bg-white shadow-[0_1px_4px_rgb(0_0_0/0.2)] transition-[inset-inline-start]", checked ? "start-[25px]" : "start-[3px]")} />
     </button>
   );
 }
 
 /** Grey "Soon" / "never allowed" chip. */
 export function Badge({ children, tone = "muted" }: { children: ReactNode; tone?: "muted" | "success" | "warning" }) {
-  const tones = { muted: "bg-line text-muted", success: "bg-[#ecfdf5] text-success", warning: "bg-[#fffbeb] text-warning" };
+  const tones = { muted: "bg-line text-muted", success: "bg-success-tint text-success", warning: "bg-warning-tint text-warning" };
   return <span className={cn("flex h-7 items-center rounded-full px-3 text-[13px] font-bold whitespace-nowrap", tones[tone])}>{children}</span>;
 }
 
@@ -78,6 +79,7 @@ export function Choice<T extends string>({
   label: string;
   disabled?: boolean;
 }) {
+  const t = useTranslations("settings");
   return (
     <div role="radiogroup" aria-label={label} className="flex gap-[3px] rounded-[10px] bg-page p-[3px]">
       {options.map((o) => {
@@ -89,7 +91,7 @@ export function Choice<T extends string>({
             role="radio"
             aria-checked={active}
             disabled={disabled || o.soon}
-            title={o.soon ? "Coming soon" : undefined}
+            title={o.soon ? t("soonTitle") : undefined}
             onClick={() => onChange?.(o.value)}
             className={cn(
               "rounded-lg px-3.5 py-[7px] text-[13px] disabled:cursor-not-allowed",
@@ -98,7 +100,7 @@ export function Choice<T extends string>({
             )}
           >
             {o.label}
-            {o.soon && <span className="ml-1 font-mono text-[10px]">soon</span>}
+            {o.soon && <span className="ms-1 font-mono text-[10px]">{t("soon")}</span>}
           </button>
         );
       })}

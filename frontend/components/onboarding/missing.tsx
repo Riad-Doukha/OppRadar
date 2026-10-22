@@ -1,49 +1,53 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+
 import { STEPS } from "@/lib/onboarding/options";
 
 import { useWizard } from "./frame";
 
-// Keys from the API's onboarding.missing list (backend/app/services/profiles.py).
-const LABELS: Record<string, string> = {
-  "about.full_name": "Full name",
-  "about.birth_year": "Birth year",
-  "about.nationality": "Nationality",
-  "about.country": "Country",
-  "about.wilaya": "Wilaya",
-  "education.education_level": "Education level",
-  "education.field_of_study": "Field of study",
-  "education.current_or_graduation_year": "Current or graduation year",
-  "skills.skills": "At least 3 skills",
-  "skills.interests": "Interests",
-  "skills.opportunity_types": "Opportunity types",
-  "skills.preferred_location": "Preferred location",
-  "goals.goal": "Goal",
-  "alerts.channel": "A notification channel",
-  "alerts.consent.terms_privacy": "Terms and Privacy consent",
-  "alerts.consent.agent_matching": "Matching consent",
-  "alerts.consent.ai_cv_processing": "CV processing consent",
-};
+// Keys from the API's onboarding.missing list (backend/app/services/profiles.py),
+// labelled by onboarding.missing.fields.<key with dots as underscores>.
+const KNOWN = [
+  "about.full_name",
+  "about.birth_year",
+  "about.nationality",
+  "about.country",
+  "about.wilaya",
+  "education.education_level",
+  "education.field_of_study",
+  "education.current_or_graduation_year",
+  "skills.skills",
+  "skills.interests",
+  "skills.opportunity_types",
+  "skills.preferred_location",
+  "goals.goal",
+  "alerts.channel",
+  "alerts.consent.terms_privacy",
+  "alerts.consent.agent_matching",
+  "alerts.consent.ai_cv_processing",
+];
 
 /** "Some required fields are still empty" with a link to each step. */
 export function MissingList({ missing }: { missing: string[] }) {
+  const t = useTranslations("onboarding.missing");
   const { goTo } = useWizard();
-  const known = missing.filter((m) => m in LABELS);
-  if (!known.length) return <p>We couldn&apos;t finish your setup. Please try again.</p>;
+  const known = missing.filter((m) => KNOWN.includes(m));
+  if (!known.length) return <p>{t("couldNotFinish")}</p>;
   return (
     <>
-      <p>Some required fields are still empty:</p>
-      <ul className="list-disc pt-1 pl-4">
+      <p>{t("intro")}</p>
+      <ul className="list-disc pt-1 ps-4">
         {known.map((key) => {
           const step = STEPS.find((s) => s.slug === key.split(".")[0]);
           return (
             <li key={key}>
-              {LABELS[key]}
+              {t(`fields.${key.replaceAll(".", "_")}` as Parameters<typeof t>[0])}
               {step && (
                 <>
                   {" — "}
                   <button type="button" className="font-bold underline" onClick={() => goTo(step.n)}>
-                    step {step.n}
+                    {t("step", { n: step.n })}
                   </button>
                 </>
               )}

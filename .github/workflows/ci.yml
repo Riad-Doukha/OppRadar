@@ -55,6 +55,8 @@ jobs:
       - run: npm ci
       - name: ESLint
         run: npm run lint
+      - name: Translations in sync (en/fr/ar)
+        run: npm run i18n:check
       - name: Type-check
         run: npm run typecheck
       - name: Build

@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useState, type ComponentProps, type KeyboardEvent, type ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
@@ -11,7 +12,7 @@ export function Select({ className, invalid, describedBy, children, ...props }: 
       aria-invalid={invalid || undefined}
       aria-describedby={describedBy}
       className={cn(
-        "h-11 w-full appearance-none rounded-field border bg-surface select-chevron pr-9 pl-3.5 text-[15px] text-ink outline-none focus:border-brand focus:shadow-focus",
+        "h-11 w-full appearance-none rounded-field border bg-surface select-chevron pe-9 ps-3.5 text-[15px] text-ink outline-none focus:border-brand focus:shadow-focus",
         invalid ? "border-danger" : "border-line",
         className,
       )}
@@ -24,6 +25,7 @@ export function Select({ className, invalid, describedBy, children, ...props }: 
 
 /** Lavender pill used for skills, languages, interests and experience kinds. */
 export function Pill({ children, onRemove, className, muted }: { children: ReactNode; onRemove?: () => void; className?: string; muted?: boolean }) {
+  const t = useTranslations("common");
   return (
     <span
       className={cn(
@@ -34,7 +36,7 @@ export function Pill({ children, onRemove, className, muted }: { children: React
     >
       {children}
       {onRemove && (
-        <button type="button" onClick={onRemove} className="opacity-60 hover:opacity-100" aria-label={`Remove ${typeof children === "string" ? children : ""}`}>
+        <button type="button" onClick={onRemove} className="opacity-60 hover:opacity-100" aria-label={t("removeItem", { item: typeof children === "string" ? children : "" })}>
           ×
         </button>
       )}

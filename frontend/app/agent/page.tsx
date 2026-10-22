@@ -1,10 +1,10 @@
-import type { Metadata } from "next";
 import { Suspense } from "react";
 
 import { AgentPage } from "@/components/agent/agent-page";
 import { AppShell } from "@/components/app/app-shell";
+import { titled } from "@/i18n/metadata";
 
-export const metadata: Metadata = { title: "Ask the agent" };
+export const generateMetadata = titled("agent");
 
 export default function Page() {
   return (

@@ -1,0 +1,92 @@
+{
+  "greeting": {
+    "morning": "Bonjour",
+    "afternoon": "Bon après-midi",
+    "evening": "Bonsoir",
+    "named": "{greeting}, {name}"
+  },
+  "loadError": "Impossible de charger votre tableau de bord : {error}. L'API est-elle lancée ?",
+  "scanning": "Votre agent cherche pour vous.",
+  "matchingSoon": "La mise en correspondance arrive bientôt — pour l'instant nous montrons les opportunités ouvertes des types choisis.",
+  "demo": "Vous consultez la démo en lecture seule. L'enregistrement est désactivé.",
+  "countsError": "Impossible de charger vos compteurs : {error}",
+  "tabs": {
+    "label": "Opportunités",
+    "for_you": "Pour vous",
+    "closing": "Bientôt clôturées",
+    "saved": "Enregistrées",
+    "applications": "Mes candidatures"
+  },
+  "stats": {
+    "forYou": "ouvertes pour vous",
+    "closing": "clôturent cette semaine",
+    "saved": "enregistrées",
+    "applications": "mes candidatures"
+  },
+  "feed": {
+    "allTypes": "Tous les types",
+    "clear": "Effacer les filtres",
+    "loading": "Chargement des opportunités…",
+    "loadingMore": "Chargement…",
+    "error": "Impossible de charger les opportunités : {error}",
+    "emptySavedTitle": "Rien d'enregistré pour l'instant",
+    "emptySaved": "Appuyez sur Enregistrer sur une opportunité pour la garder ici.",
+    "noResultsTitle": "Aucun résultat",
+    "noResults": "Essayez une autre recherche ou effacez les filtres.",
+    "emptyTitle": "Rien d'ouvert pour le moment",
+    "empty": "De nouvelles opportunités sont ajoutées au fil des analyses. Revenez bientôt.",
+    "more": "Voir plus ({left} restantes)"
+  },
+  "ask": {
+    "placeholder": "Demandez à l'agent : collez un lien ou citez une opportunité, un type ou un domaine.",
+    "label": "Demander à l'agent",
+    "submit": "Demander"
+  },
+  "profile": {
+    "label": "Votre profil",
+    "edit": "Modifier le profil",
+    "completeness": "Complétude du profil",
+    "finish": "Terminez la configuration de votre profil pour que l'agent puisse vous proposer des correspondances.",
+    "almost": "Presque fini — {tip}",
+    "complete": "Votre profil est complet.",
+    "tips": {
+      "links": "ajoutez un lien portfolio ou GitHub — l'agent trouve mieux avec des liens.",
+      "experience": "ajoutez une expérience ou un certificat.",
+      "skillLevels": "indiquez un niveau pour vos compétences.",
+      "languages": "ajoutez les langues que vous parlez.",
+      "institution": "ajoutez votre établissement pour trouver des opportunités sur le campus."
+    }
+  },
+  "radar": {
+    "label": "Votre agent",
+    "active": "Radar actif",
+    "ready": "Agent prêt",
+    "notStarted": "Agent non démarré",
+    "scanningShort": "analyse en cours",
+    "soonShort": "correspondances bientôt",
+    "now": "now :",
+    "soon": "bientôt :",
+    "fit": "{count} opportunités ouvertes correspondent à vos types",
+    "close": "{count} clôturent dans les 7 prochains jours",
+    "scores": "scores de correspondance + vérification d'éligibilité",
+    "whenMatching": "Disponible au lancement des correspondances",
+    "run": "Lancer une analyse",
+    "history": "Historique",
+    "loading": "Chargement de votre agent…"
+  },
+  "loading": "Chargement de votre tableau de bord…",
+  "scan": {
+    "loaded": "Profil chargé : {name}",
+    "started": "Agent démarré",
+    "fit": "{count} opportunités ouvertes correspondent aux types choisis",
+    "close": "{count} clôturent dans les 7 prochains jours",
+    "deadlineSort": "Les scores arrivent avec la mise en correspondance — tri par date limite pour l'instant",
+    "title": "Votre agent lance sa première analyse",
+    "body": "Vérification des opportunités ouvertes qui correspondent à vos types et préférences. Scores et alertes suivront dès le lancement de la mise en correspondance.",
+    "working": "en cours…",
+    "error": "Impossible de démarrer votre agent : {error}",
+    "toDashboard": "Aller au tableau de bord",
+    "taking": "Direction votre tableau de bord…",
+    "starting": "Démarrage…"
+  }
+}

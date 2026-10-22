@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 
 import { initialsOf } from "@/components/app/app-shell";
@@ -11,27 +12,19 @@ import { Button, ButtonLink } from "@/components/ui/button";
 import { Pill, SectionLabel } from "@/components/ui/inputs";
 import { Loading, Skeleton } from "@/components/ui/skeleton";
 import { api, type Me } from "@/lib/api/client";
-import {
-  AVAILABILITY,
-  CURRENT_YEARS,
-  EDUCATION_LEVELS,
-  EXPERIENCE_KINDS,
-  FREQUENCIES,
-  PREFERRED_LOCATIONS,
-  labelOf,
-} from "@/lib/onboarding/options";
+import { labelOf, useOptions } from "@/lib/onboarding/options";
 import { firstIncompleteStep, isComplete } from "@/lib/onboarding/status";
-import { TYPE_LABELS } from "@/lib/opportunities";
 import { cn } from "@/lib/utils";
 
-const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 const edit = (step: number) => `/onboarding?step=${step}`;
 
 /** "My profile" (Figma): the whole profile at a glance; each Edit opens that wizard step. */
 export function ProfilePage() {
+  const t = useTranslations("profile");
+  const o = useOptions();
   const me = useQuery({ queryKey: ["me"], queryFn: () => api<Me>("/me") });
 
-  if (me.isError) return <Alert>We couldn&apos;t load your profile: {me.error.message}</Alert>;
+  if (me.isError) return <Alert>{t("loadError", { error: me.error.message })}</Alert>;
   if (!me.data) return <ProfileSkeleton />;
   const p = me.data;
   const complete = isComplete(p);
@@ -47,26 +40,27 @@ export function ProfilePage() {
   }
 
   const headline = [
-    [p.current_year && labelOf(CURRENT_YEARS, p.current_year).replace(" year", "-year"), p.field_of_study].filter(Boolean).join(" "),
-    [p.institution, p.wilaya].filter(Boolean).join(", "),
-    p.graduation_year && `graduating ${p.graduation_year}`,
+    [p.current_year && labelOf(o.CURRENT_YEARS, p.current_year), p.field_of_study].filter(Boolean).join(" · "),
+    [p.institution, o.wilayaLabel(p.wilaya)].filter(Boolean).join(", "),
+    p.graduation_year && t("graduating", { year: p.graduation_year }),
   ].filter(Boolean).join(" · ");
 
   const age = p.birth_year ? new Date().getFullYear() - p.birth_year : null;
   const n = p.notifications;
   const link = (kind: string) => p.links.find((l) => l.kind === kind)?.url;
+  const tip = missingOptional(p);
 
   return (
     <div className="mx-auto max-w-[1112px]">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="font-display text-2xl font-bold tracking-[-0.5px] text-ink sm:text-[28px]">My profile</h1>
+        <h1 className="font-display text-2xl font-bold tracking-[-0.5px] text-ink sm:text-[28px]">{t("title")}</h1>
         <div className="flex gap-2.5">
           <Button variant="ghost" className="h-10 text-sm" onClick={download}>
-            Download my data
+            {t("download")}
           </Button>
           {!p.is_demo && (
             <ButtonLink href={edit(1)} variant="outline" className="h-10 text-sm">
-              Re-upload CV
+              {t("reupload")}
             </ButtonLink>
           )}
         </div>
@@ -74,7 +68,7 @@ export function ProfilePage() {
 
       {p.is_demo && (
         <Alert tone="info" className="mt-4">
-          This is the read-only demo profile. Editing is turned off.
+          {t("demo")}
         </Alert>
       )}
 
@@ -84,82 +78,83 @@ export function ProfilePage() {
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2.5">
             <p className="font-display text-[22px] font-bold text-ink">{p.full_name || p.email}</p>
-            <span className={cn("flex h-7 items-center rounded-full px-3 text-[13px] font-bold", complete ? "bg-[#ecfdf5] text-success" : "bg-[#fffbeb] text-warning")}>
-              {complete ? "Ready" : "Incomplete"}
+            <span className={cn("flex h-7 items-center rounded-full px-3 text-[13px] font-bold", complete ? "bg-success-tint text-success" : "bg-warning-tint text-warning")}>
+              {complete ? t("ready") : t("incomplete")}
             </span>
           </div>
           {headline && <p className="pt-1 text-[13px] text-muted">{headline}</p>}
           {p.skills.length > 0 && (
             <div className="flex flex-wrap gap-1.5 pt-2.5">
               {p.skills.slice(0, 4).map((s) => <Pill key={s.id ?? s.name} className="h-[26px] text-xs">{s.name}</Pill>)}
-              {p.skills.length > 4 && <Pill muted className="h-[26px] text-xs">+{p.skills.length - 4} more</Pill>}
+              {p.skills.length > 4 && <Pill muted className="h-[26px] text-xs">{t("more", { count: p.skills.length - 4 })}</Pill>}
             </div>
           )}
         </div>
         <div className="w-full shrink-0 md:w-[260px]">
           <div className="flex items-baseline justify-between">
-            <SectionLabel>Completeness</SectionLabel>
+            <SectionLabel>{t("completeness")}</SectionLabel>
             <span className="font-mono text-base font-bold text-ink">{pct}%</span>
           </div>
-          <div className="mt-1.5 h-[9px] overflow-hidden rounded-[5px] bg-line" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label="Profile completeness">
+          <div className="mt-1.5 h-[9px] overflow-hidden rounded-[5px] bg-line" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label={t("completenessLabel")}>
             <div className="h-full rounded-[5px] bg-brand" style={{ width: `${pct}%` }} />
           </div>
           <p className="pt-2 text-xs text-muted">
-            {!complete ? (
-              <>
-                Some required fields are missing —{" "}
-                <Link href={edit(firstIncompleteStep(p))} className="text-[13px] font-bold text-brand">
-                  continue setup
-                </Link>
-              </>
-            ) : pct < 100 ? (
-              <>
-                {missingOptional(p)} —{" "}
-                <Link href={edit(missingOptionalStep(p))} className="text-[13px] font-bold text-brand">
-                  add it
-                </Link>
-              </>
-            ) : (
-              "Your profile is complete."
-            )}
+            {!complete
+              ? t.rich("missingRequired", {
+                  link: (c) => (
+                    <Link href={edit(firstIncompleteStep(p))} className="text-[13px] font-bold text-brand">
+                      {c}
+                    </Link>
+                  ),
+                })
+              : pct < 100
+                ? t.rich("addIt", {
+                    tip: t(`tips.${tip}`),
+                    link: (c) => (
+                      <Link href={edit(missingOptionalStep(p))} className="text-[13px] font-bold text-brand">
+                        {c}
+                      </Link>
+                    ),
+                  })
+                : t("complete")}
           </p>
         </div>
       </section>
 
       <div className="grid gap-4 pt-[18px] md:grid-cols-2">
-        <Card icon="section-about" title="About you" step={1} readOnly={p.is_demo}>
+        <Card icon="section-about" title={t("cards.about")} step={1} readOnly={p.is_demo}>
           <Facts
             rows={[
-              ["Full name", p.full_name],
-              ["Birth year", p.birth_year ? `${p.birth_year} (${age})` : null],
-              ["Nationality", p.nationality],
-              ["Location", [p.wilaya, p.country].filter(Boolean).join(", ")],
-              ["Languages", p.languages.map((l) => `${l.language} ${l.level}`).join(" · ")],
+              [t("facts.fullName"), p.full_name],
+              [t("facts.birthYear"), p.birth_year ? t("facts.age", { year: p.birth_year, age: age ?? 0 }) : null],
+              [t("facts.nationality"), o.nationalityLabel(p.nationality)],
+              [t("facts.location"), [o.wilayaLabel(p.wilaya), o.countryLabel(p.country)].filter(Boolean).join(", ")],
+              [t("facts.languages"), p.languages.map((l) => `${l.language} ${labelOf(o.LANGUAGE_LEVELS, l.level)}`).join(" · ")],
             ]}
           />
         </Card>
 
-        <Card icon="section-education" title="Education" step={2} readOnly={p.is_demo}>
+        <Card icon="section-education" title={t("cards.education")} step={2} readOnly={p.is_demo}>
           <Facts
             rows={[
-              ["Level", labelOf(EDUCATION_LEVELS, p.education_level)],
-              ["Field", p.field_of_study],
-              ["Institution", p.institution],
-              ["Year", [p.current_year && labelOf(CURRENT_YEARS, p.current_year), p.graduation_year && `graduating ${p.graduation_year}`].filter(Boolean).join(" · ")],
-              ["GPA", p.gpa_value != null ? `${p.gpa_value} / ${p.gpa_scale}` : null],
+              [t("facts.level"), labelOf(o.EDUCATION_LEVELS, p.education_level)],
+              [t("facts.field"), p.field_of_study],
+              [t("facts.institution"), p.institution],
+              [t("facts.year"), [p.current_year && labelOf(o.CURRENT_YEARS, p.current_year), p.graduation_year && t("graduating", { year: p.graduation_year })].filter(Boolean).join(" · ")],
+              [t("facts.gpa"), p.gpa_value != null ? `${p.gpa_value} / ${p.gpa_scale}` : null],
             ]}
           />
         </Card>
 
-        <Card icon="section-experience" title="Experience" step={2} readOnly={p.is_demo}>
+        <Card icon="section-experience" title={t("cards.experience")} step={2} readOnly={p.is_demo}>
           {p.experiences.length + p.certificates.length === 0 ? (
-            <Empty step={2}>No experience or certificates yet</Empty>
+            <Empty step={2}>{t("emptyExperience")}</Empty>
           ) : (
             <div className="flex flex-col gap-[9px]">
               {p.experiences.map((x) => (
                 <div key={x.id} className="rounded-field border border-line px-3.5 py-[11px]">
                   <div className="flex flex-wrap items-center gap-[9px]">
-                    <Pill className="h-[23px] text-[11px]">{labelOf(EXPERIENCE_KINDS, x.kind)}</Pill>
+                    <Pill className="h-[23px] text-[11px]">{labelOf(o.EXPERIENCE_KINDS, x.kind)}</Pill>
                     <span className="text-[14.5px] font-bold text-ink">{[x.title, x.organization].filter(Boolean).join(" — ")}</span>
                     {x.year && <span className="font-mono text-xs text-muted">{x.year}</span>}
                   </div>
@@ -167,15 +162,15 @@ export function ProfilePage() {
                 </div>
               ))}
               {p.certificates.map((c) => (
-                <div key={c.id} className="rounded-field border border-line bg-[#fbfafe] px-3.5 py-[11px]">
+                <div key={c.id} className="rounded-field border border-line bg-raised px-3.5 py-[11px]">
                   <p className="text-[14.5px] font-bold text-body">{[c.title, c.issuer].filter(Boolean).join(" — ")}</p>
                   <p className="text-[13px] text-body">
-                    Certificate{c.year ? ` · ${c.year}` : ""}
+                    {t("certificate")}{c.year ? ` · ${c.year}` : ""}
                     {c.credential_url && (
                       <>
                         {" · "}
                         <a href={c.credential_url} target="_blank" rel="noopener noreferrer" className="font-bold text-brand">
-                          credential ↗
+                          {t("credential")} <span className="inline-block rtl:-scale-x-100">↗</span>
                         </a>
                       </>
                     )}
@@ -186,50 +181,50 @@ export function ProfilePage() {
           )}
         </Card>
 
-        <Card icon="section-skills" title="Skills & interests" step={3} readOnly={p.is_demo}>
-          <SectionLabel>Skills</SectionLabel>
+        <Card icon="section-skills" title={t("cards.skills")} step={3} readOnly={p.is_demo}>
+          <SectionLabel>{t("skills")}</SectionLabel>
           <div className="flex flex-wrap gap-[7px] pt-2">
-            {p.skills.length ? p.skills.map((s) => <Pill key={s.id ?? s.name} className="h-8 text-[12.5px]">{s.name}{s.level && ` · ${cap(s.level)}`}</Pill>) : <Empty step={3}>No skills yet</Empty>}
+            {p.skills.length ? p.skills.map((s) => <Pill key={s.id ?? s.name} className="h-8 text-[12.5px]">{s.name}{s.level && ` · ${labelOf(o.SKILL_LEVELS, s.level)}`}</Pill>) : <Empty step={3}>{t("noSkills")}</Empty>}
           </div>
-          <SectionLabel className="pt-4">Interests</SectionLabel>
+          <SectionLabel className="pt-4">{t("interests")}</SectionLabel>
           <div className="flex flex-wrap gap-[7px] pt-2">
-            {p.interests.length ? p.interests.map((i) => <Pill key={i} muted className="h-8 text-[12.5px]">{i}</Pill>) : <Empty step={3}>No interests yet</Empty>}
+            {p.interests.length ? p.interests.map((i) => <Pill key={i} muted className="h-8 text-[12.5px]">{i}</Pill>) : <Empty step={3}>{t("noInterests")}</Empty>}
           </div>
-          <SectionLabel className="pt-4">Types wanted</SectionLabel>
+          <SectionLabel className="pt-4">{t("types")}</SectionLabel>
           <div className="flex flex-wrap gap-[7px] pt-2">
-            {p.opportunity_types.length ? p.opportunity_types.map((t) => <Pill key={t} className="h-8 text-[12.5px]">{TYPE_LABELS[t]} ✓</Pill>) : <Empty step={3}>None chosen</Empty>}
+            {p.opportunity_types.length ? p.opportunity_types.map((type) => <Pill key={type} className="h-8 text-[12.5px]">{o.typeLabel(type)} ✓</Pill>) : <Empty step={3}>{t("noTypes")}</Empty>}
           </div>
           {(p.preferred_location || p.availability) && (
             <p className="pt-3 text-[13px] text-muted">
-              {[labelOf(PREFERRED_LOCATIONS, p.preferred_location), labelOf(AVAILABILITY, p.availability)].filter(Boolean).join(" · ")}
+              {[labelOf(o.PREFERRED_LOCATIONS, p.preferred_location), labelOf(o.AVAILABILITY, p.availability)].filter(Boolean).join(" · ")}
             </p>
           )}
         </Card>
 
-        <Card icon="section-goal" title="Goal & links" step={4} readOnly={p.is_demo}>
+        <Card icon="section-goal" title={t("cards.goal")} step={4} readOnly={p.is_demo}>
           {p.goal ? (
-            <p className="rounded-r-lg border-l-[3px] border-brand bg-page px-3.5 py-2.5 text-[13px] text-body">&ldquo;{p.goal}&rdquo;</p>
+            <p className="rounded-e-lg border-s-[3px] border-brand bg-page px-3.5 py-2.5 text-[13px] text-body">&ldquo;{p.goal}&rdquo;</p>
           ) : (
-            <Empty step={4}>No goal yet</Empty>
+            <Empty step={4}>{t("noGoal")}</Empty>
           )}
           <div className="pt-3.5">
             <Facts
               rows={(["linkedin", "github", "portfolio", "other"] as const).map((kind) => {
                 const url = link(kind);
-                const label = { linkedin: "LinkedIn", github: "GitHub", portfolio: "Portfolio", other: "Other link" }[kind];
                 return [
-                  label,
+                  t(`links.${kind}`),
                   url ? (
-                    <a href={url.startsWith("http") ? url : `https://${url}`} target="_blank" rel="noopener noreferrer" className="truncate hover:text-brand">
+                    <a href={url.startsWith("http") ? url : `https://${url}`} target="_blank" rel="noopener noreferrer" className="block truncate hover:text-brand">
                       {url.replace(/^https?:\/\//, "")}
                     </a>
                   ) : (
                     <span className="font-normal">
-                      not added{!p.is_demo && (
+                      {t("notAdded")}
+                      {!p.is_demo && (
                         <>
                           {" — "}
                           <Link href={edit(4)} className="text-[13px] font-bold text-brand">
-                            add
+                            {t("add")}
                           </Link>
                         </>
                       )}
@@ -241,22 +236,22 @@ export function ProfilePage() {
           </div>
         </Card>
 
-        <Card icon="section-alerts" title="Alerts & consent" step={5} readOnly={p.is_demo}>
+        <Card icon="section-alerts" title={t("cards.alerts")} step={5} readOnly={p.is_demo}>
           <Facts
             rows={[
               [
-                "Channels",
+                t("facts.channels"),
                 <span key="c" className="flex flex-wrap items-center gap-1.5">
-                  {[n.email_enabled && "Email ✓", n.telegram_enabled && "Telegram ✓"].filter(Boolean).join(" · ") || "None"}
-                  <span className="rounded-full bg-line px-3 py-0.5 text-[13px] text-muted">SMS soon</span>
+                  {[n.email_enabled && t("email"), n.telegram_enabled && t("telegram")].filter(Boolean).join(" · ") || t("none")}
+                  <span className="rounded-full bg-line px-3 py-0.5 text-[13px] text-muted">{t("smsSoon")}</span>
                 </span>,
               ],
-              ["Threshold", <span key="t" className="font-mono">≥ {n.threshold}% match</span>],
-              ["Frequency", labelOf(FREQUENCIES, n.frequency).split(":")[0]],
-              ["Quiet hours", n.quiet_start && n.quiet_end ? <span key="q" className="font-mono">{n.quiet_start.slice(0, 5)} – {n.quiet_end.slice(0, 5)}</span> : "None"],
+              [t("facts.threshold"), <span key="t" className="font-mono">{t("facts.thresholdValue", { n: n.threshold })}</span>],
+              [t("facts.frequency"), labelOf(o.FREQUENCIES, n.frequency).split(/\s*[:：]/)[0]],
+              [t("facts.quiet"), n.quiet_start && n.quiet_end ? <span key="q" className="font-mono" dir="ltr">{n.quiet_start.slice(0, 5)} – {n.quiet_end.slice(0, 5)}</span> : t("none")],
               [
-                "Consents",
-                [p.consents.includes("terms_privacy") && "Terms ✓", p.consents.includes("agent_matching") && "Agent profile use ✓", p.consents.includes("ai_cv_processing") && "AI CV processing ✓"].filter(Boolean).join(" · ") || "None",
+                t("facts.consents"),
+                [p.consents.includes("terms_privacy") && t("consent.terms"), p.consents.includes("agent_matching") && t("consent.matching"), p.consents.includes("ai_cv_processing") && t("consent.cv")].filter(Boolean).join(" · ") || t("none"),
               ],
             ]}
           />
@@ -265,18 +260,21 @@ export function ProfilePage() {
 
       <section className="mt-4 flex flex-col gap-4 rounded-card border border-line bg-surface px-6 py-5 shadow-[0_1px_1.5px_rgb(30_17_62/0.05)] sm:flex-row sm:items-center">
         <div className="flex-1">
-          <SectionLabel>Data &amp; privacy</SectionLabel>
+          <SectionLabel>{t("privacy.title")}</SectionLabel>
           <p className="pt-2.5 text-sm text-body">
-            Your CV file is stored in a private bucket only you can access, and deleted on request.{" "}
+            {t("privacy.body")}{" "}
             <button type="button" onClick={download} className="text-[13px] font-bold text-brand">
-              Export
+              {t("privacy.export")}
             </button>{" "}
-            · <span className="text-[13px] font-bold text-muted" title="Coming soon">Delete my account (soon)</span>
+            ·{" "}
+            <Link href="/settings" className="text-[13px] font-bold text-brand">
+              {t("privacy.delete")}
+            </Link>
           </p>
         </div>
         <span className="flex shrink-0 items-center gap-1.5 self-start rounded-full bg-page px-3 py-1.5 text-xs font-bold text-body sm:self-center">
-          <Image src="/icons/lock-muted.svg" alt="" width={13} height={13} />
-          Only you can see this
+          <Image src="/icons/lock-muted.svg" alt="" width={13} height={13} className="icon-adapt" />
+          {t("privacy.only")}
         </span>
       </section>
     </div>
@@ -285,12 +283,12 @@ export function ProfilePage() {
 
 /** First optional section that's empty (same order as the backend's completeness). */
 function missingOptional(p: Me) {
-  if (!p.links.length) return "Add a portfolio or GitHub link to reach 100%";
-  if (!p.experiences.length && !p.certificates.length) return "Add an experience or certificate";
-  if (!p.skills.some((s) => s.level)) return "Set a level for your skills";
-  if (!p.languages.length) return "Add your languages";
-  if (!p.institution) return "Add your institution";
-  return "A few optional details are missing";
+  if (!p.links.length) return "links";
+  if (!p.experiences.length && !p.certificates.length) return "experience";
+  if (!p.skills.some((s) => s.level)) return "skillLevels";
+  if (!p.languages.length) return "languages";
+  if (!p.institution) return "institution";
+  return "other";
 }
 
 function missingOptionalStep(p: Me) {
@@ -302,6 +300,7 @@ function missingOptionalStep(p: Me) {
 }
 
 function Card({ icon, title, step, readOnly, children }: { icon: string; title: string; step: number; readOnly: boolean; children: ReactNode }) {
+  const t = useTranslations("profile");
   return (
     <section className="flex flex-col rounded-card border border-line bg-surface px-6 py-5">
       <div className="flex items-center justify-between">
@@ -312,8 +311,8 @@ function Card({ icon, title, step, readOnly, children }: { icon: string; title: 
           {title}
         </h2>
         {!readOnly && (
-          <ButtonLink href={edit(step)} variant="ghost" className="h-[34px] px-4 text-[13px]" aria-label={`Edit ${title}`}>
-            Edit
+          <ButtonLink href={edit(step)} variant="ghost" className="h-[34px] px-4 text-[13px]" aria-label={t("editCard", { title })}>
+            {t("edit")}
           </ButtonLink>
         )}
       </div>
@@ -336,19 +335,21 @@ function Facts({ rows }: { rows: [string, ReactNode][] }) {
 }
 
 function Empty({ step, children }: { step: number; children: ReactNode }) {
+  const t = useTranslations("profile");
   return (
     <p className="text-sm text-muted">
       {children} —{" "}
       <Link href={edit(step)} className="font-bold text-brand">
-        add
+        {t("add")}
       </Link>
     </p>
   );
 }
 
 function ProfileSkeleton() {
+  const t = useTranslations("profile");
   return (
-    <Loading label="Loading your profile…" className="mx-auto max-w-[1112px]">
+    <Loading label={t("loading")} className="mx-auto max-w-[1112px]">
       <div className="flex justify-between">
         <Skeleton className="h-8 w-40" />
         <Skeleton className="h-10 w-56 rounded-field" />

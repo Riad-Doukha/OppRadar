@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "gen:api": "openapi-typescript lib/api/openapi.json -o lib/api/schema.d.ts"
+    "gen:api": "openapi-typescript lib/api/openapi.json -o lib/api/schema.d.ts",
+    "i18n:check": "node scripts/check-messages.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.7.0",
@@ -18,6 +19,7 @@
     "clsx": "^2.1.1",
     "lucide-react": "^0.544.0",
     "next": "^15.1.0",
+    "next-intl": "^4.14.9",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "socket.io-client": "^4.8.1",

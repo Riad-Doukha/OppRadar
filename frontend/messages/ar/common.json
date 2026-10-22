@@ -1,0 +1,67 @@
+{
+  "loading": "جارٍ التحميل…",
+  "home": "الصفحة الرئيسية لـ OppRadar",
+  "soon": "قريبًا",
+  "comingSoon": "قريبًا",
+  "close": "إغلاق",
+  "cancel": "إلغاء",
+  "save": "حفظ",
+  "saving": "جارٍ الحفظ…",
+  "saved": "تم الحفظ",
+  "edit": "تعديل",
+  "remove": "إزالة",
+  "removeItem": "إزالة {item}",
+  "back": "رجوع",
+  "continue": "متابعة",
+  "retry": "حاول مجددًا",
+  "show": "إظهار",
+  "hide": "إخفاء",
+  "showPassword": "إظهار كلمة المرور",
+  "hidePassword": "إخفاء كلمة المرور",
+  "optional": "اختياري",
+  "yes": "نعم",
+  "no": "لا",
+  "on": "مفعّل",
+  "off": "معطّل",
+  "theme": {
+    "toLight": "التبديل إلى الوضع الفاتح",
+    "toDark": "التبديل إلى الوضع الداكن",
+    "system": "النظام",
+    "light": "فاتح",
+    "dark": "داكن"
+  },
+  "language": {
+    "label": "اللغة",
+    "change": "تغيير اللغة (الحالية: {name})"
+  },
+  "errors": {
+    "generic": "حدث خطأ ما. يُرجى المحاولة مجددًا.",
+    "network": "تعذّر الاتصال بـ OppRadar. تحقّق من اتصالك وحاول مجددًا."
+  },
+  "demo": {
+    "readOnly": "عرض تجريبي للقراءة فقط"
+  },
+  "time": {
+    "yesterday": "أمس"
+  },
+  "titles": {
+    "checkEmail": "تحقّق من بريدك",
+    "forgotPassword": "إعادة تعيين كلمة المرور",
+    "login": "تسجيل الدخول",
+    "resetPassword": "اختر كلمة مرور جديدة",
+    "signup": "أنشئ حسابك",
+    "agent": "اسأل الوكيل",
+    "applications": "الطلبات",
+    "apply": "مساعد التقديم",
+    "dashboard": "لوحة التحكم",
+    "notifications": "الإشعارات",
+    "onboarding": "إعداد ملفك الشخصي",
+    "opportunity": "فرصة",
+    "premiumCheckout": "احجز بريميوم",
+    "premium": "بريميوم (قريبًا)",
+    "premiumReserved": "حجز بريميوم الخاص بك",
+    "profile": "ملفي الشخصي",
+    "scan": "تشغيل وكيلك",
+    "settings": "الإعدادات"
+  }
+}

@@ -26,7 +26,7 @@ export function AuthTitle({ title, subtitle, center }: { title: string; subtitle
 export function AuthIcon({ src, tone }: { src: string; tone: "brand" | "success" }) {
   return (
     <div className="flex justify-center pt-1">
-      <div className={cn("flex items-center justify-center", tone === "brand" ? "size-[72px] rounded-3xl bg-brand-soft" : "size-16 rounded-full bg-[#ecfdf5]")}>
+      <div className={cn("flex items-center justify-center", tone === "brand" ? "size-[72px] rounded-3xl bg-brand-soft" : "size-16 rounded-full bg-success-tint")}>
         {/* eslint-disable-next-line @next/next/no-img-element -- fixed-size decorative SVG */}
         <img src={src} alt="" width={tone === "brand" ? 34 : 30} height={tone === "brand" ? 34 : 30} />
       </div>
