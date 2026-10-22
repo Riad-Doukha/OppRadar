@@ -344,6 +344,36 @@ class SupabaseRepository:
     def clear_chat(self, user_id: str) -> None:
         self.db.table("chat_messages").delete().eq("user_id", user_id).execute()
 
+    # -- premium early access --------------------------------------------------------- #
+    def get_reservation(self, user_id: str) -> Row | None:
+        data = (
+            self.db.table("premium_reservations").select("*").eq("user_id", user_id).execute().data
+        )
+        return data[0] if data else None
+
+    def upsert_reservation(self, user_id: str, fields: Row) -> Row:
+        data = (
+            self.db.table("premium_reservations")
+            .upsert(_json({"user_id": user_id, **fields}), on_conflict="user_id")
+            .execute()
+            .data
+        )
+        return _first(data, "reservation")
+
+    def delete_reservation(self, user_id: str) -> None:
+        data = self.db.table("premium_reservations").delete().eq("user_id", user_id).execute().data
+        _first(data, "reservation")
+
+    def count_reservations(self, before: datetime | None = None) -> int:
+        query: Any = self.db.table("premium_reservations").select(
+            "user_id", count="exact", head=True
+        )
+        if before is not None:
+            query = query.lte(
+                "created_at", before if isinstance(before, str) else before.isoformat()
+            )
+        return query.execute().count or 0
+
     # -- notifications -------------------------------------------------------------- #
     def list_notifications(
         self, user_id: str, kinds: list[str] | None, since: datetime, limit: int

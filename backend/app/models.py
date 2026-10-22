@@ -477,6 +477,37 @@ class ChatHistory(_Out):
     ai_available: bool = False  # flips when the AI chat phase is wired in
 
 
+# --------------------------------------------------------------------------- #
+# Premium early access (payments not live yet)
+# --------------------------------------------------------------------------- #
+PremiumPlan = Literal["premium", "clubs"]
+Billing = Literal["monthly", "yearly"]
+PaymentMethod = Literal["cib", "edahabia", "baridimob", "ccp"]
+
+
+class ReservationIn(_In):
+    plan: PremiumPlan = "premium"
+    billing: Billing = "monthly"
+    payment_method: PaymentMethod | None = None
+
+
+class Reservation(_Out):
+    model_config = _READ
+
+    plan: PremiumPlan
+    billing: Billing
+    payment_method: PaymentMethod | None = None
+    position: int  # place in the early-access queue (1 = first)
+    created_at: datetime
+
+
+class PremiumStatus(_Out):
+    current_plan: Literal["free"] = "free"  # nobody can pay yet
+    payments_live: bool = False
+    reservation: Reservation | None = None
+    reservations_total: int = 0
+
+
 class OpportunityFilters(BaseModel):
     q: str | None = None
     types: list[OpportunityTypeName] = Field(default_factory=list)

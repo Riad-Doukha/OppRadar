@@ -489,6 +489,47 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/me/premium": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Status
+         * @description Current plan (always Free until payments launch) and any early-access reservation.
+         */
+        get: operations["get_status_me_premium_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/premium/reservation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Reserve
+         * @description Reserve early access / join the Clubs waitlist. Nothing is charged.
+         */
+        put: operations["reserve_me_premium_reservation_put"];
+        post?: never;
+        /** Cancel */
+        delete: operations["cancel_me_premium_reservation_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/documents": {
         parameters: {
             query?: never;
@@ -1686,10 +1727,69 @@ export interface components {
             /** Offset */
             offset: number;
         };
+        /** PremiumStatus */
+        PremiumStatus: {
+            /**
+             * Current Plan
+             * @default free
+             * @constant
+             */
+            current_plan: "free";
+            /**
+             * Payments Live
+             * @default false
+             */
+            payments_live: boolean;
+            reservation: components["schemas"]["Reservation"] | null;
+            /**
+             * Reservations Total
+             * @default 0
+             */
+            reservations_total: number;
+        };
         /** ReadRequest */
         ReadRequest: {
             /** Ids */
             ids?: string[] | null;
+        };
+        /** Reservation */
+        Reservation: {
+            /**
+             * Plan
+             * @enum {string}
+             */
+            plan: "premium" | "clubs";
+            /**
+             * Billing
+             * @enum {string}
+             */
+            billing: "monthly" | "yearly";
+            /** Payment Method */
+            payment_method: ("cib" | "edahabia" | "baridimob" | "ccp") | null;
+            /** Position */
+            position: number;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /** ReservationIn */
+        ReservationIn: {
+            /**
+             * Plan
+             * @default premium
+             * @enum {string}
+             */
+            plan: "premium" | "clubs";
+            /**
+             * Billing
+             * @default monthly
+             * @enum {string}
+             */
+            billing: "monthly" | "yearly";
+            /** Payment Method */
+            payment_method?: ("cib" | "edahabia" | "baridimob" | "ccp") | null;
         };
         /**
          * SettingsPatch
@@ -2673,6 +2773,79 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_status_me_premium_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PremiumStatus"];
+                };
+            };
+        };
+    };
+    reserve_me_premium_reservation_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReservationIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PremiumStatus"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    cancel_me_premium_reservation_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PremiumStatus"];
                 };
             };
         };

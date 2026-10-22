@@ -1387,6 +1387,104 @@
     }
    }
   },
+  "/me/premium": {
+   "get": {
+    "tags": [
+     "premium"
+    ],
+    "summary": "Get Status",
+    "description": "Current plan (always Free until payments launch) and any early-access reservation.",
+    "operationId": "get_status_me_premium_get",
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/PremiumStatus"
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ]
+   }
+  },
+  "/me/premium/reservation": {
+   "put": {
+    "tags": [
+     "premium"
+    ],
+    "summary": "Reserve",
+    "description": "Reserve early access / join the Clubs waitlist. Nothing is charged.",
+    "operationId": "reserve_me_premium_reservation_put",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/ReservationIn"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/PremiumStatus"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ]
+   },
+   "delete": {
+    "tags": [
+     "premium"
+    ],
+    "summary": "Cancel",
+    "operationId": "cancel_me_premium_reservation_delete",
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/PremiumStatus"
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ]
+   }
+  },
   "/documents": {
    "get": {
     "tags": [
@@ -5105,6 +5203,44 @@
     ],
     "title": "OpportunityPage"
    },
+   "PremiumStatus": {
+    "properties": {
+     "current_plan": {
+      "type": "string",
+      "const": "free",
+      "title": "Current Plan",
+      "default": "free"
+     },
+     "payments_live": {
+      "type": "boolean",
+      "title": "Payments Live",
+      "default": false
+     },
+     "reservation": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/Reservation"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "reservations_total": {
+      "type": "integer",
+      "title": "Reservations Total",
+      "default": 0
+     }
+    },
+    "type": "object",
+    "required": [
+     "current_plan",
+     "payments_live",
+     "reservation",
+     "reservations_total"
+    ],
+    "title": "PremiumStatus"
+   },
    "ReadRequest": {
     "properties": {
      "ids": {
@@ -5126,6 +5262,103 @@
     "additionalProperties": false,
     "type": "object",
     "title": "ReadRequest"
+   },
+   "Reservation": {
+    "properties": {
+     "plan": {
+      "type": "string",
+      "enum": [
+       "premium",
+       "clubs"
+      ],
+      "title": "Plan"
+     },
+     "billing": {
+      "type": "string",
+      "enum": [
+       "monthly",
+       "yearly"
+      ],
+      "title": "Billing"
+     },
+     "payment_method": {
+      "anyOf": [
+       {
+        "type": "string",
+        "enum": [
+         "cib",
+         "edahabia",
+         "baridimob",
+         "ccp"
+        ]
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Payment Method"
+     },
+     "position": {
+      "type": "integer",
+      "title": "Position"
+     },
+     "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Created At"
+     }
+    },
+    "type": "object",
+    "required": [
+     "plan",
+     "billing",
+     "payment_method",
+     "position",
+     "created_at"
+    ],
+    "title": "Reservation"
+   },
+   "ReservationIn": {
+    "properties": {
+     "plan": {
+      "type": "string",
+      "enum": [
+       "premium",
+       "clubs"
+      ],
+      "title": "Plan",
+      "default": "premium"
+     },
+     "billing": {
+      "type": "string",
+      "enum": [
+       "monthly",
+       "yearly"
+      ],
+      "title": "Billing",
+      "default": "monthly"
+     },
+     "payment_method": {
+      "anyOf": [
+       {
+        "type": "string",
+        "enum": [
+         "cib",
+         "edahabia",
+         "baridimob",
+         "ccp"
+        ]
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Payment Method"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "title": "ReservationIn"
    },
    "SettingsPatch": {
     "properties": {

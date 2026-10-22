@@ -20,6 +20,7 @@ from app.routers import (
     me,
     notifications,
     opportunities,
+    premium,
 )
 from app.services.ai import LLMError
 from app.sockets import sio_app
@@ -79,6 +80,7 @@ app.include_router(me.router, prefix="/me", tags=["me"])
 app.include_router(feed.router, prefix="/me", tags=["dashboard"])
 app.include_router(notifications.router, prefix="/me/notifications", tags=["notifications"])
 app.include_router(applications.router, prefix="/me/applications", tags=["applications"])
+app.include_router(premium.router, prefix="/me/premium", tags=["premium"])
 app.include_router(documents.router, prefix="/documents", tags=["documents"])
 app.include_router(opportunities.router, prefix="/opportunities", tags=["opportunities"])
 app.include_router(matches.router, prefix="/matches", tags=["matches"])

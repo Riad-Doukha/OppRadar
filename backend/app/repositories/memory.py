@@ -92,6 +92,7 @@ class MemoryRepository:
         self.notifications: dict[str, Row] = {}
         self.applications: dict[tuple[str, str], Row] = {}
         self.chat: list[Row] = []
+        self.reservations: dict[str, Row] = {}
 
     # -- profile --------------------------------------------------------------- #
     def get_profile(self, user_id: str) -> Row | None:
@@ -125,6 +126,7 @@ class MemoryRepository:
             self.documents = {k: d for k, d in self.documents.items() if d["user_id"] != user_id}
             self.applications = {k: v for k, v in self.applications.items() if k[0] != user_id}
             self.chat = [m for m in self.chat if m["user_id"] != user_id]
+            self.reservations.pop(user_id, None)
             self.notifications = {
                 k: v for k, v in self.notifications.items() if v["user_id"] != user_id
             }
@@ -362,6 +364,31 @@ class MemoryRepository:
     def clear_chat(self, user_id: str) -> None:
         with self._lock:
             self.chat = [m for m in self.chat if m["user_id"] != user_id]
+
+    # -- premium early access --------------------------------------------------------- #
+    def get_reservation(self, user_id: str) -> Row | None:
+        with self._lock:
+            row = self.reservations.get(user_id)
+            return copy.deepcopy(row) if row else None
+
+    def upsert_reservation(self, user_id: str, fields: Row) -> Row:
+        with self._lock:
+            row = self.reservations.setdefault(
+                user_id, {"user_id": user_id, "payment_method": None, "created_at": _now()}
+            )
+            row.update(copy.deepcopy(fields), updated_at=_now())
+            return copy.deepcopy(row)
+
+    def delete_reservation(self, user_id: str) -> None:
+        with self._lock:
+            if self.reservations.pop(user_id, None) is None:
+                raise NotFoundError("reservation")
+
+    def count_reservations(self, before: datetime | None = None) -> int:
+        with self._lock:
+            return sum(
+                1 for r in self.reservations.values() if before is None or r["created_at"] <= before
+            )
 
     # -- notifications -------------------------------------------------------------- #
     def _visible(self, user_id: str, since: datetime) -> list[Row]:
