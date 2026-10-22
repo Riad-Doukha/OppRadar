@@ -21,7 +21,12 @@ LanguageLevel = Literal["basic", "good", "fluent"]
 ExperienceKind = Literal["internship", "hackathon", "job", "volunteer", "competition", "other"]
 LinkKind = Literal["linkedin", "github", "portfolio", "other"]
 AlertFrequency = Literal["instant", "daily", "weekly"]
-ConsentKind = Literal["terms_privacy", "agent_matching", "ai_cv_processing"]
+ConsentKind = Literal[
+    "terms_privacy", "agent_matching", "ai_cv_processing",
+    "ai_drafts", "chat_history", "anonymized_stats",  # Settings -> Privacy & AI
+]  # fmt: skip
+HistoryRetention = Literal["12_months", "never"]
+SourceGroup = Literal["universities", "companies", "events", "international"]
 DocumentKind = Literal["cv", "certificate", "portfolio"]
 DocumentStatus = Literal["queued", "reading", "extracting", "done", "failed"]
 OpportunityTypeName = Literal[
@@ -154,6 +159,50 @@ class NotificationSettings(_Out):
     frequency: AlertFrequency = "instant"
     quiet_start: time | None = time(22, 0)
     quiet_end: time | None = time(7, 0)
+    # Settings -> Notifications -> Alert rules
+    rule_new_match: bool = True
+    rule_deadline_reminders: bool = True
+    rule_application_updates: bool = True
+    rule_weekly_digest: bool = True
+    rule_profile_tips: bool = False
+    bundle_non_urgent: bool = False
+
+
+_SOURCE_GROUPS = ("universities", "companies", "events", "international")
+
+
+class AgentSettings(_Out):
+    """Settings -> Agent & sources. Stored as profiles.agent_settings (jsonb);
+    honoured by the scan pipeline once it ships."""
+
+    auto_scan: bool = True
+    scope: Literal["all_dz", "remote"] = "all_dz"
+    languages: list[Literal["en", "fr", "ar"]] = Field(default_factory=lambda: ["en", "fr", "ar"])
+    min_score: int = Field(55, ge=0, le=100)
+    check_eligibility: bool = True
+    auto_save_high_matches: bool = True
+    draft_applications: bool = True
+    source_groups: dict[SourceGroup, bool] = Field(
+        default_factory=lambda: dict.fromkeys(_SOURCE_GROUPS, True)
+    )
+
+
+class AgentSettingsPatch(_In):
+    auto_scan: bool | None = None
+    scope: Literal["all_dz", "remote"] | None = None
+    languages: list[Literal["en", "fr", "ar"]] | None = Field(None, min_length=1)
+    min_score: int | None = Field(None, ge=0, le=100)
+    check_eligibility: bool | None = None
+    auto_save_high_matches: bool | None = None
+    draft_applications: bool | None = None
+    source_groups: dict[SourceGroup, bool] | None = None
+
+
+class SettingsPatch(_In):
+    """PATCH /me/settings: Privacy & AI retention + Agent & sources."""
+
+    history_retention: HistoryRetention | None = None
+    agent: AgentSettingsPatch | None = None
 
 
 # --------------------------------------------------------------------------- #
@@ -225,6 +274,13 @@ class AlertsStep(_In):
     quiet_end: time | None = None
     clear_quiet_hours: bool = False
     consents: dict[ConsentKind, bool] | None = None
+    # Settings -> Notifications (not shown in the wizard)
+    rule_new_match: bool | None = None
+    rule_deadline_reminders: bool | None = None
+    rule_application_updates: bool | None = None
+    rule_weekly_digest: bool | None = None
+    rule_profile_tips: bool | None = None
+    bundle_non_urgent: bool | None = None
 
 
 # --------------------------------------------------------------------------- #
@@ -267,6 +323,8 @@ class Me(_Out):
     links: list[Link] = Field(default_factory=list)
     notifications: NotificationSettings = Field(default_factory=NotificationSettings)
     consents: list[ConsentKind] = Field(default_factory=list)  # currently granted
+    history_retention: HistoryRetention = "12_months"
+    agent_settings: AgentSettings = Field(default_factory=AgentSettings)
     completeness: float = 0.0
     completeness_suggestions: list[str] = Field(default_factory=list)
     onboarding: OnboardingStatus
@@ -275,6 +333,39 @@ class Me(_Out):
 # --------------------------------------------------------------------------- #
 # Documents
 # --------------------------------------------------------------------------- #
+# --------------------------------------------------------------------------- #
+# Notifications (bell + Notifications page)
+# --------------------------------------------------------------------------- #
+NotificationKind = Literal[
+    "match", "deadline", "application", "digest", "tip", "security", "system"
+]
+NotificationTab = Literal["all", "matches", "deadlines", "applications", "system"]
+
+
+class NotificationOut(_Out):
+    model_config = _READ
+
+    id: UUID
+    kind: NotificationKind = "match"
+    title: str
+    body: str = ""
+    opportunity_id: UUID | None = None
+    score: float | None = None
+    deadline: date | None = None
+    action_url: str | None = None
+    read: bool = False
+    created_at: datetime
+
+
+class NotificationList(_Out):
+    items: list[NotificationOut]
+    unread: int
+
+
+class ReadRequest(_In):
+    ids: list[UUID] | None = None  # None = mark everything read
+
+
 class Document(_Out):
     id: UUID
     kind: DocumentKind

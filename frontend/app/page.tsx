@@ -17,7 +17,8 @@ const PROMISES = [
   { icon: "/icons/external-light.svg", text: "Always verify on the official page" },
 ];
 
-export default function LandingPage() {
+export default async function LandingPage({ searchParams }: { searchParams: Promise<{ deleted?: string }> }) {
+  const { deleted } = await searchParams;
   return (
     <div className="min-h-dvh bg-page">
       <header className="sticky top-0 z-10 flex h-[60px] items-center justify-between border-b border-line bg-surface px-4 md:h-[68px] md:px-10">
@@ -40,6 +41,11 @@ export default function LandingPage() {
         </div>
       </header>
 
+      {deleted && (
+        <p role="status" className="bg-[#ecfdf5] px-4 py-3 text-center text-sm font-bold text-success">
+          Your account and all its data have been deleted.
+        </p>
+      )}
       <main>
         {/* Hero */}
         <section className="mx-auto flex max-w-[1440px] flex-col gap-10 px-4 pt-8 pb-14 md:flex-row md:items-center md:gap-14 md:px-16 md:pt-[72px]">

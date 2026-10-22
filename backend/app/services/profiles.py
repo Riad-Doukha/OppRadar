@@ -16,15 +16,18 @@ from app.models import (
     MIN_SKILLS,
     REQUIRED_CONSENTS,
     AboutYouStep,
+    AgentSettings,
     AlertsStep,
     EducationStep,
     GoalsStep,
     Me,
     NotificationSettings,
     OnboardingStatus,
+    SettingsPatch,
     SkillsStep,
 )
 from app.repositories import Repository, Row
+from app.services import notifications
 from app.services.parallel import gather
 
 PROFILE_FIELDS = (
@@ -73,6 +76,8 @@ def load_me(repo: Repository, user: CurrentUser) -> Me:
             telegram_linked=bool(settings.get("telegram_chat_id")),
         ),
         consents=r["consents"],
+        history_retention=profile.get("history_retention") or "12_months",
+        agent_settings=AgentSettings.model_validate(profile.get("agent_settings") or {}),
         completeness_suggestions=profile.get("completeness_suggestions") or [],
         onboarding=OnboardingStatus(
             step=profile.get("onboarding_step") or 1,
@@ -157,6 +162,7 @@ def save_step(repo: Repository, user: CurrentUser, step: int, body: Any) -> Me:
         updates.update(data)
     elif isinstance(body, AlertsStep):
         _save_alerts(repo, user.id, data)
+        notifications.invalidate(user.id)  # alert rules may have changed
 
     if profile.get("onboarding_completed_at") is None:
         updates["onboarding_step"] = max(step, profile.get("onboarding_step") or 1)
@@ -207,3 +213,27 @@ def _dedupe_by(rows: list[dict[str, Any]], key: str) -> list[dict[str, Any]]:
             seen.add(row[key].lower())
             out.append(row)
     return out
+
+
+def save_settings(repo: Repository, user: CurrentUser, body: SettingsPatch) -> Me:
+    """Settings -> Privacy & AI retention and Agent & sources (merged into the stored jsonb)."""
+    profile = repo.ensure_profile(user.id, user.full_name)
+    updates: Row = {}
+    if body.history_retention:
+        updates["history_retention"] = body.history_retention
+    if body.agent:
+        current = AgentSettings.model_validate(profile.get("agent_settings") or {}).model_dump()
+        patch = body.agent.model_dump(exclude_none=True)
+        if "source_groups" in patch:
+            patch["source_groups"] = {**current["source_groups"], **patch["source_groups"]}
+        updates["agent_settings"] = AgentSettings.model_validate({**current, **patch}).model_dump()
+    if updates:
+        repo.update_profile(user.id, updates)
+    return load_me(repo, user)
+
+
+def delete_account(repo: Repository, user: CurrentUser) -> None:
+    """Delete stored files, then the auth user; every table cascades from it."""
+    for doc in repo.list_documents(user.id):
+        repo.delete_file(doc["storage_path"])
+    repo.delete_user(user.id)

@@ -7,6 +7,8 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 
 import { Logo } from "@/components/brand/logo";
+import { NotificationBell } from "@/components/notifications/bell";
+import { useNotificationSummary } from "@/lib/notifications";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api, type Me } from "@/lib/api/client";
 import { createClient } from "@/lib/supabase/client";
@@ -17,13 +19,13 @@ type NavItem = { label: string; icon: string; href?: string; soon?: boolean };
 const NAV: NavItem[] = [
   { label: "Dashboard", icon: "nav-dashboard", href: "/dashboard" },
   { label: "Ask the agent", icon: "nav-ask", soon: true },
-  { label: "Notifications", icon: "nav-notifications", soon: true },
+  { label: "Notifications", icon: "nav-notifications", href: "/notifications" },
   { label: "My profile", icon: "nav-profile", href: "/profile" },
   { label: "Applications", icon: "nav-applications", soon: true },
 ];
 const NAV_MORE: NavItem[] = [
   { label: "Premium", icon: "nav-premium", soon: true },
-  { label: "Settings", icon: "nav-settings", soon: true },
+  { label: "Settings", icon: "nav-settings", href: "/settings" },
 ];
 
 export const initialsOf = (name: string) =>
@@ -56,6 +58,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
 function Nav({ items }: { items: NavItem[] }) {
   const pathname = usePathname();
+  const unread = useNotificationSummary().data?.unread ?? 0;
   return (
     <nav className="flex flex-col gap-1" aria-label="Main">
       {items.map((item) => {
@@ -65,6 +68,9 @@ function Nav({ items }: { items: NavItem[] }) {
             <NavIcon name={item.icon} className={active ? "text-brand-strong" : "text-body"} />
             <span className={cn("text-[15px]", active ? "font-bold text-brand-strong" : "font-medium text-body")}>{item.label}</span>
             {item.soon && <span className="ml-auto rounded-full bg-surface px-2 py-0.5 font-mono text-[10px] text-muted">soon</span>}
+            {item.href === "/notifications" && unread > 0 && (
+              <span className={cn("ml-auto rounded-full bg-surface px-[7px] py-0.5 font-mono text-[11px]", active ? "font-bold text-brand-strong" : "text-body")}>{unread}</span>
+            )}
           </>
         );
         const cls = cn("flex h-11 items-center gap-3 rounded-field px-3.5", active ? "bg-brand-soft" : item.href && "hover:bg-surface");
@@ -123,12 +129,10 @@ function TopBar({ me }: { me?: Me }) {
         />
       </form>
       <div className="ml-auto flex items-center gap-2">
-        <span className="relative flex size-10 items-center justify-center rounded-field opacity-70" title="Notifications — coming soon">
-          <Image src="/icons/bell.svg" alt="Notifications (coming soon)" width={20} height={20} />
-        </span>
-        <span className="hidden size-10 items-center justify-center rounded-field opacity-70 sm:flex" title="Settings — coming soon">
-          <Image src="/icons/gear.svg" alt="Settings (coming soon)" width={20} height={20} />
-        </span>
+        <NotificationBell me={me} />
+        <Link href="/settings" className="hidden size-10 items-center justify-center rounded-field hover:bg-page sm:flex" aria-label="Settings">
+          <Image src="/icons/gear.svg" alt="" width={20} height={20} />
+        </Link>
         <AccountMenu me={me} />
       </div>
     </header>
@@ -183,6 +187,9 @@ function AccountMenu({ me }: { me?: Me }) {
           </Link>
           <Link role="menuitem" href="/profile" className="block rounded-lg px-3 py-2 text-sm text-body hover:bg-page" onClick={() => setOpen(false)}>
             My profile
+          </Link>
+          <Link role="menuitem" href="/settings" className="block rounded-lg px-3 py-2 text-sm text-body hover:bg-page" onClick={() => setOpen(false)}>
+            Settings
           </Link>
           <button role="menuitem" type="button" onClick={logOut} className="block w-full rounded-lg px-3 py-2 text-left text-sm text-body hover:bg-page">
             {me?.is_demo ? "Leave the demo" : "Log out"}

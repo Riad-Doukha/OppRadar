@@ -45,6 +45,8 @@ def profile_defaults(user_id: str, full_name: str = "") -> Row:
         "onboarding_completed_at": None,
         "agent_started_at": None,
         "is_demo": False,
+        "history_retention": "12_months",
+        "agent_settings": {},
         "summary": "",
         "completeness": 0.0,
         "completeness_suggestions": [],
@@ -67,6 +69,12 @@ def notification_defaults(user_id: str) -> Row:
         "frequency": "instant",
         "quiet_start": time(22, 0),
         "quiet_end": time(7, 0),
+        "rule_new_match": True,
+        "rule_deadline_reminders": True,
+        "rule_application_updates": True,
+        "rule_weekly_digest": True,
+        "rule_profile_tips": False,
+        "bundle_non_urgent": False,
     }
 
 
@@ -81,6 +89,7 @@ class MemoryRepository:
         self.files: dict[str, bytes] = {}
         self.opportunities: dict[str, Row] = {}
         self.opportunity_states: dict[tuple[str, str], Row] = {}
+        self.notifications: dict[str, Row] = {}
 
     # -- profile --------------------------------------------------------------- #
     def get_profile(self, user_id: str) -> Row | None:
@@ -102,6 +111,22 @@ class MemoryRepository:
                 raise NotFoundError(f"profile {user_id}")
             row.update(copy.deepcopy(fields), updated_at=_now())
             return copy.deepcopy(row)
+
+    def delete_user(self, user_id: str) -> None:
+        """Mirrors `on delete cascade` from auth.users."""
+        with self._lock:
+            self.profiles.pop(user_id, None)
+            self.notification_settings.pop(user_id, None)
+            for table in list(self.children):
+                self.children[table] = [r for r in self.children[table] if r["user_id"] != user_id]
+            self.consents = [c for c in self.consents if c["user_id"] != user_id]
+            self.documents = {k: d for k, d in self.documents.items() if d["user_id"] != user_id}
+            self.notifications = {
+                k: v for k, v in self.notifications.items() if v["user_id"] != user_id
+            }
+            self.opportunity_states = {
+                k: v for k, v in self.opportunity_states.items() if k[0] != user_id
+            }
 
     # -- child lists ------------------------------------------------------------- #
     def _rows(self, table: ChildTable) -> list[Row]:
@@ -290,6 +315,59 @@ class MemoryRepository:
                 base.update(copy.deepcopy(row))
                 self.opportunities[key] = base
         return len(rows)
+
+    # -- notifications -------------------------------------------------------------- #
+    def _visible(self, user_id: str, since: datetime) -> list[Row]:
+        return [
+            n
+            for n in self.notifications.values()
+            if n["user_id"] == user_id and n["dismissed_at"] is None and n["created_at"] >= since
+        ]
+
+    def list_notifications(
+        self, user_id: str, kinds: list[str] | None, since: datetime, limit: int
+    ) -> list[Row]:
+        with self._lock:
+            rows = [n for n in self._visible(user_id, since) if not kinds or n["kind"] in kinds]
+            rows.sort(key=lambda n: n["created_at"], reverse=True)
+            return copy.deepcopy(rows[:limit])
+
+    def count_unread_notifications(self, user_id: str, since: datetime) -> int:
+        with self._lock:
+            return sum(1 for n in self._visible(user_id, since) if n["read_at"] is None)
+
+    def add_notification(self, row: Row) -> Row | None:
+        with self._lock:
+            key = row.get("dedupe_key")
+            if key and any(
+                n["user_id"] == row["user_id"] and n.get("dedupe_key") == key
+                for n in self.notifications.values()
+            ):
+                return None
+            new = {
+                "id": str(uuid.uuid4()), "kind": "match", "body": "", "opportunity_id": None,
+                "score": None, "deadline": None, "action_url": None, "dedupe_key": None,
+                "read_at": None, "dismissed_at": None, "created_at": _now(), **copy.deepcopy(row),
+            }  # fmt: skip
+            self.notifications[new["id"]] = new
+            return copy.deepcopy(new)
+
+    def mark_notifications_read(self, user_id: str, ids: list[str] | None) -> None:
+        with self._lock:
+            for n in self.notifications.values():
+                if (
+                    n["user_id"] == user_id
+                    and n["read_at"] is None
+                    and (ids is None or n["id"] in ids)
+                ):
+                    n["read_at"] = _now()
+
+    def dismiss_notification(self, user_id: str, notification_id: str) -> None:
+        with self._lock:
+            n = self.notifications.get(notification_id)
+            if n is None or n["user_id"] != user_id:
+                raise NotFoundError(f"notification {notification_id}")
+            n["dismissed_at"] = _now()
 
     # -- per-user opportunity state ------------------------------------------------ #
     def list_opportunity_states(self, user_id: str) -> list[Row]:

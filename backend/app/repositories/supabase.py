@@ -11,6 +11,7 @@ from collections.abc import Callable
 from datetime import date, datetime, time, timezone
 from typing import Any
 
+from postgrest.exceptions import APIError
 from supabase import Client
 
 from app.models import OpportunityFilters
@@ -126,6 +127,10 @@ class SupabaseRepository:
         _first(data, f"{table} {child_id}")
 
     # -- alerts & consent ---------------------------------------------------------- #
+    def delete_user(self, user_id: str) -> None:
+        # Every public table references auth.users with on delete cascade.
+        self.db.auth.admin.delete_user(user_id)
+
     def get_notification_settings(self, user_id: str) -> Row:
         data = (
             self.db.table("notification_settings").select("*").eq("user_id", user_id).execute().data
@@ -281,6 +286,67 @@ class SupabaseRepository:
             .data
         )
         return len(data)
+
+    # -- notifications -------------------------------------------------------------- #
+    def list_notifications(
+        self, user_id: str, kinds: list[str] | None, since: datetime, limit: int
+    ) -> list[Row]:
+        query: Any = (
+            self.db.table("notifications")
+            .select("*")
+            .eq("user_id", user_id)
+            .is_("dismissed_at", "null")
+            .gte("created_at", since.isoformat())
+        )
+        if kinds:
+            query = query.in_("kind", kinds)
+        return query.order("created_at", desc=True).limit(limit).execute().data
+
+    def count_unread_notifications(self, user_id: str, since: datetime) -> int:
+        return (
+            self.db.table("notifications")
+            .select("id", count="exact", head=True)
+            .eq("user_id", user_id)
+            .is_("read_at", "null")
+            .is_("dismissed_at", "null")
+            .gte("created_at", since.isoformat())
+            .execute()
+            .count
+            or 0
+        )
+
+    def add_notification(self, row: Row) -> Row | None:
+        try:
+            data = self.db.table("notifications").insert(_json(row)).execute().data
+        except APIError as exc:
+            if exc.code == "23505":  # dedupe_key already used for this user
+                return None
+            raise
+        return data[0] if data else None
+
+    def mark_notifications_read(self, user_id: str, ids: list[str] | None) -> None:
+        query: Any = (
+            self.db.table("notifications")
+            .update({"read_at": datetime.now(timezone.utc).isoformat()})
+            .eq("user_id", user_id)
+            .is_("read_at", "null")
+        )
+        if ids is not None:
+            if not ids:
+                return
+            query = query.in_("id", ids)
+        query.execute()
+
+    def dismiss_notification(self, user_id: str, notification_id: str) -> None:
+        data = (
+            self.db.table("notifications")
+            .update({"dismissed_at": datetime.now(timezone.utc).isoformat()})
+            .eq("user_id", user_id)
+            .eq("id", notification_id)
+            .execute()
+            .data
+        )
+        _first(data, f"notification {notification_id}")
 
     # -- per-user opportunity state ------------------------------------------------ #
     def list_opportunity_states(self, user_id: str) -> list[Row]:

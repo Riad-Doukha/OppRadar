@@ -57,10 +57,35 @@ export interface paths {
         get: operations["get_me_me_get"];
         put?: never;
         post?: never;
-        delete?: never;
+        /**
+         * Delete Me
+         * @description Settings -> Danger zone: permanently delete the account, its files and data.
+         */
+        delete: operations["delete_me_me_delete"];
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/me/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Save Settings
+         * @description Settings -> Privacy & AI (history retention) and Agent & sources.
+         *     Notification rules and consents use PATCH /me/onboarding/alerts.
+         */
+        patch: operations["save_settings_me_settings_patch"];
         trace?: never;
     };
     "/me/onboarding/about": {
@@ -369,6 +394,63 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/me/notifications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Notifications
+         * @description Last 30 days, newest first, plus the unread count (the bell uses limit=5).
+         */
+        get: operations["list_notifications_me_notifications_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/notifications/read": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Mark Read
+         * @description Mark the given notifications read, or all of them when `ids` is omitted.
+         */
+        post: operations["mark_read_me_notifications_read_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/notifications/{notification_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Dismiss */
+        delete: operations["dismiss_me_notifications__notification_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/documents": {
         parameters: {
             query?: never;
@@ -487,6 +569,71 @@ export interface components {
             /** Languages */
             languages: components["schemas"]["LanguageIn-Output"][] | null;
         };
+        /**
+         * AgentSettings
+         * @description Settings -> Agent & sources. Stored as profiles.agent_settings (jsonb);
+         *     honoured by the scan pipeline once it ships.
+         */
+        AgentSettings: {
+            /**
+             * Auto Scan
+             * @default true
+             */
+            auto_scan: boolean;
+            /**
+             * Scope
+             * @default all_dz
+             * @enum {string}
+             */
+            scope: "all_dz" | "remote";
+            /** Languages */
+            languages: ("en" | "fr" | "ar")[];
+            /**
+             * Min Score
+             * @default 55
+             */
+            min_score: number;
+            /**
+             * Check Eligibility
+             * @default true
+             */
+            check_eligibility: boolean;
+            /**
+             * Auto Save High Matches
+             * @default true
+             */
+            auto_save_high_matches: boolean;
+            /**
+             * Draft Applications
+             * @default true
+             */
+            draft_applications: boolean;
+            /** Source Groups */
+            source_groups: {
+                [key: string]: boolean;
+            };
+        };
+        /** AgentSettingsPatch */
+        AgentSettingsPatch: {
+            /** Auto Scan */
+            auto_scan?: boolean | null;
+            /** Scope */
+            scope?: ("all_dz" | "remote") | null;
+            /** Languages */
+            languages?: ("en" | "fr" | "ar")[] | null;
+            /** Min Score */
+            min_score?: number | null;
+            /** Check Eligibility */
+            check_eligibility?: boolean | null;
+            /** Auto Save High Matches */
+            auto_save_high_matches?: boolean | null;
+            /** Draft Applications */
+            draft_applications?: boolean | null;
+            /** Source Groups */
+            source_groups?: {
+                [key: string]: boolean;
+            } | null;
+        };
         /** AgentStatus */
         AgentStatus: {
             /**
@@ -526,6 +673,18 @@ export interface components {
             consents?: {
                 [key: string]: boolean;
             } | null;
+            /** Rule New Match */
+            rule_new_match?: boolean | null;
+            /** Rule Deadline Reminders */
+            rule_deadline_reminders?: boolean | null;
+            /** Rule Application Updates */
+            rule_application_updates?: boolean | null;
+            /** Rule Weekly Digest */
+            rule_weekly_digest?: boolean | null;
+            /** Rule Profile Tips */
+            rule_profile_tips?: boolean | null;
+            /** Bundle Non Urgent */
+            bundle_non_urgent?: boolean | null;
         };
         /** Body_upload_document_documents_post */
         Body_upload_document_documents_post: {
@@ -1027,7 +1186,14 @@ export interface components {
             links: components["schemas"]["Link"][];
             notifications: components["schemas"]["NotificationSettings"];
             /** Consents */
-            consents: ("terms_privacy" | "agent_matching" | "ai_cv_processing")[];
+            consents: ("terms_privacy" | "agent_matching" | "ai_cv_processing" | "ai_drafts" | "chat_history" | "anonymized_stats")[];
+            /**
+             * History Retention
+             * @default 12_months
+             * @enum {string}
+             */
+            history_retention: "12_months" | "never";
+            agent_settings: components["schemas"]["AgentSettings"];
             /**
              * Completeness
              * @default 0
@@ -1148,6 +1314,52 @@ export interface components {
             /** Offset */
             offset: number;
         };
+        /** NotificationList */
+        NotificationList: {
+            /** Items */
+            items: components["schemas"]["NotificationOut"][];
+            /** Unread */
+            unread: number;
+        };
+        /** NotificationOut */
+        NotificationOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Kind
+             * @default match
+             * @enum {string}
+             */
+            kind: "match" | "deadline" | "application" | "digest" | "tip" | "security" | "system";
+            /** Title */
+            title: string;
+            /**
+             * Body
+             * @default
+             */
+            body: string;
+            /** Opportunity Id */
+            opportunity_id: string | null;
+            /** Score */
+            score: number | null;
+            /** Deadline */
+            deadline: string | null;
+            /** Action Url */
+            action_url: string | null;
+            /**
+             * Read
+             * @default false
+             */
+            read: boolean;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
         /** NotificationSettings */
         NotificationSettings: {
             /**
@@ -1186,6 +1398,36 @@ export interface components {
              * @default 07:00:00
              */
             quiet_end: string | null;
+            /**
+             * Rule New Match
+             * @default true
+             */
+            rule_new_match: boolean;
+            /**
+             * Rule Deadline Reminders
+             * @default true
+             */
+            rule_deadline_reminders: boolean;
+            /**
+             * Rule Application Updates
+             * @default true
+             */
+            rule_application_updates: boolean;
+            /**
+             * Rule Weekly Digest
+             * @default true
+             */
+            rule_weekly_digest: boolean;
+            /**
+             * Rule Profile Tips
+             * @default false
+             */
+            rule_profile_tips: boolean;
+            /**
+             * Bundle Non Urgent
+             * @default false
+             */
+            bundle_non_urgent: boolean;
         };
         /** OnboardingStatus */
         OnboardingStatus: {
@@ -1284,6 +1526,20 @@ export interface components {
             limit: number;
             /** Offset */
             offset: number;
+        };
+        /** ReadRequest */
+        ReadRequest: {
+            /** Ids */
+            ids?: string[] | null;
+        };
+        /**
+         * SettingsPatch
+         * @description PATCH /me/settings: Privacy & AI retention + Agent & sources.
+         */
+        SettingsPatch: {
+            /** History Retention */
+            history_retention?: ("12_months" | "never") | null;
+            agent?: components["schemas"]["AgentSettingsPatch"] | null;
         };
         /** Skill */
         Skill: {
@@ -1420,6 +1676,57 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Me"];
+                };
+            };
+        };
+    };
+    delete_me_me_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    save_settings_me_settings_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SettingsPatch"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Me"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -2021,6 +2328,100 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["MyOpportunity"];
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_notifications_me_notifications_get: {
+        parameters: {
+            query?: {
+                tab?: "all" | "matches" | "deadlines" | "applications" | "system";
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificationList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    mark_read_me_notifications_read_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReadRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificationList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    dismiss_me_notifications__notification_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                notification_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {

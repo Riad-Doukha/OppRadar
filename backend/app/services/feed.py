@@ -24,6 +24,7 @@ from app.models import (
 )
 from app.repositories import NotFoundError, Repository
 from app.repositories.base import Row
+from app.services import notifications
 from app.services.parallel import gather
 
 CLOSING_SOON_DAYS = 7
@@ -133,6 +134,7 @@ def set_flag(
     if flag == "dismissed_at" and on:
         fields["saved_at"] = None  # "Not interested" also un-saves
     repo.set_opportunity_state(user.id, opportunity_id, fields)
+    notifications.invalidate(user.id)  # a saved deadline may need a reminder now
     return get_one(repo, user, opportunity_id)
 
 
@@ -159,4 +161,5 @@ def start_agent(repo: Repository, user: CurrentUser) -> AgentStatus:
     started = profile.get("agent_started_at")
     if not started:
         started = repo.update_profile(user.id, {"agent_started_at": _now()})["agent_started_at"]
+    notifications.invalidate(user.id)
     return AgentStatus(status="waiting_for_matcher", agent_started_at=started)

@@ -9,7 +9,17 @@ from fastapi.responses import JSONResponse
 
 from app.config import get_settings
 from app.repositories import NotFoundError
-from app.routers import auth, chat, documents, feed, health, matches, me, opportunities
+from app.routers import (
+    auth,
+    chat,
+    documents,
+    feed,
+    health,
+    matches,
+    me,
+    notifications,
+    opportunities,
+)
 from app.services.ai import LLMError
 from app.sockets import sio_app
 
@@ -21,6 +31,24 @@ app = FastAPI(
     version="0.2.0",
     description="Backend for OppRadar — opportunities in, matches out.",
 )
+
+
+@app.middleware("http")
+async def unexpected_errors(request: Request, call_next):  # type: ignore[no-untyped-def]
+    """Turn crashes into a JSON 500 *inside* the CORS middleware (registered
+    after this, so it wraps it). Otherwise Starlette answers from the outermost
+    layer without CORS headers and the browser only reports "Failed to fetch"."""
+    try:
+        return await call_next(request)
+    except Exception:
+        logging.getLogger("app").exception(
+            "unhandled error on %s %s", request.method, request.url.path
+        )
+        return JSONResponse(
+            {"detail": "Something went wrong on our side. Please try again."},
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
 
 app.add_middleware(
     CORSMiddleware,
@@ -48,6 +76,7 @@ app.include_router(health.router)
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
 app.include_router(me.router, prefix="/me", tags=["me"])
 app.include_router(feed.router, prefix="/me", tags=["dashboard"])
+app.include_router(notifications.router, prefix="/me/notifications", tags=["notifications"])
 app.include_router(documents.router, prefix="/documents", tags=["documents"])
 app.include_router(opportunities.router, prefix="/opportunities", tags=["opportunities"])
 app.include_router(matches.router, prefix="/matches", tags=["matches"])

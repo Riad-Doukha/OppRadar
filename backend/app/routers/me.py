@@ -22,6 +22,7 @@ from app.models import (
     ExperiencePatch,
     GoalsStep,
     Me,
+    SettingsPatch,
     SkillsStep,
 )
 from app.repositories import Repository, get_repository
@@ -39,6 +40,20 @@ def get_me(user: User, repo: Repo) -> Me:
 
 # One autosave endpoint per wizard step. Only the fields sent change; a list
 # that is sent (languages, skills, links) replaces the stored list.
+@router.patch("/settings", response_model=Me)
+def save_settings(user: Writer, repo: Repo, body: SettingsPatch) -> Me:
+    """Settings -> Privacy & AI (history retention) and Agent & sources.
+    Notification rules and consents use PATCH /me/onboarding/alerts."""
+    return profiles.save_settings(repo, user, body)
+
+
+@router.delete("", status_code=status.HTTP_204_NO_CONTENT)
+def delete_me(user: Writer, repo: Repo) -> Response:
+    """Settings -> Danger zone: permanently delete the account, its files and data."""
+    profiles.delete_account(repo, user)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
 @router.patch("/onboarding/about", response_model=Me)
 def save_about(user: Writer, repo: Repo, body: AboutYouStep) -> Me:
     """Step 1 · About you."""

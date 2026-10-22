@@ -75,6 +75,71 @@
       "HTTPBearer": []
      }
     ]
+   },
+   "delete": {
+    "tags": [
+     "me"
+    ],
+    "summary": "Delete Me",
+    "description": "Settings -> Danger zone: permanently delete the account, its files and data.",
+    "operationId": "delete_me_me_delete",
+    "responses": {
+     "204": {
+      "description": "Successful Response"
+     }
+    },
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ]
+   }
+  },
+  "/me/settings": {
+   "patch": {
+    "tags": [
+     "me"
+    ],
+    "summary": "Save Settings",
+    "description": "Settings -> Privacy & AI (history retention) and Agent & sources.\nNotification rules and consents use PATCH /me/onboarding/alerts.",
+    "operationId": "save_settings_me_settings_patch",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/SettingsPatch"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Me"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ]
    }
   },
   "/me/onboarding/about": {
@@ -1038,6 +1103,162 @@
     }
    }
   },
+  "/me/notifications": {
+   "get": {
+    "tags": [
+     "notifications"
+    ],
+    "summary": "List Notifications",
+    "description": "Last 30 days, newest first, plus the unread count (the bell uses limit=5).",
+    "operationId": "list_notifications_me_notifications_get",
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ],
+    "parameters": [
+     {
+      "name": "tab",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "enum": [
+        "all",
+        "matches",
+        "deadlines",
+        "applications",
+        "system"
+       ],
+       "type": "string",
+       "default": "all",
+       "title": "Tab"
+      }
+     },
+     {
+      "name": "limit",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer",
+       "maximum": 100,
+       "minimum": 1,
+       "default": 50,
+       "title": "Limit"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/NotificationList"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/me/notifications/read": {
+   "post": {
+    "tags": [
+     "notifications"
+    ],
+    "summary": "Mark Read",
+    "description": "Mark the given notifications read, or all of them when `ids` is omitted.",
+    "operationId": "mark_read_me_notifications_read_post",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/ReadRequest"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/NotificationList"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ]
+   }
+  },
+  "/me/notifications/{notification_id}": {
+   "delete": {
+    "tags": [
+     "notifications"
+    ],
+    "summary": "Dismiss",
+    "operationId": "dismiss_me_notifications__notification_id__delete",
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ],
+    "parameters": [
+     {
+      "name": "notification_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid",
+       "title": "Notification Id"
+      }
+     }
+    ],
+    "responses": {
+     "204": {
+      "description": "Successful Response"
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
   "/documents": {
    "get": {
     "tags": [
@@ -1608,6 +1829,207 @@
     "title": "AboutYouStep",
     "description": "Step 1 \u00b7 About you."
    },
+   "AgentSettings": {
+    "properties": {
+     "auto_scan": {
+      "type": "boolean",
+      "title": "Auto Scan",
+      "default": true
+     },
+     "scope": {
+      "type": "string",
+      "enum": [
+       "all_dz",
+       "remote"
+      ],
+      "title": "Scope",
+      "default": "all_dz"
+     },
+     "languages": {
+      "items": {
+       "type": "string",
+       "enum": [
+        "en",
+        "fr",
+        "ar"
+       ]
+      },
+      "type": "array",
+      "title": "Languages"
+     },
+     "min_score": {
+      "type": "integer",
+      "maximum": 100.0,
+      "minimum": 0.0,
+      "title": "Min Score",
+      "default": 55
+     },
+     "check_eligibility": {
+      "type": "boolean",
+      "title": "Check Eligibility",
+      "default": true
+     },
+     "auto_save_high_matches": {
+      "type": "boolean",
+      "title": "Auto Save High Matches",
+      "default": true
+     },
+     "draft_applications": {
+      "type": "boolean",
+      "title": "Draft Applications",
+      "default": true
+     },
+     "source_groups": {
+      "additionalProperties": {
+       "type": "boolean"
+      },
+      "propertyNames": {
+       "enum": [
+        "universities",
+        "companies",
+        "events",
+        "international"
+       ]
+      },
+      "type": "object",
+      "title": "Source Groups"
+     }
+    },
+    "type": "object",
+    "required": [
+     "auto_scan",
+     "scope",
+     "languages",
+     "min_score",
+     "check_eligibility",
+     "auto_save_high_matches",
+     "draft_applications",
+     "source_groups"
+    ],
+    "title": "AgentSettings",
+    "description": "Settings -> Agent & sources. Stored as profiles.agent_settings (jsonb);\nhonoured by the scan pipeline once it ships."
+   },
+   "AgentSettingsPatch": {
+    "properties": {
+     "auto_scan": {
+      "anyOf": [
+       {
+        "type": "boolean"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Auto Scan"
+     },
+     "scope": {
+      "anyOf": [
+       {
+        "type": "string",
+        "enum": [
+         "all_dz",
+         "remote"
+        ]
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Scope"
+     },
+     "languages": {
+      "anyOf": [
+       {
+        "items": {
+         "type": "string",
+         "enum": [
+          "en",
+          "fr",
+          "ar"
+         ]
+        },
+        "type": "array",
+        "minItems": 1
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Languages"
+     },
+     "min_score": {
+      "anyOf": [
+       {
+        "type": "integer",
+        "maximum": 100.0,
+        "minimum": 0.0
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Min Score"
+     },
+     "check_eligibility": {
+      "anyOf": [
+       {
+        "type": "boolean"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Check Eligibility"
+     },
+     "auto_save_high_matches": {
+      "anyOf": [
+       {
+        "type": "boolean"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Auto Save High Matches"
+     },
+     "draft_applications": {
+      "anyOf": [
+       {
+        "type": "boolean"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Draft Applications"
+     },
+     "source_groups": {
+      "anyOf": [
+       {
+        "additionalProperties": {
+         "type": "boolean"
+        },
+        "propertyNames": {
+         "enum": [
+          "universities",
+          "companies",
+          "events",
+          "international"
+         ]
+        },
+        "type": "object"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Source Groups"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "title": "AgentSettingsPatch"
+   },
    "AgentStatus": {
     "properties": {
      "status": {
@@ -1723,7 +2145,10 @@
          "enum": [
           "terms_privacy",
           "agent_matching",
-          "ai_cv_processing"
+          "ai_cv_processing",
+          "ai_drafts",
+          "chat_history",
+          "anonymized_stats"
          ]
         },
         "type": "object"
@@ -1733,6 +2158,72 @@
        }
       ],
       "title": "Consents"
+     },
+     "rule_new_match": {
+      "anyOf": [
+       {
+        "type": "boolean"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Rule New Match"
+     },
+     "rule_deadline_reminders": {
+      "anyOf": [
+       {
+        "type": "boolean"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Rule Deadline Reminders"
+     },
+     "rule_application_updates": {
+      "anyOf": [
+       {
+        "type": "boolean"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Rule Application Updates"
+     },
+     "rule_weekly_digest": {
+      "anyOf": [
+       {
+        "type": "boolean"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Rule Weekly Digest"
+     },
+     "rule_profile_tips": {
+      "anyOf": [
+       {
+        "type": "boolean"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Rule Profile Tips"
+     },
+     "bundle_non_urgent": {
+      "anyOf": [
+       {
+        "type": "boolean"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Bundle Non Urgent"
      }
     },
     "additionalProperties": false,
@@ -3331,11 +3822,26 @@
        "enum": [
         "terms_privacy",
         "agent_matching",
-        "ai_cv_processing"
+        "ai_cv_processing",
+        "ai_drafts",
+        "chat_history",
+        "anonymized_stats"
        ]
       },
       "type": "array",
       "title": "Consents"
+     },
+     "history_retention": {
+      "type": "string",
+      "enum": [
+       "12_months",
+       "never"
+      ],
+      "title": "History Retention",
+      "default": "12_months"
+     },
+     "agent_settings": {
+      "$ref": "#/components/schemas/AgentSettings"
      },
      "completeness": {
       "type": "number",
@@ -3382,6 +3888,8 @@
      "links",
      "notifications",
      "consents",
+     "history_retention",
+     "agent_settings",
      "completeness",
      "completeness_suggestions",
      "onboarding"
@@ -3640,6 +4148,129 @@
     ],
     "title": "MyOpportunityPage"
    },
+   "NotificationList": {
+    "properties": {
+     "items": {
+      "items": {
+       "$ref": "#/components/schemas/NotificationOut"
+      },
+      "type": "array",
+      "title": "Items"
+     },
+     "unread": {
+      "type": "integer",
+      "title": "Unread"
+     }
+    },
+    "type": "object",
+    "required": [
+     "items",
+     "unread"
+    ],
+    "title": "NotificationList"
+   },
+   "NotificationOut": {
+    "properties": {
+     "id": {
+      "type": "string",
+      "format": "uuid",
+      "title": "Id"
+     },
+     "kind": {
+      "type": "string",
+      "enum": [
+       "match",
+       "deadline",
+       "application",
+       "digest",
+       "tip",
+       "security",
+       "system"
+      ],
+      "title": "Kind",
+      "default": "match"
+     },
+     "title": {
+      "type": "string",
+      "title": "Title"
+     },
+     "body": {
+      "type": "string",
+      "title": "Body",
+      "default": ""
+     },
+     "opportunity_id": {
+      "anyOf": [
+       {
+        "type": "string",
+        "format": "uuid"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Opportunity Id"
+     },
+     "score": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Score"
+     },
+     "deadline": {
+      "anyOf": [
+       {
+        "type": "string",
+        "format": "date"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Deadline"
+     },
+     "action_url": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Action Url"
+     },
+     "read": {
+      "type": "boolean",
+      "title": "Read",
+      "default": false
+     },
+     "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Created At"
+     }
+    },
+    "type": "object",
+    "required": [
+     "id",
+     "kind",
+     "title",
+     "body",
+     "opportunity_id",
+     "score",
+     "deadline",
+     "action_url",
+     "read",
+     "created_at"
+    ],
+    "title": "NotificationOut"
+   },
    "NotificationSettings": {
     "properties": {
      "email_enabled": {
@@ -3699,6 +4330,36 @@
       ],
       "title": "Quiet End",
       "default": "07:00:00"
+     },
+     "rule_new_match": {
+      "type": "boolean",
+      "title": "Rule New Match",
+      "default": true
+     },
+     "rule_deadline_reminders": {
+      "type": "boolean",
+      "title": "Rule Deadline Reminders",
+      "default": true
+     },
+     "rule_application_updates": {
+      "type": "boolean",
+      "title": "Rule Application Updates",
+      "default": true
+     },
+     "rule_weekly_digest": {
+      "type": "boolean",
+      "title": "Rule Weekly Digest",
+      "default": true
+     },
+     "rule_profile_tips": {
+      "type": "boolean",
+      "title": "Rule Profile Tips",
+      "default": false
+     },
+     "bundle_non_urgent": {
+      "type": "boolean",
+      "title": "Bundle Non Urgent",
+      "default": false
      }
     },
     "type": "object",
@@ -3709,7 +4370,13 @@
      "threshold",
      "frequency",
      "quiet_start",
-     "quiet_end"
+     "quiet_end",
+     "rule_new_match",
+     "rule_deadline_reminders",
+     "rule_application_updates",
+     "rule_weekly_digest",
+     "rule_profile_tips",
+     "bundle_non_urgent"
     ],
     "title": "NotificationSettings"
    },
@@ -3981,6 +4648,61 @@
      "offset"
     ],
     "title": "OpportunityPage"
+   },
+   "ReadRequest": {
+    "properties": {
+     "ids": {
+      "anyOf": [
+       {
+        "items": {
+         "type": "string",
+         "format": "uuid"
+        },
+        "type": "array"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Ids"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "title": "ReadRequest"
+   },
+   "SettingsPatch": {
+    "properties": {
+     "history_retention": {
+      "anyOf": [
+       {
+        "type": "string",
+        "enum": [
+         "12_months",
+         "never"
+        ]
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "History Retention"
+     },
+     "agent": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/AgentSettingsPatch"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "title": "SettingsPatch",
+    "description": "PATCH /me/settings: Privacy & AI retention + Agent & sources."
    },
    "Skill": {
     "properties": {
