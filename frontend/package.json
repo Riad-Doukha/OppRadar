@@ -9,7 +9,9 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "gen:api": "openapi-typescript lib/api/openapi.json -o lib/api/schema.d.ts",
-    "i18n:check": "node scripts/check-messages.mjs"
+    "i18n:check": "node scripts/check-messages.mjs",
+    "e2e": "playwright test --project=public --project=phone",
+    "e2e:full": "playwright test"
   },
   "dependencies": {
     "@supabase/ssr": "^0.7.0",
@@ -27,6 +29,7 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
+    "@playwright/test": "^1.56.1",
     "@tailwindcss/postcss": "^4.1.14",
     "@types/node": "^22.10.0",
     "@types/react": "^19.0.0",
