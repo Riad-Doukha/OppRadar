@@ -1,98 +1,54 @@
 # AI ↔ Backend interface
 
-The backend imports the `oppradar_ai` package directly (editable install via
-`backend/requirements.txt`). Five functions are the entire contract — everything
-else inside the AI package is free to change as long as these signatures and
-schemas hold.
+The backend imports the `oppradar_ai` package in-process (editable install via
+`backend/requirements.txt`). **Only `backend/app/services/ai.py` imports it** —
+routers call that module, so wiring a new AI phase is a one-file change.
 
-All schemas referenced here live in `ai/oppradar_ai/schemas.py` (shared —
-changes need approval from both AI owners).
+Shared data shapes live in `ai/oppradar_ai/schemas.py` (changes need approval
+from both AI owners). The web database mirrors them in
+`supabase/migrations/0001_initial_schema.sql`.
 
----
+## Available now (AI Phase 2 — documents)
 
-## 1. Ingest everything
+| Function | Used by | Notes |
+| --- | --- | --- |
+| `documents.read_document(path) -> DocumentContent` | `POST /documents` (background) | PDF text layer, OCR fallback for scans (~4 s/page). Raises `ValueError` for unsupported types. |
+| `documents.extract_cv(text, source_file) -> CVExtraction` | same | One LLM call. `LLMError` when the provider is down/rate-limited. |
+| `documents.extract_certificate(...)`, `extract_portfolio(...)` | same (`kind`) | |
+| `documents.build_profile(extractions, user_id) -> ProfileBuildResult` | not wired yet | The web profile is edited by the user in the onboarding wizard; the CV only **pre-fills** it (`services.ai.cv_prefill`). |
 
-```python
-from oppradar_ai.ingestion import run_pipeline
+Both slow calls run in a thread pool from a FastAPI background task, and the
+stages are pushed to the browser as `document:progress` Socket.IO events.
 
-opportunities: list[Opportunity] = run_pipeline(sources: list[str] | None = None) -> list[Opportunity]
-```
+## Coming next (backend side is ready to plug in)
 
-Runs the full ingestion pipeline for the enabled sources in
-`ingestion/sources.yaml`: fetch → LLM extraction → de-duplication → scam check.
-Returns validated, de-duplicated `Opportunity` objects, each carrying a
-`ScamVerdict`. Failures on a single source are logged and skipped — the call
-never raises for one bad source. The backend persists the returned rows.
+| AI deliverable | Backend endpoint waiting for it | Input the backend will pass |
+| --- | --- | --- |
+| Ingestion + scam check | `POST /admin/ingest`, scheduled agent | Rows go through `services.ai.opportunity_row(Opportunity)` into `public.opportunities` (upsert on `external_id` = `Opportunity.id`). |
+| Matching | `POST /me/agent/start` (returns 501 today), `GET /matches` | `services.ai.to_ai_profile(me) -> Profile` + the stored `Opportunity` list. Expects `list[MatchResult]` (score 0–100). |
+| Notifications | agent loop, `GET /notifications` | `notification_settings` row: channels, `threshold` (50–100), `frequency` (instant/daily/weekly), quiet hours. |
+| Chat | `POST /chat` | question + `ChatTurn` history + `Profile`; expects `ChatAnswer`. |
 
-## 2. Parse a CV
+## Proposal for `schemas.py` (needs Ahlem + Ikbel)
 
-```python
-from oppradar_ai.profile import parse_cv
+The onboarding design collects more than `Profile` holds. Until the schema
+grows, `to_ai_profile()` flattens it:
 
-profile: Profile = parse_cv(path: str | Path) -> Profile
-```
+| Design field | Today's mapping | Proposed schema change |
+| --- | --- | --- |
+| Opportunity types `datathon`, `competition` | → `HACKATHON`, `OTHER` | add both to `OpportunityType` |
+| Skill level (beginner/intermediate/advanced) | dropped (names only) | `skills: list[Skill{name, level}]` or a parallel `skill_levels` map |
+| Language level (basic/good/fluent) | `"Arabic (fluent)"` strings | `languages: list[Language{name, level}]` |
+| Birth year, nationality, wilaya | not passed | add to `Profile` (age limits, nationality rules, local opportunities) |
+| Goal (20–300 chars) | appended to `summary` | `goal: str` |
+| Preferred location (algeria/abroad/remote/anywhere) | `algeria` → `countries=["Algeria"]`, `remote` → `modes=["remote"]` | `Preferences.location_scope` |
+| Education level / current year / GPA | not passed | `EducationItem.level`, `Profile.current_year`, `Profile.gpa{value, scale}` |
+| CV review card shows birth year + current year | not extracted | add `birth_year`, `current_year` to `CVExtraction` |
 
-Accepts a PDF, DOCX or TXT file path and returns a structured `Profile`
-(skills, education, experience, languages, preferences). Raises
-`CVParseError` if the file cannot be read or contains no extractable text.
+## Error contract
 
-## 3. Match a profile to opportunities
-
-```python
-from oppradar_ai.matching import score_matches
-
-matches: list[MatchResult] = score_matches(
-    profile: Profile,
-    opportunities: list[Opportunity],
-    *,
-    top_k: int = 20,
-) -> list[MatchResult]
-```
-
-Applies hard filters (deadline, mode, location, opportunity type), then a soft
-score (embedding similarity + skill overlap + type-preference bonus). Returns
-`MatchResult`s sorted best-first, each with `score` (0–1), component
-sub-scores, and a non-empty `reasons` list for the UI. Opportunities that fail
-hard filters are dropped, not returned with score 0.
-
-## 4. Score an opportunity for scam risk
-
-```python
-from oppradar_ai.ingestion import scam_check
-
-verdict: ScamVerdict = scam_check.check(opportunity: Opportunity) -> ScamVerdict
-```
-
-Rule-based red-flag detection (money requested, urgency, free-mail contacts,
-missing organization site, …) with an optional LLM second opinion. Returns a
-`ScamVerdict` with `label` (`safe` | `suspicious` | `scam`), a 0–1 `score`, and
-`reasons`. Deterministic and offline (the LLM part is only used when
-configured).
-
-## 5. Ask the assistant
-
-```python
-from oppradar_ai.chat import ask
-
-answer: ChatResponse = ask(
-    question: str,
-    history: list[ChatMessage] = [],
-    profile: Profile | None = None,
-) -> ChatResponse
-```
-
-Retrieves the top-k opportunities relevant to the question (biased toward the
-profile when given), and generates a grounded answer citing the opportunity
-URLs it used. Returns a `ChatResponse` with `answer` text and `sources`
-(the retrieved opportunities). Never invents opportunities that are not in the
-retrieved set.
-
----
-
-### Error contract
-
-- Expected failures raise subclasses of `oppradar_ai.errors.AIRuntimeError`
-  (`FetchError`, `ExtractionError`, `CVParseError`, `LLMError`).
-- Anything else is a bug — the backend may 500 on it.
-- All functions are safe to call without `LLM_API_KEY` set, except 1 and 5,
-  which then raise `LLMError` immediately instead of hanging.
+- `oppradar_ai.llm.LLMError` → the API answers **503** ("AI service unavailable");
+  inside document processing the document is marked `failed` with a readable error.
+- `ValueError` from the readers → document `failed` ("We could not read this file").
+- Anything else is a bug: logged with a traceback, document `failed`.
+- Everything runs offline with `LLM_PROVIDER=fake` (the backend test suite does).

@@ -1,0 +1,357 @@
+"""API models: what the frontend sends and receives.
+
+Field sets follow the Figma onboarding screens; allowed values mirror the
+check constraints in supabase/migrations/0001_initial_schema.sql. Opportunity
+shapes come straight from oppradar_ai.schemas.
+"""
+
+from __future__ import annotations
+
+from datetime import date, datetime, time
+from typing import Any, Literal
+from uuid import UUID
+
+from pydantic import BaseModel, ConfigDict, Field, HttpUrl, field_validator, model_validator
+
+EducationLevel = Literal["bac", "licence", "master", "engineer", "phd", "other"]
+PreferredLocation = Literal["algeria", "abroad", "remote", "anywhere"]
+Availability = Literal["full_time", "part_time_10_20", "under_10h", "flexible"]
+SkillLevel = Literal["beginner", "intermediate", "advanced"]
+LanguageLevel = Literal["basic", "good", "fluent"]
+ExperienceKind = Literal["internship", "hackathon", "job", "volunteer", "competition", "other"]
+LinkKind = Literal["linkedin", "github", "portfolio", "other"]
+AlertFrequency = Literal["instant", "daily", "weekly"]
+ConsentKind = Literal["terms_privacy", "agent_matching", "ai_cv_processing"]
+DocumentKind = Literal["cv", "certificate", "portfolio"]
+DocumentStatus = Literal["queued", "reading", "extracting", "done", "failed"]
+OpportunityTypeName = Literal[
+    "scholarship", "job", "internship", "fellowship", "hackathon", "datathon",
+    "competition", "bootcamp", "research", "volunteer", "course", "grant", "other",
+]  # fmt: skip
+TrustLevelName = Literal["verified", "likely_safe", "unknown", "suspicious", "scam"]
+
+REQUIRED_CONSENTS: tuple[ConsentKind, ...] = ("terms_privacy", "agent_matching")
+MIN_SKILLS = 3
+
+
+def _strip(value: Any) -> Any:
+    return value.strip() if isinstance(value, str) else value
+
+
+class _In(BaseModel):
+    """Base for request bodies: trims strings, rejects unknown fields."""
+
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+
+# Read models built from DB rows ignore the extra columns (user_id, position, ...).
+_READ = ConfigDict(extra="ignore", str_strip_whitespace=True)
+
+
+# --------------------------------------------------------------------------- #
+# Profile pieces
+# --------------------------------------------------------------------------- #
+class SkillIn(_In):
+    name: str = Field(min_length=1, max_length=60)
+    level: SkillLevel | None = None
+
+
+class Skill(SkillIn):
+    model_config = _READ
+
+    id: UUID | None = None
+
+
+class LanguageIn(_In):
+    language: str = Field(min_length=1, max_length=40)
+    level: LanguageLevel = "good"
+
+
+class Language(LanguageIn):
+    model_config = _READ
+
+    id: UUID | None = None
+
+
+class LinkIn(_In):
+    kind: LinkKind
+    url: str = Field(min_length=1, max_length=300)
+
+    @field_validator("url")
+    @classmethod
+    def _normalise_url(cls, value: str) -> str:
+        # The design accepts "linkedin.com/in/x" without a scheme.
+        if "://" not in value:
+            value = f"https://{value}"
+        HttpUrl(value)  # raises on garbage
+        return value
+
+
+class Link(LinkIn):
+    model_config = _READ
+
+    id: UUID | None = None
+
+
+class ExperienceIn(_In):
+    kind: ExperienceKind = "other"
+    title: str = Field(min_length=1, max_length=150)
+    organization: str = Field("", max_length=150)
+    location: str = Field("", max_length=100)
+    year: int | None = Field(None, ge=1950, le=2100)
+    description: str = Field("", max_length=1000)
+
+
+class ExperiencePatch(_In):
+    kind: ExperienceKind | None = None
+    title: str | None = Field(None, min_length=1, max_length=150)
+    organization: str | None = Field(None, max_length=150)
+    location: str | None = Field(None, max_length=100)
+    year: int | None = Field(None, ge=1950, le=2100)
+    description: str | None = Field(None, max_length=1000)
+
+
+class Experience(ExperienceIn):
+    model_config = _READ
+
+    id: UUID
+
+
+class CertificateIn(_In):
+    title: str = Field(min_length=1, max_length=150)
+    issuer: str = Field("", max_length=150)
+    year: int | None = Field(None, ge=1950, le=2100)
+    credential_url: str | None = Field(None, max_length=300)
+
+
+class CertificatePatch(_In):
+    title: str | None = Field(None, min_length=1, max_length=150)
+    issuer: str | None = Field(None, max_length=150)
+    year: int | None = Field(None, ge=1950, le=2100)
+    credential_url: str | None = Field(None, max_length=300)
+
+
+class Certificate(CertificateIn):
+    model_config = _READ
+
+    id: UUID
+
+
+class NotificationSettings(BaseModel):
+    email_enabled: bool = True
+    telegram_enabled: bool = False
+    telegram_linked: bool = False
+    threshold: int = Field(70, ge=50, le=100)
+    frequency: AlertFrequency = "instant"
+    quiet_start: time | None = time(22, 0)
+    quiet_end: time | None = time(7, 0)
+
+
+# --------------------------------------------------------------------------- #
+# Onboarding steps — every field optional so the UI can autosave drafts
+# --------------------------------------------------------------------------- #
+class AboutYouStep(_In):
+    """Step 1 · About you."""
+
+    full_name: str | None = Field(None, max_length=120)
+    birth_year: int | None = Field(None, ge=1940, le=2020)
+    nationality: str | None = Field(None, max_length=60)
+    country: str | None = Field(None, max_length=60)
+    wilaya: str | None = Field(None, max_length=60)
+    languages: list[LanguageIn] | None = Field(None, max_length=10)
+
+
+class EducationStep(_In):
+    """Step 2 · Education & experience (experiences/certificates have their own CRUD)."""
+
+    education_level: EducationLevel | None = None
+    field_of_study: str | None = Field(None, max_length=120)
+    institution: str | None = Field(None, max_length=150)
+    current_year: int | None = Field(None, ge=1, le=10)
+    graduation_year: int | None = Field(None, ge=1950, le=2100)
+    gpa_value: float | None = Field(None, ge=0)
+    gpa_scale: Literal[4, 20] | None = None
+
+    @model_validator(mode="after")
+    def _gpa_within_scale(self) -> EducationStep:
+        if (
+            self.gpa_value is not None
+            and self.gpa_scale is not None
+            and self.gpa_value > self.gpa_scale
+        ):
+            raise ValueError(f"GPA {self.gpa_value} is above the /{self.gpa_scale} scale")
+        return self
+
+
+class SkillsStep(_In):
+    """Step 3 · Skills & interests."""
+
+    skills: list[SkillIn] | None = Field(None, max_length=40)
+    interests: list[str] | None = Field(None, max_length=30)
+    opportunity_types: list[OpportunityTypeName] | None = None
+    preferred_location: PreferredLocation | None = None
+    availability: Availability | None = None
+
+    @field_validator("interests")
+    @classmethod
+    def _clean_tags(cls, value: list[str] | None) -> list[str] | None:
+        return None if value is None else _dedupe_ci([_strip(v) for v in value if _strip(v)])
+
+
+class GoalsStep(_In):
+    """Step 4 · Goals & links."""
+
+    goal: str | None = Field(None, min_length=20, max_length=300)
+    links: list[LinkIn] | None = Field(None, max_length=8)
+
+
+class AlertsStep(_In):
+    """Step 5 · Alerts & consent."""
+
+    email_enabled: bool | None = None
+    telegram_enabled: bool | None = None
+    threshold: int | None = Field(None, ge=50, le=100)
+    frequency: AlertFrequency | None = None
+    quiet_start: time | None = None
+    quiet_end: time | None = None
+    clear_quiet_hours: bool = False
+    consents: dict[ConsentKind, bool] | None = None
+
+
+# --------------------------------------------------------------------------- #
+# Read model
+# --------------------------------------------------------------------------- #
+class OnboardingStatus(BaseModel):
+    step: int
+    completed_at: datetime | None = None
+    agent_started_at: datetime | None = None
+    missing: list[str] = Field(default_factory=list)  # required fields still empty
+
+
+class Me(BaseModel):
+    """Everything the onboarding wizard and the profile review screen show."""
+
+    user_id: UUID
+    email: str = ""
+    is_demo: bool = False
+    full_name: str = ""
+    birth_year: int | None = None
+    nationality: str | None = None
+    country: str | None = None
+    wilaya: str | None = None
+    education_level: EducationLevel | None = None
+    field_of_study: str | None = None
+    institution: str | None = None
+    current_year: int | None = None
+    graduation_year: int | None = None
+    gpa_value: float | None = None
+    gpa_scale: int | None = None
+    interests: list[str] = Field(default_factory=list)
+    opportunity_types: list[OpportunityTypeName] = Field(default_factory=list)
+    preferred_location: PreferredLocation | None = None
+    availability: Availability | None = None
+    goal: str | None = None
+    skills: list[Skill] = Field(default_factory=list)
+    languages: list[Language] = Field(default_factory=list)
+    experiences: list[Experience] = Field(default_factory=list)
+    certificates: list[Certificate] = Field(default_factory=list)
+    links: list[Link] = Field(default_factory=list)
+    notifications: NotificationSettings = Field(default_factory=NotificationSettings)
+    consents: list[ConsentKind] = Field(default_factory=list)  # currently granted
+    completeness: float = 0.0
+    completeness_suggestions: list[str] = Field(default_factory=list)
+    onboarding: OnboardingStatus
+
+
+# --------------------------------------------------------------------------- #
+# Documents
+# --------------------------------------------------------------------------- #
+class Document(BaseModel):
+    id: UUID
+    kind: DocumentKind
+    file_name: str
+    size_bytes: int
+    status: DocumentStatus
+    read_method: str | None = None
+    warnings: list[str] = Field(default_factory=list)
+    extraction: dict[str, Any] | None = None
+    error: str | None = None
+    created_at: datetime
+
+
+class CVPrefill(BaseModel):
+    """Values found in a CV, shaped like the onboarding steps they pre-fill."""
+
+    about: AboutYouStep = Field(default_factory=AboutYouStep)
+    education: EducationStep = Field(default_factory=EducationStep)
+    skills: SkillsStep = Field(default_factory=SkillsStep)
+    goals: GoalsStep = Field(default_factory=GoalsStep)
+    experiences: list[ExperienceIn] = Field(default_factory=list)
+    certificates: list[CertificateIn] = Field(default_factory=list)
+    needs_review: list[str] = Field(default_factory=list)
+
+
+class DocumentDetail(Document):
+    prefill: CVPrefill | None = None
+
+
+# --------------------------------------------------------------------------- #
+# Opportunities
+# --------------------------------------------------------------------------- #
+class OpportunityOut(BaseModel):
+    id: UUID
+    external_id: str | None = None
+    title: str
+    organizer: str
+    type: OpportunityTypeName
+    mode: Literal["remote", "hybrid", "onsite"] | None = None
+    location: str = ""
+    country: str = ""
+    language: str = "en"
+    deadline: date | None = None
+    funding: str | None = None
+    eligibility: list[str] = Field(default_factory=list)
+    benefits: list[str] = Field(default_factory=list)
+    summary: str = ""
+    url: str = ""
+    source: str = ""
+    trust_level: TrustLevelName = "unknown"
+    scam_flags: list[dict[str, Any]] = Field(default_factory=list)
+    added_via: str = "pipeline"
+    created_at: datetime | None = None
+
+
+class OpportunityPage(BaseModel):
+    items: list[OpportunityOut]
+    total: int
+    limit: int
+    offset: int
+
+
+class OpportunityFilters(BaseModel):
+    q: str | None = None
+    types: list[OpportunityTypeName] = Field(default_factory=list)
+    modes: list[Literal["remote", "hybrid", "onsite"]] = Field(default_factory=list)
+    country: str | None = None
+    trust_levels: list[TrustLevelName] = Field(default_factory=list)
+    include_expired: bool = False
+    deadline_before: date | None = None
+    limit: int = Field(20, ge=1, le=100)
+    offset: int = Field(0, ge=0)
+
+
+class DemoSession(BaseModel):
+    access_token: str
+    refresh_token: str
+    expires_in: int
+    token_type: str = "bearer"
+
+
+def _dedupe_ci(values: list[str]) -> list[str]:
+    seen: set[str] = set()
+    out: list[str] = []
+    for value in values:
+        if value.lower() not in seen:
+            seen.add(value.lower())
+            out.append(value)
+    return out

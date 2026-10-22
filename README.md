@@ -48,10 +48,14 @@ See [`ai/README.md`](ai/README.md) for running the AI part alone.
 
 ```bash
 cd backend
-python -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt        # installs ../ai in editable mode too
-uvicorn app.main:app --reload          # http://localhost:8000
+python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scriptsctivate
+pip install -r requirements-dev.txt    # installs ../ai in editable mode too
+pytest                                 # offline: in-memory repo + fake LLM
+uvicorn app.main:app --reload          # http://localhost:8000/docs
 ```
+
+Without a Supabase project you can still click through the API with
+`DATA_BACKEND=memory` (data is lost on restart; auth still needs Supabase JWTs).
 
 ### 3. Frontend (Next.js)
 
@@ -61,12 +65,18 @@ npm install
 npm run dev                            # http://localhost:3000
 ```
 
-### 4. Database
+### 4. Database (Supabase)
 
 ```bash
-supabase start                         # local stack
+supabase start                         # local stack (needs Docker)
 supabase db reset                      # applies supabase/migrations/
+cd backend && python scripts/seed.py --demo   # fixtures + read-only demo account
 ```
+
+No Docker? Create a free project at supabase.com, run
+`supabase link --project-ref <ref> && supabase db push`, and put its URL/keys in `.env`.
+Auth settings (e-mail confirmation, 8-char passwords with a digit, 30-min reset
+links, Google) live in `supabase/config.toml`.
 
 ## Configuration
 
@@ -78,7 +88,8 @@ the repo. The AI reads `LLM_API_KEY`, `LLM_BASE_URL`, `LLM_MODEL` and
 
 All work happens on **`develop`**. `main` is reserved for stable releases.
 
-1. Branch off `develop`: `git checkout -b develop/<your-name>/<topic>`
+1. Branch off `develop`: `git checkout -b feature/<topic>` (git cannot create
+   `develop/...` branches while a `develop` branch exists)
 2. Open a PR **back into `develop`** — CODEOWNERS auto-requests the right reviewer.
 3. `schemas.py` and `llm.py` are shared: both AI owners must approve changes there.
 
@@ -87,13 +98,13 @@ All work happens on **`develop`**. `main` is reserved for stable releases.
 | Area                | Status                                                |
 | ------------------- | ----------------------------------------------------- |
 | Repo scaffold       | ✅ Done                                               |
-| DB schema           | 🚧 First migration drafted                           |
+| DB schema           | ✅ Profile/onboarding, documents, opportunities, RLS  |
 | Ingestion           | 🚧 Scaffolded — fetchers/extractor being built        |
 | CV parsing          | 🚧 Scaffolded                                         |
 | Matching            | ⬜ Not started (Ikbel)                                |
 | Chat assistant      | ⬜ Not started (Ikbel)                                |
 | Frontend            | ⬜ Not started (Riad)                                 |
-| Backend API         | 🚧 Health endpoint only                               |
+| Backend API         | 🚧 Auth, onboarding, CV upload, opportunities — matching/chat wait on AI |
 | Eval harness        | ⬜ Test sets being labelled                           |
 
 ## Built by

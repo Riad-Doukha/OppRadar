@@ -1,3 +1,3 @@
-from app.sockets.events import sio_app
+from app.sockets.events import emit_to_user, sio_app
 
-__all__ = ["sio_app"]
+__all__ = ["emit_to_user", "sio_app"]
