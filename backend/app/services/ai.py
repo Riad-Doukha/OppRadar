@@ -14,12 +14,6 @@ from datetime import date
 from pathlib import Path
 from typing import Any
 
-from oppradar_ai.documents import (
-    extract_certificate,
-    extract_cv,
-    extract_portfolio,
-    read_document,
-)
 from oppradar_ai.llm import LLMError
 from oppradar_ai.schemas import (
     CertificateExtraction,
@@ -53,22 +47,22 @@ from app.models import (
 
 __all__ = ["LLMError", "cv_prefill", "process_document", "to_ai_profile"]
 
-_EXTRACTORS = {
-    "cv": extract_cv,
-    "certificate": extract_certificate,
-    "portfolio": extract_portfolio,
-}
-
 
 # --------------------------------------------------------------------------- #
 # Documents
 # --------------------------------------------------------------------------- #
+# oppradar_ai.documents is imported lazily: it pulls in PyMuPDF (2.x loads an
+# ONNX layout model on import) and OCR. Importing it at module level slowed
+# every server start and script — and hung them outright when Windows WMI was
+# unresponsive (onnxruntime -> platform.system()).
 def read(path: Path) -> DocumentContent:
     """File -> text (PDF text layer, OCR for scans). Slow on scans: run off the event loop.
 
     Raises ValueError for files that cannot be read (corrupt/encrypted PDFs
     surface from PyMuPDF as RuntimeError subclasses).
     """
+    from oppradar_ai.documents import read_document
+
     try:
         return read_document(path)
     except LLMError:
@@ -79,7 +73,14 @@ def read(path: Path) -> DocumentContent:
 
 def extract(kind: str, content: DocumentContent) -> BaseModel:
     """Text -> structured extraction for one document kind (one LLM call)."""
-    return _EXTRACTORS[kind](content.text, content.file_name)
+    from oppradar_ai.documents import extract_certificate, extract_cv, extract_portfolio
+
+    extractors = {
+        "cv": extract_cv,
+        "certificate": extract_certificate,
+        "portfolio": extract_portfolio,
+    }
+    return extractors[kind](content.text, content.file_name)
 
 
 def process_document(path: Path, kind: str) -> tuple[DocumentContent, BaseModel]:
