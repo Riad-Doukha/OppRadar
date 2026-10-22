@@ -10,13 +10,19 @@ from supabase import Client, create_client
 from app.config import get_settings
 
 
-@lru_cache
-def get_db() -> Client | None:
-    """Service-role client (bypasses RLS) for the repositories and scripts."""
+def new_service_client() -> Client | None:
+    """A fresh service-role client (bypasses RLS). The repository keeps one
+    per thread; see SupabaseRepository.db."""
     settings = get_settings()
     if not (settings.supabase_url and settings.supabase_service_role_key):
         return None  # not configured yet (e.g. local tests)
     return create_client(settings.supabase_url, settings.supabase_service_role_key)
+
+
+@lru_cache
+def get_db() -> Client | None:
+    """Shared service-role client for single-threaded scripts (seed.py)."""
+    return new_service_client()
 
 
 def get_anon_client() -> Client | None:

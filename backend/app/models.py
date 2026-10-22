@@ -345,8 +345,50 @@ class OpportunityFilters(BaseModel):
     trust_levels: list[TrustLevelName] = Field(default_factory=list)
     include_expired: bool = False
     deadline_before: date | None = None
+    # Per-user feeds: None = no restriction, [] = nothing ("Saved" with no saves).
+    ids: list[str] | None = None
+    exclude_ids: list[str] = Field(default_factory=list)  # "Not interested"
+    created_after: datetime | None = None  # "New" badge / new-today count
     limit: int = Field(20, ge=1, le=100)
     offset: int = Field(0, ge=0)
+
+
+# --------------------------------------------------------------------------- #
+# Dashboard feed (per-user view of opportunities)
+# --------------------------------------------------------------------------- #
+FeedTab = Literal["for_you", "closing", "saved"]
+
+
+class MyOpportunity(OpportunityOut):
+    """An opportunity plus this user's state. Match score / eligibility join
+    here when the AI matcher ships (see docs/ai-interface.md)."""
+
+    saved: bool = False
+    dismissed: bool = False
+    is_new: bool = False
+
+
+class MyOpportunityPage(_Out):
+    tab: FeedTab
+    items: list[MyOpportunity]
+    total: int
+    limit: int
+    offset: int
+
+
+class DashboardStats(_Out):
+    for_you: int
+    closing_this_week: int
+    saved: int
+    new_today: int
+    applications: int = 0
+    agent_started_at: datetime | None = None
+    matching_available: bool = False  # flips when the AI matcher is wired in
+
+
+class AgentStatus(_Out):
+    status: Literal["waiting_for_matcher", "running"]
+    agent_started_at: datetime
 
 
 class DemoSession(_Out):

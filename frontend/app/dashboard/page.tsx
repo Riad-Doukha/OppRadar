@@ -1,9 +1,17 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 
-import { SignedInPlaceholder } from "@/components/auth/signed-in-placeholder";
+import { AppShell } from "@/components/app/app-shell";
+import { Dashboard } from "@/components/dashboard/dashboard";
 
-export const metadata: Metadata = { title: "Your matches" };
+export const metadata: Metadata = { title: "Dashboard" };
 
 export default function DashboardPage() {
-  return <SignedInPlaceholder title="Your matches" />;
+  return (
+    <Suspense>
+      <AppShell>
+        <Dashboard />
+      </AppShell>
+    </Suspense>
+  );
 }

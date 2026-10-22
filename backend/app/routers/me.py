@@ -75,15 +75,6 @@ def complete_onboarding(user: Writer, repo: Repo) -> Me:
     return profiles.complete(repo, user)
 
 
-@router.post("/agent/start", status_code=status.HTTP_501_NOT_IMPLEMENTED)
-def start_agent(user: Writer) -> dict[str, str]:
-    """'Start my agent' — needs the ingestion + matching AI phases (not shipped yet)."""
-    return {
-        "detail": "The matching agent is not available yet. Your profile is saved and ready.",
-        "status": "coming_soon",
-    }
-
-
 # --------------------------------------------------------------------------- #
 # Experiences
 # --------------------------------------------------------------------------- #

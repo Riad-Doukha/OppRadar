@@ -1,24 +1,24 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, type ReactNode } from "react";
+import type { ReactNode } from "react";
 
 import { Alert } from "@/components/ui/alert";
-import { Button, Spinner } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { Pill, SectionLabel } from "@/components/ui/inputs";
-import { ApiError, api } from "@/lib/api/client";
+import { firstIncompleteStep, isComplete } from "@/lib/onboarding/status";
 import { AVAILABILITY, CURRENT_YEARS, EDUCATION_LEVELS, FREQUENCIES, OPPORTUNITY_TYPES, PREFERRED_LOCATIONS, labelOf } from "@/lib/onboarding/options";
 
 import { useWizard } from "./frame";
+import { MissingList } from "./missing";
 
 const ordinal = (n: number) => labelOf(CURRENT_YEARS, n).replace(" year", "-year");
 
-/** "SETUP COMPLETE: Review your profile" + Start my agent. */
+/** Profile review: "Start my agent" once setup is complete, otherwise what's missing + Continue setup. */
 export function Review() {
   const { me, goTo } = useWizard();
   const router = useRouter();
-  const [starting, setStarting] = useState(false);
-  const [notice, setNotice] = useState<string | null>(null);
 
   const initials = (me.full_name || me.email).split(/\s+/).map((w) => w[0]).slice(0, 2).join("").toUpperCase();
   const headline = [
@@ -31,19 +31,9 @@ export function Review() {
   const frequency = labelOf(FREQUENCIES, n.frequency).split(":")[0];
   const quiet = n.quiet_start && n.quiet_end ? ` · Quiet ${n.quiet_start.slice(0, 5)} to ${n.quiet_end.slice(0, 5)}` : "";
 
-  async function start() {
-    setStarting(true);
-    setNotice(null);
-    try {
-      await api("/me/agent/start", { method: "POST" });
-      router.push("/dashboard");
-    } catch (e) {
-      // 501 until the matching phase ships: the profile is saved, the agent isn't live yet.
-      if (e instanceof ApiError && e.status === 501) setNotice("Your profile is saved and ready. The matching agent isn't live yet — we'll start it as soon as it is.");
-      else setNotice("We couldn't start your agent. Please try again.");
-    }
-    setStarting(false);
-  }
+  // The scan screen starts the agent and then lands on the dashboard.
+  const start = () => router.push("/scan");
+  const complete = isComplete(me);
 
   return (
     <div className="rounded-card border border-line bg-surface p-5 shadow-[0_1px_1.5px_rgb(30_17_62/0.05)] sm:p-9">
@@ -53,7 +43,9 @@ export function Review() {
           <h1 className="font-display text-2xl leading-tight font-bold tracking-[-0.5px] text-ink sm:text-[28px]">{me.full_name}</h1>
           {headline && <p className="text-sm text-body">{headline}</p>}
         </div>
-        <span className="hidden h-7 items-center rounded-full bg-[#ecfdf5] px-3 text-[13px] font-bold text-success sm:flex">{me.is_demo ? "Demo" : "Ready"}</span>
+        <span className={`hidden h-7 items-center rounded-full px-3 text-[13px] font-bold sm:flex ${complete ? "bg-[#ecfdf5] text-success" : "bg-[#fffbeb] text-warning"}`}>
+          {me.is_demo ? "Demo" : complete ? "Ready" : "Incomplete"}
+        </span>
       </div>
 
       <div className="grid gap-6 pt-[26px] sm:grid-cols-2">
@@ -122,20 +114,39 @@ export function Review() {
         </Section>
       </div>
 
-      {notice && <Alert tone="info" className="mt-6">{notice}</Alert>}
+      {!complete && (
+        <Alert tone="info" className="mt-7">
+          {me.onboarding.missing.length ? (
+            <MissingList missing={me.onboarding.missing} />
+          ) : (
+            <p>Everything required is filled in — press Finish setup on step 5 to complete it.</p>
+          )}
+        </Alert>
+      )}
 
       <div className="mt-7 flex flex-col gap-4 border-t border-line pt-6 sm:flex-row sm:items-center">
         <p className="flex-1 text-sm text-body">
-          You can edit all of this later in <strong>My profile</strong>.
+          {complete ? (
+            <>
+              You can edit all of this later in <Link href="/profile" className="font-bold text-ink hover:text-brand">My profile</Link>.
+            </>
+          ) : (
+            "Finish the setup so your agent can start matching you."
+          )}
         </p>
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="sm" onClick={() => goTo(1)}>
             &lt; Edit a section
           </Button>
-          <Button size="md" className="bg-signal px-7 text-base text-ink hover:bg-[#eef03c]" onClick={start} disabled={starting}>
-            {starting && <Spinner />}
-            Start my agent &gt;
-          </Button>
+          {complete ? (
+            <Button size="md" className="bg-signal px-7 text-base text-ink hover:bg-[#eef03c]" onClick={start}>
+              Start my agent &gt;
+            </Button>
+          ) : (
+            <Button size="md" className="px-7 text-base" onClick={() => goTo(firstIncompleteStep(me))}>
+              Continue setup &gt;
+            </Button>
+          )}
         </div>
       </div>
     </div>

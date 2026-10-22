@@ -20,12 +20,11 @@ def get_repository() -> Repository:
         return MemoryRepository()
 
     from app.repositories.supabase import SupabaseRepository
-    from app.services.db import get_db
+    from app.services.db import new_service_client
 
-    client = get_db()
-    if client is None:
+    if new_service_client() is None:
         raise RuntimeError(
             "Supabase is not configured: set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY "
             "(or DATA_BACKEND=memory for a throwaway local run)."
         )
-    return SupabaseRepository(client, settings.storage_bucket)
+    return SupabaseRepository(new_service_client, settings.storage_bucket)

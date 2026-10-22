@@ -25,6 +25,7 @@ from app.models import (
     SkillsStep,
 )
 from app.repositories import Repository, Row
+from app.services.parallel import gather
 
 PROFILE_FIELDS = (
     "full_name", "birth_year", "nationality", "country", "wilaya",
@@ -42,23 +43,36 @@ def _now() -> datetime:
 # Read
 # --------------------------------------------------------------------------- #
 def load_me(repo: Repository, user: CurrentUser) -> Me:
+    # The profile row must exist first (signup trigger, or created here); the
+    # other nine reads are independent and run concurrently.
     profile = repo.ensure_profile(user.id, user.full_name)
-    settings = repo.get_notification_settings(user.id)
+    uid = user.id
+    r = gather(
+        settings=lambda: repo.get_notification_settings(uid),
+        skills=lambda: repo.list_children("profile_skills", uid),
+        languages=lambda: repo.list_children("profile_languages", uid),
+        experiences=lambda: repo.list_children("experiences", uid),
+        certificates=lambda: repo.list_children("certificates", uid),
+        links=lambda: repo.list_children("profile_links", uid),
+        consents=lambda: repo.active_consents(uid),
+        documents=lambda: repo.list_documents(uid),
+    )
+    settings = r["settings"]
     me = Me(
         user_id=user.id,
         email=user.email,
         is_demo=user.is_demo or bool(profile.get("is_demo")),
         **{k: profile.get(k) for k in PROFILE_FIELDS if profile.get(k) is not None},
-        skills=repo.list_children("profile_skills", user.id),
-        languages=repo.list_children("profile_languages", user.id),
-        experiences=repo.list_children("experiences", user.id),
-        certificates=repo.list_children("certificates", user.id),
-        links=repo.list_children("profile_links", user.id),
+        skills=r["skills"],
+        languages=r["languages"],
+        experiences=r["experiences"],
+        certificates=r["certificates"],
+        links=r["links"],
         notifications=NotificationSettings(
             **{k: v for k, v in settings.items() if k in NotificationSettings.model_fields},
             telegram_linked=bool(settings.get("telegram_chat_id")),
         ),
-        consents=repo.active_consents(user.id),
+        consents=r["consents"],
         completeness_suggestions=profile.get("completeness_suggestions") or [],
         onboarding=OnboardingStatus(
             step=profile.get("onboarding_step") or 1,
@@ -66,7 +80,7 @@ def load_me(repo: Repository, user: CurrentUser) -> Me:
             agent_started_at=profile.get("agent_started_at"),
         ),
     )
-    me.onboarding.missing = missing_required(me, has_documents=bool(repo.list_documents(user.id)))
+    me.onboarding.missing = missing_required(me, has_documents=bool(r["documents"]))
     me.completeness = completeness(me)
     return me
 

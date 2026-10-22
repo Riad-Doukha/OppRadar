@@ -183,26 +183,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/me/agent/start": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Start Agent
-         * @description 'Start my agent' — needs the ingestion + matching AI phases (not shipped yet).
-         */
-        post: operations["start_agent_me_agent_start_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/me/experiences": {
         parameters: {
             query?: never;
@@ -271,6 +251,122 @@ export interface paths {
         head?: never;
         /** Edit Certificate */
         patch: operations["edit_certificate_me_certificates__certificate_id__patch"];
+        trace?: never;
+    };
+    "/me/dashboard": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Dashboard
+         * @description Counts for the dashboard tiles and tabs.
+         */
+        get: operations["get_dashboard_me_dashboard_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/agent/start": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Start Agent
+         * @description 'Start my agent': recorded now; scanning starts once the AI matcher ships.
+         */
+        post: operations["start_agent_me_agent_start_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/opportunities": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List My Opportunities
+         * @description 'For you' (types chosen in onboarding), 'Closing soon' (7 days) or 'Saved'.
+         */
+        get: operations["list_my_opportunities_me_opportunities_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/opportunities/{opportunity_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get My Opportunity */
+        get: operations["get_my_opportunity_me_opportunities__opportunity_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/opportunities/{opportunity_id}/saved": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Save */
+        put: operations["save_me_opportunities__opportunity_id__saved_put"];
+        post?: never;
+        /** Unsave */
+        delete: operations["unsave_me_opportunities__opportunity_id__saved_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/opportunities/{opportunity_id}/dismissed": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Dismiss
+         * @description 'Not interested': hidden from 'For you' and 'Closing soon'.
+         */
+        put: operations["dismiss_me_opportunities__opportunity_id__dismissed_put"];
+        post?: never;
+        /** Undismiss */
+        delete: operations["undismiss_me_opportunities__opportunity_id__dismissed_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/documents": {
@@ -391,6 +487,19 @@ export interface components {
             /** Languages */
             languages: components["schemas"]["LanguageIn-Output"][] | null;
         };
+        /** AgentStatus */
+        AgentStatus: {
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "waiting_for_matcher" | "running";
+            /**
+             * Agent Started At
+             * Format: date-time
+             */
+            agent_started_at: string;
+        };
         /**
          * AlertsStep
          * @description Step 5 · Alerts & consent.
@@ -510,6 +619,29 @@ export interface components {
             year?: number | null;
             /** Credential Url */
             credential_url?: string | null;
+        };
+        /** DashboardStats */
+        DashboardStats: {
+            /** For You */
+            for_you: number;
+            /** Closing This Week */
+            closing_this_week: number;
+            /** Saved */
+            saved: number;
+            /** New Today */
+            new_today: number;
+            /**
+             * Applications
+             * @default 0
+             */
+            applications: number;
+            /** Agent Started At */
+            agent_started_at: string | null;
+            /**
+             * Matching Available
+             * @default false
+             */
+            matching_available: boolean;
         };
         /** DemoSession */
         DemoSession: {
@@ -904,6 +1036,117 @@ export interface components {
             /** Completeness Suggestions */
             completeness_suggestions: string[];
             onboarding: components["schemas"]["OnboardingStatus"];
+        };
+        /**
+         * MyOpportunity
+         * @description An opportunity plus this user's state. Match score / eligibility join
+         *     here when the AI matcher ships (see docs/ai-interface.md).
+         */
+        MyOpportunity: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** External Id */
+            external_id: string | null;
+            /** Title */
+            title: string;
+            /** Organizer */
+            organizer: string;
+            /**
+             * Type
+             * @enum {string}
+             */
+            type: "scholarship" | "job" | "internship" | "fellowship" | "hackathon" | "datathon" | "competition" | "bootcamp" | "research" | "volunteer" | "course" | "grant" | "other";
+            /** Mode */
+            mode: ("remote" | "hybrid" | "onsite") | null;
+            /**
+             * Location
+             * @default
+             */
+            location: string;
+            /**
+             * Country
+             * @default
+             */
+            country: string;
+            /**
+             * Language
+             * @default en
+             */
+            language: string;
+            /** Deadline */
+            deadline: string | null;
+            /** Funding */
+            funding: string | null;
+            /** Eligibility */
+            eligibility: string[];
+            /** Benefits */
+            benefits: string[];
+            /**
+             * Summary
+             * @default
+             */
+            summary: string;
+            /**
+             * Url
+             * @default
+             */
+            url: string;
+            /**
+             * Source
+             * @default
+             */
+            source: string;
+            /**
+             * Trust Level
+             * @default unknown
+             * @enum {string}
+             */
+            trust_level: "verified" | "likely_safe" | "unknown" | "suspicious" | "scam";
+            /** Scam Flags */
+            scam_flags: {
+                [key: string]: unknown;
+            }[];
+            /**
+             * Added Via
+             * @default pipeline
+             */
+            added_via: string;
+            /** Created At */
+            created_at: string | null;
+            /**
+             * Saved
+             * @default false
+             */
+            saved: boolean;
+            /**
+             * Dismissed
+             * @default false
+             */
+            dismissed: boolean;
+            /**
+             * Is New
+             * @default false
+             */
+            is_new: boolean;
+        };
+        /** MyOpportunityPage */
+        MyOpportunityPage: {
+            /**
+             * Tab
+             * @enum {string}
+             */
+            tab: "for_you" | "closing" | "saved";
+            /** Items */
+            items: components["schemas"]["MyOpportunity"][];
+            /** Total */
+            total: number;
+            /** Limit */
+            limit: number;
+            /** Offset */
+            offset: number;
         };
         /** NotificationSettings */
         NotificationSettings: {
@@ -1366,28 +1609,6 @@ export interface operations {
             };
         };
     };
-    start_agent_me_agent_start_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            501: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        [key: string]: string;
-                    };
-                };
-            };
-        };
-    };
     add_experience_me_experiences_post: {
         parameters: {
             query?: never;
@@ -1569,6 +1790,236 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Certificate"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_dashboard_me_dashboard_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DashboardStats"];
+                };
+            };
+        };
+    };
+    start_agent_me_agent_start_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AgentStatus"];
+                };
+            };
+        };
+    };
+    list_my_opportunities_me_opportunities_get: {
+        parameters: {
+            query?: {
+                tab?: "for_you" | "closing" | "saved";
+                q?: string | null;
+                type?: ("scholarship" | "job" | "internship" | "fellowship" | "hackathon" | "datathon" | "competition" | "bootcamp" | "research" | "volunteer" | "course" | "grant" | "other")[];
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyOpportunityPage"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_my_opportunity_me_opportunities__opportunity_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                opportunity_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyOpportunity"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    save_me_opportunities__opportunity_id__saved_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                opportunity_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyOpportunity"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    unsave_me_opportunities__opportunity_id__saved_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                opportunity_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyOpportunity"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    dismiss_me_opportunities__opportunity_id__dismissed_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                opportunity_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyOpportunity"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    undismiss_me_opportunities__opportunity_id__dismissed_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                opportunity_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyOpportunity"];
                 };
             };
             /** @description Validation Error */

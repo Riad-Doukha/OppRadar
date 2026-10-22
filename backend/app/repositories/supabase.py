@@ -6,6 +6,8 @@ explicitly — never drop those .eq("user_id", ...) calls.
 
 from __future__ import annotations
 
+import threading
+from collections.abc import Callable
 from datetime import date, datetime, time, timezone
 from typing import Any
 
@@ -34,9 +36,20 @@ def _first(data: list[Row], what: str) -> Row:
 
 
 class SupabaseRepository:
-    def __init__(self, client: Client, bucket: str) -> None:
-        self.db = client
+    def __init__(self, client_factory: Callable[[], Client], bucket: str) -> None:
+        # One client per thread: supabase-py talks HTTP/2 over a single shared
+        # connection, which breaks when several threads use it at once
+        # (WinError 10035 on Windows) — and FastAPI + services.parallel do.
+        self._client_factory = client_factory
+        self._local = threading.local()
         self.bucket = bucket
+
+    @property
+    def db(self) -> Client:
+        client = getattr(self._local, "client", None)
+        if client is None:
+            client = self._local.client = self._client_factory()
+        return client
 
     # -- profile --------------------------------------------------------------- #
     def get_profile(self, user_id: str) -> Row | None:
@@ -210,15 +223,17 @@ class SupabaseRepository:
 
     # -- opportunities ------------------------------------------------------------------ #
     def list_opportunities(self, filters: OpportunityFilters) -> tuple[list[Row], int]:
+        if filters.ids is not None and not filters.ids:
+            return [], 0
         query: Any = (
             self.db.table("opportunities")
             .select(OPPORTUNITY_COLUMNS, count="exact")
             .eq("review_status", "approved")
         )
         if filters.q:
-            query = query.text_search(
-                "search", filters.q, options={"config": "simple", "type": "websearch"}
-            )
+            # websearch_to_tsquery as a plain filter: .text_search() returns a
+            # builder that can't take the type/id filters chained after it.
+            query = query.filter("search", "wfts(simple)", filters.q)
         if filters.types:
             query = query.in_("type", filters.types)
         if filters.modes:
@@ -231,6 +246,12 @@ class SupabaseRepository:
             query = query.or_(f"deadline.is.null,deadline.gte.{date.today().isoformat()}")
         if filters.deadline_before:
             query = query.lte("deadline", filters.deadline_before.isoformat())
+        if filters.ids is not None:
+            query = query.in_("id", filters.ids)
+        if filters.exclude_ids:
+            query = query.not_.in_("id", filters.exclude_ids)
+        if filters.created_after:
+            query = query.gte("created_at", filters.created_after.isoformat())
         response = (
             query.order("deadline", nullsfirst=False)
             .order("title")
@@ -260,3 +281,19 @@ class SupabaseRepository:
             .data
         )
         return len(data)
+
+    # -- per-user opportunity state ------------------------------------------------ #
+    def list_opportunity_states(self, user_id: str) -> list[Row]:
+        return self.db.table("user_opportunities").select("*").eq("user_id", user_id).execute().data
+
+    def set_opportunity_state(self, user_id: str, opportunity_id: str, fields: Row) -> Row:
+        if self.get_opportunity(opportunity_id) is None:
+            raise NotFoundError(f"opportunity {opportunity_id}")
+        row = {"user_id": user_id, "opportunity_id": opportunity_id, **fields}
+        data = (
+            self.db.table("user_opportunities")
+            .upsert(_json(row), on_conflict="user_id,opportunity_id")
+            .execute()
+            .data
+        )
+        return _first(data, f"opportunity state {opportunity_id}")

@@ -80,6 +80,7 @@ class MemoryRepository:
         self.documents: dict[str, Row] = {}
         self.files: dict[str, bytes] = {}
         self.opportunities: dict[str, Row] = {}
+        self.opportunity_states: dict[tuple[str, str], Row] = {}
 
     # -- profile --------------------------------------------------------------- #
     def get_profile(self, user_id: str) -> Row | None:
@@ -246,6 +247,9 @@ class MemoryRepository:
         q = (filters.q or "").lower().split()
         country = (filters.country or "").lower()
         before = filters.deadline_before
+        ids = None if filters.ids is None else set(filters.ids)
+        excluded = set(filters.exclude_ids)
+        after = filters.created_after
 
         def keep(r: Row) -> bool:
             deadline = _as_date(r.get("deadline"))
@@ -261,6 +265,9 @@ class MemoryRepository:
                 and (filters.include_expired or deadline is None or deadline >= today)
                 and (before is None or (deadline is not None and deadline <= before))
                 and all(term in haystack for term in q)
+                and (ids is None or r["id"] in ids)
+                and r["id"] not in excluded
+                and (after is None or r["created_at"] >= after)
             )  # fmt: skip
 
         matched = [r for r in rows if keep(r)]
@@ -283,6 +290,31 @@ class MemoryRepository:
                 base.update(copy.deepcopy(row))
                 self.opportunities[key] = base
         return len(rows)
+
+    # -- per-user opportunity state ------------------------------------------------ #
+    def list_opportunity_states(self, user_id: str) -> list[Row]:
+        with self._lock:
+            return [
+                copy.deepcopy(r)
+                for (uid, _), r in self.opportunity_states.items()
+                if uid == user_id
+            ]
+
+    def set_opportunity_state(self, user_id: str, opportunity_id: str, fields: Row) -> Row:
+        with self._lock:
+            if opportunity_id not in self.opportunities:
+                raise NotFoundError(f"opportunity {opportunity_id}")
+            row = self.opportunity_states.setdefault(
+                (user_id, opportunity_id),
+                {
+                    "user_id": user_id,
+                    "opportunity_id": opportunity_id,
+                    "saved_at": None,
+                    "dismissed_at": None,
+                },
+            )
+            row.update(copy.deepcopy(fields), updated_at=_now())
+            return copy.deepcopy(row)
 
 
 def _as_date(value: Any) -> date | None:

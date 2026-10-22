@@ -9,7 +9,7 @@ from fastapi.responses import JSONResponse
 
 from app.config import get_settings
 from app.repositories import NotFoundError
-from app.routers import auth, chat, documents, health, matches, me, opportunities
+from app.routers import auth, chat, documents, feed, health, matches, me, opportunities
 from app.services.ai import LLMError
 from app.sockets import sio_app
 
@@ -47,6 +47,7 @@ async def ai_unavailable(_: Request, exc: LLMError) -> JSONResponse:
 app.include_router(health.router)
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
 app.include_router(me.router, prefix="/me", tags=["me"])
+app.include_router(feed.router, prefix="/me", tags=["dashboard"])
 app.include_router(documents.router, prefix="/documents", tags=["documents"])
 app.include_router(opportunities.router, prefix="/opportunities", tags=["opportunities"])
 app.include_router(matches.router, prefix="/matches", tags=["matches"])

@@ -339,37 +339,6 @@
     ]
    }
   },
-  "/me/agent/start": {
-   "post": {
-    "tags": [
-     "me"
-    ],
-    "summary": "Start Agent",
-    "description": "'Start my agent' \u2014 needs the ingestion + matching AI phases (not shipped yet).",
-    "operationId": "start_agent_me_agent_start_post",
-    "responses": {
-     "501": {
-      "description": "Successful Response",
-      "content": {
-       "application/json": {
-        "schema": {
-         "additionalProperties": {
-          "type": "string"
-         },
-         "type": "object",
-         "title": "Response Start Agent Me Agent Start Post"
-        }
-       }
-      }
-     }
-    },
-    "security": [
-     {
-      "HTTPBearer": []
-     }
-    ]
-   }
-  },
   "/me/experiences": {
    "post": {
     "tags": [
@@ -642,6 +611,419 @@
     "responses": {
      "204": {
       "description": "Successful Response"
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/me/dashboard": {
+   "get": {
+    "tags": [
+     "dashboard"
+    ],
+    "summary": "Get Dashboard",
+    "description": "Counts for the dashboard tiles and tabs.",
+    "operationId": "get_dashboard_me_dashboard_get",
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/DashboardStats"
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ]
+   }
+  },
+  "/me/agent/start": {
+   "post": {
+    "tags": [
+     "dashboard"
+    ],
+    "summary": "Start Agent",
+    "description": "'Start my agent': recorded now; scanning starts once the AI matcher ships.",
+    "operationId": "start_agent_me_agent_start_post",
+    "responses": {
+     "202": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/AgentStatus"
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ]
+   }
+  },
+  "/me/opportunities": {
+   "get": {
+    "tags": [
+     "dashboard"
+    ],
+    "summary": "List My Opportunities",
+    "description": "'For you' (types chosen in onboarding), 'Closing soon' (7 days) or 'Saved'.",
+    "operationId": "list_my_opportunities_me_opportunities_get",
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ],
+    "parameters": [
+     {
+      "name": "tab",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "enum": [
+        "for_you",
+        "closing",
+        "saved"
+       ],
+       "type": "string",
+       "default": "for_you",
+       "title": "Tab"
+      }
+     },
+     {
+      "name": "q",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string",
+         "maxLength": 200
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Q"
+      }
+     },
+     {
+      "name": "type",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "array",
+       "items": {
+        "enum": [
+         "scholarship",
+         "job",
+         "internship",
+         "fellowship",
+         "hackathon",
+         "datathon",
+         "competition",
+         "bootcamp",
+         "research",
+         "volunteer",
+         "course",
+         "grant",
+         "other"
+        ],
+        "type": "string"
+       },
+       "default": [],
+       "title": "Type"
+      }
+     },
+     {
+      "name": "limit",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer",
+       "maximum": 100,
+       "minimum": 1,
+       "default": 20,
+       "title": "Limit"
+      }
+     },
+     {
+      "name": "offset",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer",
+       "minimum": 0,
+       "default": 0,
+       "title": "Offset"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/MyOpportunityPage"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/me/opportunities/{opportunity_id}": {
+   "get": {
+    "tags": [
+     "dashboard"
+    ],
+    "summary": "Get My Opportunity",
+    "operationId": "get_my_opportunity_me_opportunities__opportunity_id__get",
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ],
+    "parameters": [
+     {
+      "name": "opportunity_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid",
+       "title": "Opportunity Id"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/MyOpportunity"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/me/opportunities/{opportunity_id}/saved": {
+   "put": {
+    "tags": [
+     "dashboard"
+    ],
+    "summary": "Save",
+    "operationId": "save_me_opportunities__opportunity_id__saved_put",
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ],
+    "parameters": [
+     {
+      "name": "opportunity_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid",
+       "title": "Opportunity Id"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/MyOpportunity"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   },
+   "delete": {
+    "tags": [
+     "dashboard"
+    ],
+    "summary": "Unsave",
+    "operationId": "unsave_me_opportunities__opportunity_id__saved_delete",
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ],
+    "parameters": [
+     {
+      "name": "opportunity_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid",
+       "title": "Opportunity Id"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/MyOpportunity"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/me/opportunities/{opportunity_id}/dismissed": {
+   "put": {
+    "tags": [
+     "dashboard"
+    ],
+    "summary": "Dismiss",
+    "description": "'Not interested': hidden from 'For you' and 'Closing soon'.",
+    "operationId": "dismiss_me_opportunities__opportunity_id__dismissed_put",
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ],
+    "parameters": [
+     {
+      "name": "opportunity_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid",
+       "title": "Opportunity Id"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/MyOpportunity"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   },
+   "delete": {
+    "tags": [
+     "dashboard"
+    ],
+    "summary": "Undismiss",
+    "operationId": "undismiss_me_opportunities__opportunity_id__dismissed_delete",
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ],
+    "parameters": [
+     {
+      "name": "opportunity_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid",
+       "title": "Opportunity Id"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/MyOpportunity"
+        }
+       }
+      }
      },
      "422": {
       "description": "Validation Error",
@@ -1226,6 +1608,29 @@
     "title": "AboutYouStep",
     "description": "Step 1 \u00b7 About you."
    },
+   "AgentStatus": {
+    "properties": {
+     "status": {
+      "type": "string",
+      "enum": [
+       "waiting_for_matcher",
+       "running"
+      ],
+      "title": "Status"
+     },
+     "agent_started_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Agent Started At"
+     }
+    },
+    "type": "object",
+    "required": [
+     "status",
+     "agent_started_at"
+    ],
+    "title": "AgentStatus"
+   },
    "AlertsStep": {
     "properties": {
      "email_enabled": {
@@ -1622,6 +2027,59 @@
     "additionalProperties": false,
     "type": "object",
     "title": "CertificatePatch"
+   },
+   "DashboardStats": {
+    "properties": {
+     "for_you": {
+      "type": "integer",
+      "title": "For You"
+     },
+     "closing_this_week": {
+      "type": "integer",
+      "title": "Closing This Week"
+     },
+     "saved": {
+      "type": "integer",
+      "title": "Saved"
+     },
+     "new_today": {
+      "type": "integer",
+      "title": "New Today"
+     },
+     "applications": {
+      "type": "integer",
+      "title": "Applications",
+      "default": 0
+     },
+     "agent_started_at": {
+      "anyOf": [
+       {
+        "type": "string",
+        "format": "date-time"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Agent Started At"
+     },
+     "matching_available": {
+      "type": "boolean",
+      "title": "Matching Available",
+      "default": false
+     }
+    },
+    "type": "object",
+    "required": [
+     "for_you",
+     "closing_this_week",
+     "saved",
+     "new_today",
+     "applications",
+     "agent_started_at",
+     "matching_available"
+    ],
+    "title": "DashboardStats"
    },
    "DemoSession": {
     "properties": {
@@ -2930,6 +3388,257 @@
     ],
     "title": "Me",
     "description": "Everything the onboarding wizard and the profile review screen show."
+   },
+   "MyOpportunity": {
+    "properties": {
+     "id": {
+      "type": "string",
+      "format": "uuid",
+      "title": "Id"
+     },
+     "external_id": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "External Id"
+     },
+     "title": {
+      "type": "string",
+      "title": "Title"
+     },
+     "organizer": {
+      "type": "string",
+      "title": "Organizer"
+     },
+     "type": {
+      "type": "string",
+      "enum": [
+       "scholarship",
+       "job",
+       "internship",
+       "fellowship",
+       "hackathon",
+       "datathon",
+       "competition",
+       "bootcamp",
+       "research",
+       "volunteer",
+       "course",
+       "grant",
+       "other"
+      ],
+      "title": "Type"
+     },
+     "mode": {
+      "anyOf": [
+       {
+        "type": "string",
+        "enum": [
+         "remote",
+         "hybrid",
+         "onsite"
+        ]
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Mode"
+     },
+     "location": {
+      "type": "string",
+      "title": "Location",
+      "default": ""
+     },
+     "country": {
+      "type": "string",
+      "title": "Country",
+      "default": ""
+     },
+     "language": {
+      "type": "string",
+      "title": "Language",
+      "default": "en"
+     },
+     "deadline": {
+      "anyOf": [
+       {
+        "type": "string",
+        "format": "date"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Deadline"
+     },
+     "funding": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Funding"
+     },
+     "eligibility": {
+      "items": {
+       "type": "string"
+      },
+      "type": "array",
+      "title": "Eligibility"
+     },
+     "benefits": {
+      "items": {
+       "type": "string"
+      },
+      "type": "array",
+      "title": "Benefits"
+     },
+     "summary": {
+      "type": "string",
+      "title": "Summary",
+      "default": ""
+     },
+     "url": {
+      "type": "string",
+      "title": "Url",
+      "default": ""
+     },
+     "source": {
+      "type": "string",
+      "title": "Source",
+      "default": ""
+     },
+     "trust_level": {
+      "type": "string",
+      "enum": [
+       "verified",
+       "likely_safe",
+       "unknown",
+       "suspicious",
+       "scam"
+      ],
+      "title": "Trust Level",
+      "default": "unknown"
+     },
+     "scam_flags": {
+      "items": {
+       "additionalProperties": true,
+       "type": "object"
+      },
+      "type": "array",
+      "title": "Scam Flags"
+     },
+     "added_via": {
+      "type": "string",
+      "title": "Added Via",
+      "default": "pipeline"
+     },
+     "created_at": {
+      "anyOf": [
+       {
+        "type": "string",
+        "format": "date-time"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Created At"
+     },
+     "saved": {
+      "type": "boolean",
+      "title": "Saved",
+      "default": false
+     },
+     "dismissed": {
+      "type": "boolean",
+      "title": "Dismissed",
+      "default": false
+     },
+     "is_new": {
+      "type": "boolean",
+      "title": "Is New",
+      "default": false
+     }
+    },
+    "type": "object",
+    "required": [
+     "id",
+     "external_id",
+     "title",
+     "organizer",
+     "type",
+     "mode",
+     "location",
+     "country",
+     "language",
+     "deadline",
+     "funding",
+     "eligibility",
+     "benefits",
+     "summary",
+     "url",
+     "source",
+     "trust_level",
+     "scam_flags",
+     "added_via",
+     "created_at",
+     "saved",
+     "dismissed",
+     "is_new"
+    ],
+    "title": "MyOpportunity",
+    "description": "An opportunity plus this user's state. Match score / eligibility join\nhere when the AI matcher ships (see docs/ai-interface.md)."
+   },
+   "MyOpportunityPage": {
+    "properties": {
+     "tab": {
+      "type": "string",
+      "enum": [
+       "for_you",
+       "closing",
+       "saved"
+      ],
+      "title": "Tab"
+     },
+     "items": {
+      "items": {
+       "$ref": "#/components/schemas/MyOpportunity"
+      },
+      "type": "array",
+      "title": "Items"
+     },
+     "total": {
+      "type": "integer",
+      "title": "Total"
+     },
+     "limit": {
+      "type": "integer",
+      "title": "Limit"
+     },
+     "offset": {
+      "type": "integer",
+      "title": "Offset"
+     }
+    },
+    "type": "object",
+    "required": [
+     "tab",
+     "items",
+     "total",
+     "limit",
+     "offset"
+    ],
+    "title": "MyOpportunityPage"
    },
    "NotificationSettings": {
     "properties": {

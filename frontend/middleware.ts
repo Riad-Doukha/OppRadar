@@ -4,7 +4,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { env } from "@/lib/env";
 
 // Pages that need a signed-in user, and auth pages a signed-in user skips.
-const PROTECTED = ["/onboarding", "/dashboard"];
+const PROTECTED = ["/onboarding", "/dashboard", "/scan", "/opportunities", "/profile"];
 const GUEST_ONLY = ["/login", "/signup"];
 
 export async function middleware(request: NextRequest) {
@@ -21,10 +21,11 @@ export async function middleware(request: NextRequest) {
     },
   });
 
-  // Refreshes an expired access token and validates it with Supabase Auth.
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // Refreshes an expired access token, then verifies its signature locally
+  // against the project's cached JWKS — no Auth round trip per navigation
+  // (getUser() would ask Supabase every time).
+  const { data } = await supabase.auth.getClaims();
+  const user = data?.claims?.sub ? { id: data.claims.sub } : null;
 
   const { pathname, search } = request.nextUrl;
   const redirect = (to: string) => {

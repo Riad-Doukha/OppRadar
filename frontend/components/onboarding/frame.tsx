@@ -59,9 +59,18 @@ export function WizardHeader({ exit = true }: { exit?: boolean }) {
   );
 }
 
-/** Progress label + bar above the card. */
-export function Progress({ step, complete }: { step: number; complete?: boolean }) {
-  const title = complete ? "SETUP COMPLETE: Review your profile" : `STEP ${step} OF 5 · ${STEPS[step - 1].title}`;
+/**
+ * Progress label + bar above the card. On the review screen it reflects the
+ * real profile state: green "SETUP COMPLETE" only when nothing required is
+ * missing; otherwise `step` is the number of fully filled steps.
+ */
+export function Progress({ step, review }: { step: number; review?: "complete" | "incomplete" }) {
+  const complete = review === "complete";
+  const title = complete
+    ? "SETUP COMPLETE: Review your profile"
+    : review === "incomplete"
+      ? `REVIEW YOUR PROFILE · ${step} OF 5 STEPS DONE`
+      : `STEP ${step} OF 5 · ${STEPS[step - 1].title}`;
   return (
     <div>
       <p className={cn("font-mono text-[13px] font-semibold uppercase", complete ? "text-success" : "text-brand")}>{title}</p>

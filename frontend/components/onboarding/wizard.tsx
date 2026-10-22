@@ -5,10 +5,11 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useMemo, useRef, useState } from "react";
 
 import { Alert } from "@/components/ui/alert";
-import { Spinner } from "@/components/ui/button";
+import { FieldSkeleton, Loading, Skeleton } from "@/components/ui/skeleton";
 import { api, type Me } from "@/lib/api/client";
 import { filled } from "@/lib/onboarding/body";
 import { SaveStatusProvider } from "@/lib/onboarding/save-status";
+import { isComplete, stepsDone } from "@/lib/onboarding/status";
 import { createClient } from "@/lib/supabase/client";
 
 import type { Prefill } from "./cv-upload";
@@ -88,9 +89,25 @@ export function OnboardingWizard() {
   if (me.isPending) {
     return (
       <Shell>
-        <p className="flex items-center gap-2 py-20 text-sm text-muted">
-          <Spinner className="text-brand" /> Loading your profile…
-        </p>
+        <Loading label="Loading your profile…">
+          <Skeleton className="h-4 w-60" />
+          <Skeleton className="mt-3 h-2 w-full rounded" />
+          <div className="mt-7 flex flex-col gap-5 rounded-card border border-line bg-surface px-5 py-7 sm:px-9 sm:py-8">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <FieldSkeleton />
+              <FieldSkeleton />
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <FieldSkeleton />
+              <FieldSkeleton />
+            </div>
+            <FieldSkeleton className="sm:w-1/2" />
+            <div className="mt-2 flex justify-between border-t border-line pt-[22px]">
+              <Skeleton className="h-11 w-20 rounded-field" />
+              <Skeleton className="h-11 w-28 rounded-field" />
+            </div>
+          </div>
+        </Loading>
       </Shell>
     );
   }
@@ -114,7 +131,11 @@ export function OnboardingWizard() {
               </button>
             </Alert>
           )}
-          <Progress step={step === "review" ? 5 : step} complete={step === "review"} />
+          {step === "review" ? (
+            <Progress step={stepsDone(me.data)} review={isComplete(me.data) ? "complete" : "incomplete"} />
+          ) : (
+            <Progress step={step} />
+          )}
           <div className="pt-7" key={`${step}-${formKey}`}>
             {step === 1 && <StepAbout onApplyPrefill={applyPrefill} />}
             {step === 2 && <StepEducation />}
