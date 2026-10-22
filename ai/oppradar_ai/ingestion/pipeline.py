@@ -1,7 +1,8 @@
 # One ingestion run over the configured sources: fetch -> clean/parse ->
-# budgeted extract -> dedupe by URL, collecting per-source stats, remote
-# call usage and failures. NEVER raises: every problem becomes a failure
-# entry in the returned IngestionReport.
+# budgeted extract (is_opportunity gate + rule-first deadlines) -> dedupe by
+# URL, collecting per-source stats, rejected items, deadline provenance,
+# remote call usage and failures. NEVER raises: every problem becomes a
+# failure entry in the returned IngestionReport.
 # Called by: api.py (Phase 7), notebooks 03_discovery / 04_page_extraction.
 
 from __future__ import annotations
@@ -12,13 +13,25 @@ from datetime import datetime, timezone
 
 from oppradar_ai.config import Settings, get_settings
 from oppradar_ai.ingestion.budget import RunBudget
-from oppradar_ai.ingestion.clean import clean_html
-from oppradar_ai.ingestion.extract import extract_from_text, fields_filled
+from oppradar_ai.ingestion.clean import clean_html, looks_like_list_page
+from oppradar_ai.ingestion.extract import (
+    RawExtraction,
+    extract_record,
+    fields_filled,
+    truncate_text,
+)
 from oppradar_ai.ingestion.fetch import PageFetcher
 from oppradar_ai.ingestion.rss import FeedEntry, read_feed
 from oppradar_ai.ingestion.search import TavilySearcher
 from oppradar_ai.ingestion.sources import load_sources
-from oppradar_ai.schemas import CallUsage, IngestionReport, Opportunity, Source, SourceStats
+from oppradar_ai.schemas import (
+    CallUsage,
+    IngestionReport,
+    Opportunity,
+    RejectedItem,
+    Source,
+    SourceStats,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -46,7 +59,9 @@ def run_ingestion(
     budget = RunBudget(settings)
     fetcher = fetcher or PageFetcher(settings)
     searcher = searcher or TavilySearcher(settings, budget=budget)
+    detail_usage = CallUsage(limit=settings.max_detail_fetches_per_run)
     opportunities: list[Opportunity] = []
+    rejected: list[RejectedItem] = []
     stats: list[SourceStats] = []
     seen: set[str] = set()
 
@@ -54,18 +69,18 @@ def run_ingestion(
         stat = SourceStats(source=source.name)
         start = time.monotonic()
         try:
-            found = _ingest_source(source, budget, fetcher, searcher, seen, settings, stat)
+            outcomes = _ingest_source(source, budget, fetcher, searcher, settings,
+                                      stat, detail_usage)
         except Exception as exc:  # one broken source must not kill the run
             logger.exception("source %s failed", source.name)
             stat.errors.append(str(exc))
-            found = []
+            outcomes = []
         stat.duration_seconds = round(time.monotonic() - start, 2)
-        opportunities.extend(found)
+        _collect(outcomes, source, stat, seen, opportunities, rejected)
         failures.extend(f"{source.name}: {message}" for message in stat.errors)
         stats.append(stat)
-    return _report(
-        started, opportunities, stats, failures, budget, searcher.usage
-    )
+    return _report(started, opportunities, stats, failures, budget,
+                   searcher.usage, rejected, detail_usage)
 
 
 def _resolve_sources(
@@ -91,28 +106,38 @@ def _ingest_source(
     budget: RunBudget,
     fetcher: PageFetcher,
     searcher: TavilySearcher,
-    seen: set[str],
     settings: Settings,
     stat: SourceStats,
-) -> list[Opportunity]:
-    """One source -> fresh (deduped) opportunities; errors go to `stat`."""
+    detail_usage: CallUsage,
+) -> list[RawExtraction]:
+    """One source -> extraction outcomes; errors go to `stat`, never raised."""
     if source.kind == "rss":
         entries, errors = read_feed(source.url, fetcher)
         stat.errors.extend(errors)
         stat.fetched = len(entries)
-        found = [_from_entry(entry, source, budget, settings) for entry in entries]
-    elif source.kind == "page":
-        found = _from_page(source, budget, fetcher, settings, stat)
-    else:
-        found = _from_search(source, budget, fetcher, searcher, settings, stat)
-    return _dedupe(found, seen, stat)
+        return [
+            _from_entry(entry, source, budget, settings, fetcher, detail_usage)
+            for entry in entries
+        ]
+    if source.kind == "page":
+        return _from_page(source, budget, fetcher, settings, stat)
+    return _from_search(source, budget, fetcher, searcher, settings, stat)
 
 
 def _from_entry(
-    entry: FeedEntry, source: Source, budget: RunBudget, settings: Settings
-) -> Opportunity | None:
-    return extract_from_text(
-        f"{entry.title}\n{entry.summary}",
+    entry: FeedEntry,
+    source: Source,
+    budget: RunBudget,
+    settings: Settings,
+    fetcher: PageFetcher,
+    detail_usage: CallUsage,
+) -> RawExtraction:
+    """One feed entry from its title+summary; one capped detail re-extract."""
+    text = truncate_text(
+        f"{entry.title}\n{entry.summary}", settings.feed_text_max_chars
+    )
+    outcome = extract_record(
+        text,
         url=entry.url,
         source_name=source.name,
         title_hint=entry.title,
@@ -122,6 +147,46 @@ def _from_entry(
         budget=budget,
         settings=settings,
     )
+    _fill_deadline_from_detail(outcome, entry, source, budget, settings,
+                               fetcher, detail_usage)
+    return outcome
+
+
+def _fill_deadline_from_detail(
+    outcome: RawExtraction,
+    entry: FeedEntry,
+    source: Source,
+    budget: RunBudget,
+    settings: Settings,
+    fetcher: PageFetcher,
+    detail_usage: CallUsage,
+) -> None:
+    """Accepted entry without a deadline -> one capped detail-page re-extract."""
+    if outcome.opportunity is None or outcome.opportunity.deadline is not None:
+        return
+    if detail_usage.made >= detail_usage.limit:  # hard cap (free-tier protection)
+        return
+    detail_usage.made += 1
+    doc = fetcher.get(entry.url)
+    if not doc.ok:
+        logger.info("detail fetch skipped for %s: %s", entry.url, doc.error)
+        return
+    page = clean_html(doc.html, entry.url)
+    retry = extract_record(
+        truncate_text(page.text, settings.llm_max_input_chars),
+        url=entry.url,
+        source_name=source.name,
+        title_hint=page.title or entry.title,
+        type_hint=source.type_hint,
+        language=source.language,
+        country=source.country,
+        budget=budget,
+        settings=settings,
+        list_page=looks_like_list_page(page),
+    )
+    if retry.opportunity is not None and retry.opportunity.deadline is not None:
+        retry.opportunity.review_notes.append("deadline filled from the detail page")
+        outcome.opportunity = retry.opportunity
 
 
 def _from_page(
@@ -130,25 +195,30 @@ def _from_page(
     fetcher: PageFetcher,
     settings: Settings,
     stat: SourceStats,
-) -> list[Opportunity | None]:
+) -> list[RawExtraction]:
     doc = fetcher.get(source.url)
     if not doc.ok:
         stat.errors.append(doc.error)
         return []
     stat.fetched = 1
     page = clean_html(doc.html, source.url)
-    opp = extract_from_text(
-        page.text,
-        url=page.canonical or source.url,
-        source_name=source.name,
-        title_hint=page.title,
-        type_hint=source.type_hint,
-        language=source.language,
-        country=source.country,
-        budget=budget,
-        settings=settings,
-    )
-    return [opp]
+    is_list = looks_like_list_page(page)
+    if is_list:
+        stat.list_pages += 1
+    return [
+        extract_record(
+            page.text,
+            url=page.canonical or source.url,
+            source_name=source.name,
+            title_hint=page.title,
+            type_hint=source.type_hint,
+            language=source.language,
+            country=source.country,
+            budget=budget,
+            settings=settings,
+            list_page=is_list,
+        )
+    ]
 
 
 def _from_search(
@@ -158,21 +228,24 @@ def _from_search(
     searcher: TavilySearcher,
     settings: Settings,
     stat: SourceStats,
-) -> list[Opportunity | None]:
+) -> list[RawExtraction]:
     # For kind="search" the `url` field carries the Tavily query string.
     before = len(searcher.failures)
     hits = searcher.search(source.url)
     stat.errors.extend(searcher.failures[before:])
     stat.fetched += len(hits)
-    found: list[Opportunity | None] = []
+    outcomes: list[RawExtraction] = []
     for hit in hits:
         doc = fetcher.get(hit.url)
         if not doc.ok:
             stat.errors.append(f"{hit.url}: {doc.error}")
             continue
         page = clean_html(doc.html, hit.url)
-        found.append(
-            extract_from_text(
+        is_list = looks_like_list_page(page)
+        if is_list:
+            stat.list_pages += 1
+        outcomes.append(
+            extract_record(
                 page.text,
                 url=page.canonical or hit.url,
                 source_name=source.name,
@@ -182,30 +255,59 @@ def _from_search(
                 country=source.country,
                 budget=budget,
                 settings=settings,
+                list_page=is_list,
             )
         )
-    return found
+    return outcomes
 
 
-def _dedupe(
-    found: list[Opportunity | None], seen: set[str], stat: SourceStats
-) -> list[Opportunity]:
+# --------------------------------------------------------------------------- #
+# Collect + dedupe
+# --------------------------------------------------------------------------- #
+def _collect(
+    outcomes: list[RawExtraction],
+    source: Source,
+    stat: SourceStats,
+    seen: set[str],
+    opportunities: list[Opportunity],
+    rejected: list[RejectedItem],
+) -> None:
+    """Split outcomes into rejected items and deduped opportunities."""
+    for outcome in outcomes:
+        if outcome.rejected_reason is not None:
+            stat.rejected += 1
+            rejected.append(
+                RejectedItem(
+                    source=source.name,
+                    title=(outcome.extraction.title.strip() if outcome.extraction else "")
+                    or "(no title)",
+                    url=outcome.url,
+                    reason=outcome.rejected_reason,
+                )
+            )
+            continue
+        _dedupe_one(outcome.opportunity, seen, stat, opportunities)
+
+
+def _dedupe_one(
+    opp: Opportunity | None,
+    seen: set[str],
+    stat: SourceStats,
+    opportunities: list[Opportunity],
+) -> None:
     """Drop cross-source duplicates (same normalized URL); fill `stat`."""
-    fresh: list[Opportunity] = []
-    for opp in found:
-        if opp is None:
-            stat.errors.append("item without a usable title was skipped")
-            continue
-        stat.extracted += 1
-        key = (opp.url.rstrip("/") or opp.id).lower()
-        if key in seen:
-            stat.duplicates += 1
-            continue
-        seen.add(key)
-        stat.new += 1
-        stat.fields_filled += fields_filled(opp)
-        fresh.append(opp)
-    return fresh
+    if opp is None:
+        stat.errors.append("item without a usable title was skipped")
+        return
+    stat.extracted += 1
+    key = (opp.url.rstrip("/") or opp.id).lower()
+    if key in seen:
+        stat.duplicates += 1
+        return
+    seen.add(key)
+    stat.new += 1
+    stat.fields_filled += fields_filled(opp)
+    opportunities.append(opp)
 
 
 # --------------------------------------------------------------------------- #
@@ -218,7 +320,10 @@ def _report(
     failures: list[str],
     budget: RunBudget,
     search_usage: CallUsage,
+    rejected: list[RejectedItem],
+    detail_usage: CallUsage,
 ) -> IngestionReport:
+    deadlines = _deadline_counts(opportunities)
     report = IngestionReport(
         started_at=started,
         finished_at=datetime.now(timezone.utc),
@@ -228,18 +333,49 @@ def _report(
         items_new=sum(s.new for s in stats),
         items_duplicate=sum(s.duplicates for s in stats),
         items_flagged=sum(1 for opp in opportunities if opp.to_verify()),
+        items_rejected=len(rejected),
+        items_list_pages=sum(s.list_pages for s in stats),
+        deadline_from_rule=deadlines["rule"],
+        deadline_from_llm=deadlines["llm"],
+        deadline_mismatches=deadlines["mismatch"],
+        deadline_null=deadlines["null"],
+        detail_fetches=detail_usage.made,
         searches=search_usage,
         extractions=budget.extractions,
+        rejected=rejected,
         failures=failures,
     )
     logger.info(
         "ingestion finished: %d new / %d fetched from %d source(s) | "
+        "accepted %d / rejected %d / flagged %d | deadlines rule %d llm %d "
+        "mismatch %d null %d | detail fetches %d | "
         "Tavily %d made / %d cached / %d skipped (cap %d) | "
         "LLM %d made / %d cached / %d skipped (cap %d) | %d failure(s)",
         report.items_new, report.items_fetched, len(stats),
+        report.items_new, report.items_rejected, report.items_flagged,
+        report.deadline_from_rule, report.deadline_from_llm,
+        report.deadline_mismatches, report.deadline_null, report.detail_fetches,
         report.searches.made, report.searches.cached, report.searches.skipped,
         report.searches.limit,
         report.extractions.made, report.extractions.cached, report.extractions.skipped,
         report.extractions.limit, len(report.failures),
     )
     return report
+
+
+def _deadline_counts(opportunities: list[Opportunity]) -> dict[str, int]:
+    """Per-run deadline provenance: rule vs llm vs mismatch vs null."""
+    return {
+        "rule": sum(
+            1 for o in opportunities
+            if o.deadline is not None and o.deadline_source == "rule"
+        ),
+        "llm": sum(
+            1 for o in opportunities
+            if o.deadline is not None and o.deadline_source == "llm"
+        ),
+        "mismatch": sum(
+            1 for o in opportunities if any("mismatch" in n for n in o.review_notes)
+        ),
+        "null": sum(1 for o in opportunities if o.deadline is None),
+    }

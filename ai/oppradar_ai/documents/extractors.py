@@ -104,4 +104,8 @@ def _backfill(cv: CVExtraction, text: str) -> None:
         cv.links = find_urls(text)
         filled.append("links")
     if filled:
-        logger.info("regex backfill filled %s for %s", ", ".join(filled), cv.source_file)
+        logger.info(
+            "regex backfill filled %s for %s",
+            ", ".join(filled),
+            cv.source_file or "(inline text, no filename given)",
+        )

@@ -9,6 +9,7 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
+import re
 import threading
 import time
 import types
@@ -155,6 +156,29 @@ class LLM(ABC):
         key = self.cache.key(self.name, self.model, f"{system or ''}\n{clean}", schema.__name__)
         return self.cache.get(key) is not None
 
+    def cached_meta(
+        self, prompt: str, schema: type[T], system: str | None = None
+    ) -> dict[str, Any] | None:
+        """Provider/model recorded with the cached answer (None when uncached).
+
+        Records written before the provenance fields existed report "unknown".
+        Lets notebooks prove which provider produced a stored extraction.
+
+        Example:
+            >>> meta = llm.cached_meta("...", SomeSchema, system="...")
+            >>> meta is None or {"provider", "model"} <= set(meta)
+            True
+        """
+        clean = self._truncate(prompt)
+        key = self.cache.key(self.name, self.model, f"{system or ''}\n{clean}", schema.__name__)
+        record = self.cache.get(key)
+        if record is None:
+            return None
+        return {
+            "provider": str(record.get("provider") or "unknown"),
+            "model": str(record.get("model") or "unknown"),
+        }
+
     def text(self, prompt: str, system: str | None = None) -> str:
         """Ask for a plain-text answer (cached on disk)."""
         clean = self._truncate(prompt)
@@ -171,7 +195,7 @@ class LLM(ABC):
             _stats.errors += 1
             raise
         _stats.calls += 1
-        self.cache.put(key, {"text": result})
+        self.cache.put(key, {"text": result, "provider": self.name, "model": self.model})
         return result
 
     # -- internals ------------------------------------------------------------
@@ -185,7 +209,15 @@ class LLM(ABC):
             _stats.errors += 1
             raise
         _stats.calls += 1
-        self.cache.put(key, {"schema": schema.__name__, "data": result})
+        self.cache.put(
+            key,
+            {
+                "schema": schema.__name__,
+                "data": result,
+                "provider": self.name,
+                "model": self.model,
+            },
+        )
         return result
 
     def _retrying(self) -> Retrying:
@@ -460,6 +492,8 @@ _CANNED: dict[str, dict[str, Any]] = {
         "benefits": ["Tuition covered", "Mentorship"],
         "summary": "A synthetic scholarship returned by the fake LLM provider.",
         "deadline": "March 15, 2027",
+        "is_opportunity": True,
+        "not_opportunity_reason": None,
         "field_confidences": [
             {"field": "title", "confidence": 0.95},
             {"field": "organizer", "confidence": 0.9},
@@ -479,6 +513,13 @@ def _canned(schema: type[BaseModel], prompt: str) -> dict[str, Any]:
         data = {k: v for k, v in data.items() if k in schema.model_fields}
     else:
         data = {}
+    if schema.__name__ == "OpportunityExtraction" and re.search(
+        r"\btop\s+\d+\b", prompt[:300], re.IGNORECASE
+    ):
+        # Deterministic fake rule: "Top 10 ..." headlines are listicles, so
+        # the offline provider exercises the is_opportunity rejection path.
+        data["is_opportunity"] = False
+        data["not_opportunity_reason"] = "listicle (fake-provider rule)"
     for name, field in schema.model_fields.items():
         if name not in data:
             data[name] = _default_for(field.annotation, name, depth=0)

@@ -187,6 +187,9 @@ class Opportunity(BaseModel):
     country: str = ""
     language: str = "en"
     deadline: date | None = None
+    # Provenance of `deadline`: "rule" = found by the rule-first "Deadline:"
+    # line regex, "llm" = model value, "none" = the source states no deadline.
+    deadline_source: Literal["rule", "llm", "none"] | None = None
     funding: str | None = None
     eligibility: list[str] = Field(default_factory=list)
     benefits: list[str] = Field(default_factory=list)
@@ -198,6 +201,9 @@ class Opportunity(BaseModel):
     scam_flags: list[ScamFlagDetail] = Field(default_factory=list)
     added_via: Literal["pipeline", "form", "user"] = "pipeline"
     field_confidences: list[FieldConfidence] = Field(default_factory=list)
+    # Free-text "to verify" notes (e.g. "deadline mismatch: ...",
+    # "list page - needs detail") shown next to the field confidences.
+    review_notes: list[str] = Field(default_factory=list)
 
     @field_validator("title", "organizer")
     @classmethod
@@ -243,9 +249,24 @@ class SourceStats(BaseModel):
     new: int = 0
     duplicates: int = 0
     scam_flagged: int = 0
+    rejected: int = 0  # is_opportunity=false (listicles, news, advice...)
+    list_pages: int = 0  # index pages -> low-confidence "needs detail" records
     fields_filled: int = 0
     duration_seconds: float = 0.0
     errors: list[str] = Field(default_factory=list)
+
+
+class RejectedItem(BaseModel):
+    """An extracted item that is NOT an opportunity (kept for the report only).
+
+    Never becomes an `Opportunity` record — e.g. a "Top 10 ..." listicle,
+    a career-advice article or general news that shares a feed with real calls.
+    """
+
+    source: str
+    title: str
+    url: str = ""
+    reason: str = ""
 
 
 class CallUsage(BaseModel):
@@ -268,8 +289,17 @@ class IngestionReport(BaseModel):
     items_new: int = 0
     items_duplicate: int = 0
     items_flagged: int = 0
+    items_rejected: int = 0  # not an opportunity (listicles, news, advice)
+    items_list_pages: int = 0  # low-confidence records from index pages
+    # Deadline provenance (rule-first policy: a "Deadline:" line beats the model)
+    deadline_from_rule: int = 0
+    deadline_from_llm: int = 0
+    deadline_mismatches: int = 0  # model disagreed with the rule (rule kept)
+    deadline_null: int = 0  # no/rolling deadline in the source (never invented)
+    detail_fetches: int = 0  # capped detail-page re-extractions for missing deadlines
     searches: CallUsage = Field(default_factory=CallUsage)
     extractions: CallUsage = Field(default_factory=CallUsage)
+    rejected: list[RejectedItem] = Field(default_factory=list)
     failures: list[str] = Field(default_factory=list)
 
 
@@ -451,4 +481,8 @@ class OpportunityExtraction(BaseModel):
     benefits: list[str] = Field(default_factory=list)
     summary: str = ""
     deadline: str = ""  # exactly as written in the source; "" when none is stated
+    # Gate: false for listicles/rankings, career-advice posts, news — such
+    # items are kept in the report's rejected list, never as Opportunity records.
+    is_opportunity: bool = True
+    not_opportunity_reason: str | None = None
     field_confidences: list[FieldConfidence] = Field(default_factory=list)

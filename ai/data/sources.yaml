@@ -166,14 +166,15 @@ sources:
     type_hint: other
     language: en
     country: ""
-    enabled: true
+    enabled: false
     verified: true
     notes: >-
       European Commission EURAXESS "Jobs & opportunities" portal
-      confirmed 2026-10-21: research jobs, fellowships and funding.
-      robots.txt allows /jobs but disallows query strings (/*?) and
-      detail paths (/jobs/*) — only the list page may be fetched.
-      List page: one page-level record (low confidence), see report.
+      confirmed 2026-10-21. DISABLED after the Phase 3b live probe
+      (2026-10-22): it is a LIST page (117 links, 82% teaser lines) and
+      robots.txt disallows the detail paths (/jobs/*) and query strings,
+      so neither extraction nor list-fan-out can reach a real
+      opportunity. Re-enable only after robots allows detail pages.
 
   - name: chevening-awards
     url: https://www.chevening.org/
@@ -181,13 +182,15 @@ sources:
     type_hint: scholarship
     language: en
     country: ""
-    enabled: true
+    enabled: false
     verified: true
     notes: >-
       UK Government Chevening Scholarships/Fellowships site confirmed
-      2026-10-21 (Algeria present in its country selector). Standard
-      WordPress robots.txt (only /wp-admin blocked). Homepage-level
-      extraction: one page-level record only.
+      2026-10-21. DISABLED after the Phase 3b live probe (2026-10-22):
+      the URL is the HOMEPAGE (a landing page, not a programme page) —
+      extraction returned only the title "Chevening" with no deadline or
+      eligibility. To use Chevening, add the specific country programme
+      page (discovered via Tavily: /scholarship/algeria) as a new source.
 
   - name: mlh-hackathons
     url: https://www.mlh.com/seasons/2027/events
@@ -263,9 +266,13 @@ sources:
       "France Excellence Eiffel" scholarship programme page confirmed
       2026-10-22 (the URL is a link discovered on the campusfrance.org
       homepage, not guessed). Drupal robots.txt allows it (only
-      /admin, /search etc. blocked). Single static programme page ->
-      one record per run; the Eiffel call is annual, so any deadline
-      must come from the page text only — never invented.
+      /admin, /search etc. blocked). Single static programme page: the
+      ONLY kind:page source that survived the Phase 3b live probe
+      (2026-10-22) — it yielded a real record (organizer
+      "Ministère de l'Europe et des Affaires étrangères", deadline
+      2027-01-06 from the page). The list-page heuristic leaves it
+      alone (flowing prose, not teaser lines). Any deadline must come
+      from the page text only — never invented.
 
   - name: francophonie-appels
     url: https://www.francophonie.org/appels-projets-candidatures-initiatives-1111
@@ -273,14 +280,16 @@ sources:
     type_hint: other
     language: fr
     country: ""
-    enabled: true
+    enabled: false
     verified: true
     notes: >-
       OIF (Organisation internationale de la Francophonie) "Appels à
       projets, candidatures, initiatives" page confirmed 2026-10-22 —
-      open calls for the 90+ member states including Algeria. Drupal
-      robots.txt allows it. Navigation-heavy page: expect one
-      low-confidence record until list-page fan-out exists.
+      open calls for the 90+ member states including Algeria. DISABLED
+      after the Phase 3b live probe (2026-10-22): it is a PORTAL page
+      (general guidance + navigation); the extractor's is_opportunity
+      gate rejected it as "general information", not a single call.
+      Re-enable only with per-call detail URLs (list-page fan-out).
 
   - name: britishcouncil-algeria-scholarships
     url: https://www.britishcouncil.dz/study-uk/scholarships
@@ -288,11 +297,12 @@ sources:
     type_hint: scholarship
     language: ar
     country: Algeria
-    enabled: true
+    enabled: false
     verified: true
     notes: >-
       British Council Algeria "المنح الدراسية" (scholarships) page
-      confirmed 2026-10-22; robots.txt allows /study-uk/*. Arabic
-      page listing UK scholarship programmes open to Algerians
-      (Chevening, GREAT ...). Navigation-heavy -> one low-confidence
-      record; also a good real-world test for Arabic extraction.
+      confirmed 2026-10-22; robots.txt allows /study-uk/*. DISABLED
+      after the Phase 3b live probe (2026-10-22): the site returns
+      HTTP 403 to our non-browser fetcher (bot protection), so no page
+      can be fetched. It would otherwise be a good real-world test for
+      Arabic extraction — revisit with a browser-like fetch if needed.

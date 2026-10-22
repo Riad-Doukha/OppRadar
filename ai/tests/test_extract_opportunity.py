@@ -121,10 +121,24 @@ def test_unparseable_deadline_is_never_invented() -> None:
 
 
 def test_rules_backfill_the_deadline_from_page_text() -> None:
+    # Explicit "deadline is <date>" line -> rule-first path, confidence 0.9.
     opp = to_opportunity(
         _extraction(deadline=""),
         text="The application deadline is 20 November 2028.",
         url="https://example.org/g/5",
+    )
+    assert opp.deadline == date(2028, 11, 20)
+    assert opp.deadline_source == "rule"
+    deadline_fc = next(fc for fc in opp.field_confidences if fc.field == "deadline")
+    assert deadline_fc.confidence == 0.9 and not deadline_fc.needs_review
+
+
+def test_loose_date_scan_still_backfills_the_deadline() -> None:
+    # No "Deadline:" prefix anywhere: the plain date scan keeps 0.75.
+    opp = to_opportunity(
+        _extraction(deadline=""),
+        text="Applications close 20 November 2028. Apply early!",
+        url="https://example.org/g/6",
     )
     assert opp.deadline == date(2028, 11, 20)
     deadline_fc = next(fc for fc in opp.field_confidences if fc.field == "deadline")

@@ -59,6 +59,21 @@ and the two borderline ones (a paid event, a free-mail contact) are labelled leg
 
 ## Privacy
 
-All documents under `data/samples/` are synthetic. Never commit real CVs or
-personal data (`data/private/` is git-ignored). The free Gemini tier may use
-inputs for improvement — only synthetic data should be sent to it.
+What may be sent to the LLM (Gemini / Ollama / fake):
+
+- **Public opportunity pages and RSS feed entries** (anything fetched from the
+  `sources.yaml` public sources) **MAY be sent to the LLM.** They are public
+  web data, and extraction is the whole point of the ingestion pipeline.
+  Notebooks run real Gemini on the synthetic samples and on the frozen live
+  snapshot (`data/eval/live_snapshot.json`) so you can see real extraction
+  without pointing the model at arbitrary pages.
+- **User documents (CVs, certificates, portfolios) are treated as private.**
+  Everything under `data/samples/` is synthetic; `data/private/` is
+  git-ignored and must never be committed. Samples, fixtures and tests use
+  synthetic documents only — never real personal data. When you extract your
+  own CV with real Gemini, its text is sent to the configured provider for
+  structuring; set `LLM_PROVIDER=fake` to keep everything on your machine
+  (results are then canned, not real extractions).
+
+The free Gemini tier may use inputs for improvement, so decide consciously
+what you point it at.

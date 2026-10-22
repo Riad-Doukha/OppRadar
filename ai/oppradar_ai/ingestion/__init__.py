@@ -3,14 +3,18 @@
 # budgets, robots.txt politeness and never-crash reporting.
 
 from oppradar_ai.ingestion.budget import RunBudget
-from oppradar_ai.ingestion.clean import CleanedPage, clean_html
+from oppradar_ai.ingestion.clean import CleanedPage, clean_html, looks_like_list_page
 from oppradar_ai.ingestion.extract import (
+    RawExtraction,
+    deadline_line,
     extract_from_text,
+    extract_record,
     fields_filled,
     find_deadline,
     opportunity_id,
     parse_deadline,
     to_opportunity,
+    truncate_text,
 )
 from oppradar_ai.ingestion.fetch import PageDoc, PageFetcher
 from oppradar_ai.ingestion.pipeline import run_ingestion
@@ -24,14 +28,18 @@ __all__ = [
     "FeedEntry",
     "PageDoc",
     "PageFetcher",
+    "RawExtraction",
     "RunBudget",
     "SearchHit",
     "TavilySearcher",
     "clean_html",
+    "deadline_line",
     "extract_from_text",
+    "extract_record",
     "fields_filled",
     "find_deadline",
     "load_sources",
+    "looks_like_list_page",
     "opportunity_id",
     "origin_of",
     "parse_deadline",
@@ -41,4 +49,5 @@ __all__ = [
     "robots_allows",
     "run_ingestion",
     "to_opportunity",
+    "truncate_text",
 ]

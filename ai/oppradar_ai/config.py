@@ -45,6 +45,11 @@ class Settings(BaseSettings):
     # hits are always allowed and never counted against these limits).
     tavily_max_searches_per_run: int = 5
     max_extractions_per_run: int = 20
+    # Accepted RSS entry with no deadline -> fetch its detail page and
+    # re-extract once, at most this many times per run (free-tier protection).
+    max_detail_fetches_per_run: int = 5
+    # Feed bodies are cut to this many chars before the LLM (summaries are long).
+    feed_text_max_chars: int = 6000
     # Polite crawling: one clear identity + a pause between HTTP requests.
     user_agent: str = "OppRadarBot/0.1 (student project; https://github.com/Riad-Doukha/OppRadar)"
     fetch_delay_seconds: float = 1.5

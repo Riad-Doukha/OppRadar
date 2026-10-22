@@ -58,6 +58,34 @@ def clean_html(html: str, url: str = "") -> CleanedPage:
     )
 
 
+def looks_like_list_page(page: CleanedPage) -> bool:
+    """Best-effort heuristic: many links + teaser-shaped text = an index page.
+
+    Tuned on the real enabled sources (Phase 3b): it flags the EURAXESS jobs
+    listing (117 links, 82% short lines) and leaves a genuine single-program
+    page alone even when its navigation is huge (CampusFrance Eiffel: 131
+    links but only 58% short lines). A wrong guess only marks the record
+    "list page - needs detail" (low confidence + a review note); it never
+    drops data or crashes a run.
+
+    Example:
+        >>> links = [f"https://example.org/{i}" for i in range(30)]
+        >>> teasers = "\\n".join("Short teaser line here" for _ in range(20))
+        >>> looks_like_list_page(CleanedPage(text=teasers, links=links))
+        True
+        >>> prose = "\\n".join(" ".join("word" for _ in range(20)) for _ in range(20))
+        >>> looks_like_list_page(CleanedPage(text=prose, links=links))
+        False
+    """
+    if len(page.links) < 30:  # an article/detail page never carries that many links
+        return False
+    lines = [ln for ln in page.text.splitlines() if ln.strip()]
+    if not lines:  # links but no readable prose at all: an index
+        return True
+    short = sum(1 for ln in lines if len(ln.split()) <= 12)
+    return short / len(lines) >= 0.6  # many short lines = a list of teasers
+
+
 def _canonical(html: str) -> str:
     for pattern in (_CANONICAL_RE, _OG_URL_RE, _CANONICAL_HREF_FIRST_RE):
         match = pattern.search(html)
