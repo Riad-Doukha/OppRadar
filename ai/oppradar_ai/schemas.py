@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from datetime import date, datetime, timezone
 from enum import Enum
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -301,6 +301,29 @@ class IngestionReport(BaseModel):
     extractions: CallUsage = Field(default_factory=CallUsage)
     rejected: list[RejectedItem] = Field(default_factory=list)
     failures: list[str] = Field(default_factory=list)
+
+    @field_validator("searches", "extractions", mode="before")
+    @classmethod
+    def _adopt_foreign_usage(cls, value: Any) -> Any:
+        """Accept a `CallUsage` built by another copy of this module.
+
+        Notebook kernels run `%autoreload 2`: edited modules are re-executed
+        but unchanged ones keep the old class, so one kernel can hold two live
+        `CallUsage` classes. Re-validating from the data keeps the report
+        construction working instead of raising a `model_type` error.
+
+        Example:
+            >>> report = IngestionReport(
+            ...     started_at=datetime.now(timezone.utc),
+            ...     finished_at=datetime.now(timezone.utc),
+            ...     searches=CallUsage(made=3),
+            ... )
+            >>> report.searches.made
+            3
+        """
+        if isinstance(value, BaseModel):
+            return value.model_dump()
+        return value
 
 
 # --------------------------------------------------------------------------- #

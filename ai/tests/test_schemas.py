@@ -1,12 +1,13 @@
-from datetime import date
+from datetime import date, datetime, timezone
 
 import pytest
-from pydantic import ValidationError
+from pydantic import BaseModel, ValidationError
 
 from oppradar_ai.schemas import (
     CriteriaStatus,
     EligibilityCriterion,
     FieldConfidence,
+    IngestionReport,
     MatchResult,
     NotificationStatus,
     Opportunity,
@@ -85,3 +86,30 @@ class TestNotification:
 
 def _opp() -> Opportunity:
     return Opportunity(title="t", organizer="o")
+
+
+class TestIngestionReportUsage:
+    def test_accepts_usage_from_another_module_copy(self):
+        """A notebook kernel can hold two live `CallUsage` classes.
+
+        `%autoreload 2` re-runs edited modules but leaves unchanged ones on the
+        old class, so `run_ingestion` may hand the report a `CallUsage` built by
+        a different copy of `schemas.py`. It must rebuild it from the data
+        instead of raising a `model_type` error.
+        """
+
+        class StaleCallUsage(BaseModel):
+            made: int = 0
+            cached: int = 0
+            skipped: int = 0
+            limit: int = 0
+
+        now = datetime.now(timezone.utc)
+        report = IngestionReport(
+            started_at=now,
+            finished_at=now,
+            searches=StaleCallUsage(made=3, limit=5),
+            extractions=StaleCallUsage(made=1, cached=2, limit=20),
+        )
+        assert (report.searches.made, report.searches.limit) == (3, 5)
+        assert (report.extractions.made, report.extractions.cached) == (1, 2)
