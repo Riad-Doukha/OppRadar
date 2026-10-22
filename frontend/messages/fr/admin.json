@@ -1,0 +1,65 @@
+{
+  "title": "Administration",
+  "subtitle": "Vérifiez les propositions, ré-étiquetez les sources suspectes et gérez les opportunités.",
+  "forbidden": "Cet espace est réservé aux administrateurs OppRadar.",
+  "forbiddenHint": "Si vous devriez y avoir accès, demandez à un administrateur de lancer scripts/make_admin.py avec votre e-mail, puis reconnectez-vous.",
+  "stats": {
+    "pending": "en attente",
+    "flagged": "sources signalées",
+    "published": "publiées et ouvertes",
+    "rejected": "refusées"
+  },
+  "tabs": {
+    "label": "Sections d'administration",
+    "queue": "File de vérification",
+    "flagged": "Signalées",
+    "all": "Toutes les opportunités",
+    "new": "Ajouter une opportunité"
+  },
+  "search": "Rechercher titre, organisateur, description",
+  "loading": "Chargement…",
+  "loadError": "Impossible de charger la liste : {error}",
+  "empty": {
+    "queue": "Aucune proposition en attente. 🎉",
+    "flagged": "Aucune source signalée.",
+    "all": "Aucune opportunité ne correspond."
+  },
+  "more": "Voir plus ({left} restantes)",
+  "review": {
+    "pending": "En attente",
+    "approved": "Publiée",
+    "rejected": "Refusée"
+  },
+  "via": {
+    "form": "proposée par une organisation",
+    "pipeline": "trouvée par l'agent",
+    "user": "ajoutée par un administrateur"
+  },
+  "contact": "Contact : {email}",
+  "created": "Ajoutée le {date}",
+  "official": "Page officielle",
+  "approve": "Approuver et publier",
+  "reject": "Refuser",
+  "unpublish": "Dépublier",
+  "republish": "Publier",
+  "notePlaceholder": "Note pour l'auteur (facultatif, visible par lui)",
+  "confirmReject": "Refuser",
+  "trustLabel": "Niveau de confiance",
+  "trust": {
+    "verified": "Vérifiée",
+    "likely_safe": "Semble légitime",
+    "unknown": "Non vérifiée",
+    "suspicious": "Suspecte",
+    "scam": "Arnaque"
+  },
+  "edit": "Modifier",
+  "delete": "Supprimer",
+  "confirmDelete": "Supprimer « {title} » définitivement ? Les enregistrements et candidatures suivies des étudiants seront aussi supprimés.",
+  "save": "Enregistrer",
+  "create": "Publier l'opportunité",
+  "cancel": "Annuler",
+  "published": "Publiée. Elle est maintenant visible par les étudiants.",
+  "actionError": "Échec : {error}",
+  "flags": "Signaux d'arnaque : {flags}",
+  "viewIt": "La voir"
+}

@@ -24,7 +24,7 @@ export function daysLeft(deadline: string | null): number | null {
 }
 
 /** "Organizer · Algiers, Algeria · $5,000/mo" */
-export function metaLine(o: MyOpportunity) {
+export function metaLine(o: Pick<MyOpportunity, "organizer" | "location" | "country" | "funding">) {
   const place = [o.location, o.country].filter((p, i, all) => p && all.indexOf(p) === i).join(", ");
   return [o.organizer, place, o.funding].filter(Boolean).join(" · ");
 }

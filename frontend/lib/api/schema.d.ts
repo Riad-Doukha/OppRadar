@@ -530,6 +530,116 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/me/submissions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Mine
+         * @description Your submissions with their review status and the admin's note.
+         */
+        get: operations["mine_me_submissions_get"];
+        put?: never;
+        /**
+         * Submit
+         * @description Submit an opportunity for review (at most 5 waiting per account).
+         */
+        post: operations["submit_me_submissions_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/stats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Stats */
+        get: operations["stats_admin_stats_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/opportunities": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Opportunities
+         * @description Every opportunity, whatever its review status, newest first.
+         */
+        get: operations["list_opportunities_admin_opportunities_get"];
+        put?: never;
+        /**
+         * Create
+         * @description Add an opportunity by hand (published right away).
+         */
+        post: operations["create_admin_opportunities_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/opportunities/{opportunity_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get */
+        get: operations["get_admin_opportunities__opportunity_id__get"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete
+         * @description Delete for good (saves and tracked applications of it go too).
+         */
+        delete: operations["delete_admin_opportunities__opportunity_id__delete"];
+        options?: never;
+        head?: never;
+        /**
+         * Update
+         * @description Edit fields, including the trust level (re-label a suspicious source).
+         */
+        patch: operations["update_admin_opportunities__opportunity_id__patch"];
+        trace?: never;
+    };
+    "/admin/opportunities/{opportunity_id}/review": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Decide
+         * @description Approve (publish) or reject; the submitter is notified.
+         */
+        post: operations["decide_admin_opportunities__opportunity_id__review_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/documents": {
         parameters: {
             query?: never;
@@ -689,6 +799,69 @@ export interface components {
             wilaya: string | null;
             /** Languages */
             languages: components["schemas"]["LanguageIn-Output"][] | null;
+        };
+        /** AdminOpportunityIn */
+        AdminOpportunityIn: {
+            /** Title */
+            title: string;
+            /** Organizer */
+            organizer: string;
+            /**
+             * Type
+             * @default other
+             * @enum {string}
+             */
+            type: "scholarship" | "job" | "internship" | "fellowship" | "hackathon" | "datathon" | "competition" | "bootcamp" | "research" | "volunteer" | "course" | "grant" | "other";
+            /** Mode */
+            mode?: ("remote" | "hybrid" | "onsite") | null;
+            /**
+             * Location
+             * @default
+             */
+            location: string;
+            /**
+             * Country
+             * @default
+             */
+            country: string;
+            /**
+             * Language
+             * @default en
+             * @enum {string}
+             */
+            language: "en" | "fr" | "ar";
+            /** Deadline */
+            deadline?: string | null;
+            /** Funding */
+            funding?: string | null;
+            /** Eligibility */
+            eligibility?: string[];
+            /** Benefits */
+            benefits?: string[];
+            /**
+             * Summary
+             * @default
+             */
+            summary: string;
+            /** Url */
+            url: string;
+            /**
+             * Trust Level
+             * @default likely_safe
+             * @enum {string}
+             */
+            trust_level: "verified" | "likely_safe" | "unknown" | "suspicious" | "scam";
+        };
+        /** AdminStats */
+        AdminStats: {
+            /** Pending */
+            pending: number;
+            /** Flagged */
+            flagged: number;
+            /** Published */
+            published: number;
+            /** Rejected */
+            rejected: number;
         };
         /**
          * AgentSettings
@@ -1338,6 +1511,11 @@ export interface components {
              */
             is_demo: boolean;
             /**
+             * Is Admin
+             * @default false
+             */
+            is_admin: boolean;
+            /**
              * Full Name
              * @default
              */
@@ -1727,6 +1905,40 @@ export interface components {
             /** Offset */
             offset: number;
         };
+        /**
+         * OpportunityPatch
+         * @description Admin edit: only the fields sent are changed.
+         */
+        OpportunityPatch: {
+            /** Title */
+            title?: string | null;
+            /** Organizer */
+            organizer?: string | null;
+            /** Type */
+            type?: ("scholarship" | "job" | "internship" | "fellowship" | "hackathon" | "datathon" | "competition" | "bootcamp" | "research" | "volunteer" | "course" | "grant" | "other") | null;
+            /** Mode */
+            mode?: ("remote" | "hybrid" | "onsite") | null;
+            /** Location */
+            location?: string | null;
+            /** Country */
+            country?: string | null;
+            /** Language */
+            language?: ("en" | "fr" | "ar") | null;
+            /** Deadline */
+            deadline?: string | null;
+            /** Funding */
+            funding?: string | null;
+            /** Eligibility */
+            eligibility?: string[] | null;
+            /** Benefits */
+            benefits?: string[] | null;
+            /** Summary */
+            summary?: string | null;
+            /** Url */
+            url?: string | null;
+            /** Trust Level */
+            trust_level?: ("verified" | "likely_safe" | "unknown" | "suspicious" | "scam") | null;
+        };
         /** PremiumStatus */
         PremiumStatus: {
             /**
@@ -1791,6 +2003,124 @@ export interface components {
             /** Payment Method */
             payment_method?: ("cib" | "edahabia" | "baridimob" | "ccp") | null;
         };
+        /** ReviewIn */
+        ReviewIn: {
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "approved" | "rejected";
+            /** Note */
+            note?: string | null;
+            /** Trust Level */
+            trust_level?: ("verified" | "likely_safe" | "unknown" | "suspicious" | "scam") | null;
+        };
+        /**
+         * ReviewedOpportunity
+         * @description An opportunity with its review state (admin screens, "My submissions").
+         */
+        ReviewedOpportunity: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** External Id */
+            external_id: string | null;
+            /** Title */
+            title: string;
+            /** Organizer */
+            organizer: string;
+            /**
+             * Type
+             * @enum {string}
+             */
+            type: "scholarship" | "job" | "internship" | "fellowship" | "hackathon" | "datathon" | "competition" | "bootcamp" | "research" | "volunteer" | "course" | "grant" | "other";
+            /** Mode */
+            mode: ("remote" | "hybrid" | "onsite") | null;
+            /**
+             * Location
+             * @default
+             */
+            location: string;
+            /**
+             * Country
+             * @default
+             */
+            country: string;
+            /**
+             * Language
+             * @default en
+             */
+            language: string;
+            /** Deadline */
+            deadline: string | null;
+            /** Funding */
+            funding: string | null;
+            /** Eligibility */
+            eligibility: string[];
+            /** Benefits */
+            benefits: string[];
+            /**
+             * Summary
+             * @default
+             */
+            summary: string;
+            /**
+             * Url
+             * @default
+             */
+            url: string;
+            /**
+             * Source
+             * @default
+             */
+            source: string;
+            /**
+             * Trust Level
+             * @default unknown
+             * @enum {string}
+             */
+            trust_level: "verified" | "likely_safe" | "unknown" | "suspicious" | "scam";
+            /** Scam Flags */
+            scam_flags: {
+                [key: string]: unknown;
+            }[];
+            /**
+             * Added Via
+             * @default pipeline
+             */
+            added_via: string;
+            /** Created At */
+            created_at: string | null;
+            /**
+             * Review Status
+             * @default approved
+             * @enum {string}
+             */
+            review_status: "pending" | "approved" | "rejected";
+            /** Review Note */
+            review_note: string | null;
+            /** Reviewed At */
+            reviewed_at: string | null;
+            /** Contact Email */
+            contact_email: string | null;
+            /** Submitted By */
+            submitted_by: string | null;
+            /** Updated At */
+            updated_at: string | null;
+        };
+        /** ReviewedOpportunityPage */
+        ReviewedOpportunityPage: {
+            /** Items */
+            items: components["schemas"]["ReviewedOpportunity"][];
+            /** Total */
+            total: number;
+            /** Limit */
+            limit: number;
+            /** Offset */
+            offset: number;
+        };
         /**
          * SettingsPatch
          * @description PATCH /me/settings: Privacy & AI retention + Agent & sources.
@@ -1854,6 +2184,57 @@ export interface components {
             preferred_location: ("algeria" | "abroad" | "remote" | "anywhere") | null;
             /** Availability */
             availability: ("full_time" | "part_time_10_20" | "under_10h" | "flexible") | null;
+        };
+        /**
+         * SubmissionIn
+         * @description Organisation submission: reviewed by an admin before it goes public.
+         */
+        SubmissionIn: {
+            /** Title */
+            title: string;
+            /** Organizer */
+            organizer: string;
+            /**
+             * Type
+             * @default other
+             * @enum {string}
+             */
+            type: "scholarship" | "job" | "internship" | "fellowship" | "hackathon" | "datathon" | "competition" | "bootcamp" | "research" | "volunteer" | "course" | "grant" | "other";
+            /** Mode */
+            mode?: ("remote" | "hybrid" | "onsite") | null;
+            /**
+             * Location
+             * @default
+             */
+            location: string;
+            /**
+             * Country
+             * @default
+             */
+            country: string;
+            /**
+             * Language
+             * @default en
+             * @enum {string}
+             */
+            language: "en" | "fr" | "ar";
+            /** Deadline */
+            deadline?: string | null;
+            /** Funding */
+            funding?: string | null;
+            /** Eligibility */
+            eligibility?: string[];
+            /** Benefits */
+            benefits?: string[];
+            /**
+             * Summary
+             * @default
+             */
+            summary: string;
+            /** Url */
+            url: string;
+            /** Contact Email */
+            contact_email: string;
         };
         /** ValidationError */
         ValidationError: {
@@ -2846,6 +3227,277 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PremiumStatus"];
+                };
+            };
+        };
+    };
+    mine_me_submissions_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReviewedOpportunity"][];
+                };
+            };
+        };
+    };
+    submit_me_submissions_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SubmissionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReviewedOpportunity"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    stats_admin_stats_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminStats"];
+                };
+            };
+        };
+    };
+    list_opportunities_admin_opportunities_get: {
+        parameters: {
+            query?: {
+                status?: ("pending" | "approved" | "rejected")[];
+                trust?: ("verified" | "likely_safe" | "unknown" | "suspicious" | "scam")[];
+                q?: string | null;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReviewedOpportunityPage"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_admin_opportunities_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdminOpportunityIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReviewedOpportunity"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_admin_opportunities__opportunity_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                opportunity_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReviewedOpportunity"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_admin_opportunities__opportunity_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                opportunity_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_admin_opportunities__opportunity_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                opportunity_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OpportunityPatch"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReviewedOpportunity"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    decide_admin_opportunities__opportunity_id__review_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                opportunity_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReviewIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReviewedOpportunity"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

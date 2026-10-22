@@ -69,6 +69,7 @@ export function Segmented<T extends string>({ value, options, onChange, label }:
 
 /** Field with removable pills and a free-text input; Enter or comma adds. */
 export function TagInput({ values, onChange, placeholder, suggestions = [], max = 40, invalid, id }: { values: string[]; onChange: (v: string[]) => void; placeholder: string; suggestions?: string[]; max?: number; invalid?: boolean; id?: string }) {
+  const t = useTranslations("common");
   const [draft, setDraft] = useState("");
   const has = (v: string) => values.some((x) => x.toLowerCase() === v.toLowerCase());
   const add = (raw: string) => {
@@ -105,7 +106,7 @@ export function TagInput({ values, onChange, placeholder, suggestions = [], max 
       </div>
       {open.length > 0 && (
         <p className="pt-1.5 text-xs text-muted">
-          Suggestions:{" "}
+          {t("suggestions")}{" "}
           {open.map((s, i) => (
             <span key={s}>
               {i > 0 && " · "}

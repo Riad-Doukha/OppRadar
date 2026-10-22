@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import Image from "next/image";
+import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 
-import { LanguageMenu } from "@/components/app/language-menu";
-import { ThemeToggle } from "@/components/app/theme-toggle";
 
 import { CountUp } from "@/components/brand/count-up";
 import { Logo } from "@/components/brand/logo";
+import { PublicHeader } from "@/components/brand/public-header";
 import { RadarParallax } from "@/components/brand/radar-parallax";
 import { ButtonLink } from "@/components/ui/button";
 
@@ -27,29 +27,10 @@ const strong = (chunks: React.ReactNode) => <strong className="text-ink">{chunks
 export default async function LandingPage({ searchParams }: { searchParams: Promise<{ deleted?: string }> }) {
   const { deleted } = await searchParams;
   const t = await getTranslations("landing");
+  const te = await getTranslations("explore");
   return (
     <div className="min-h-dvh bg-page">
-      <header className="sticky top-0 z-10 flex h-[60px] items-center justify-between border-b border-line bg-surface px-4 md:h-[68px] md:px-10">
-        <Logo />
-        <nav className="hidden items-center gap-7 text-[15px] md:flex" aria-label={t("nav.how")}>
-          <a href="#how-it-works" className="font-bold text-ink">
-            {t("nav.how")}
-          </a>
-          <a href="#privacy" className="font-medium text-body hover:text-ink">
-            {t("nav.privacy")}
-          </a>
-        </nav>
-        <div className="flex items-center gap-1 md:gap-3">
-          <LanguageMenu />
-          <ThemeToggle />
-          <ButtonLink href="/login" variant="ghost" size="sm" className="px-3 md:px-5">
-            {t("nav.logIn")}
-          </ButtonLink>
-          <ButtonLink href="/signup" size="sm" className="hidden md:inline-flex">
-            {t("nav.start")}
-          </ButtonLink>
-        </div>
-      </header>
+      <PublicHeader active="home" />
 
       {deleted && (
         <p role="status" className="bg-success-tint px-4 py-3 text-center text-sm font-bold text-success">
@@ -74,6 +55,20 @@ export default async function LandingPage({ searchParams }: { searchParams: Prom
                 {t("hero.login")}
               </ButtonLink>
             </div>
+            {/* Plain GET form: works before JavaScript loads. */}
+            <form action="/explore" role="search" className="mt-5 flex max-w-[481px] items-center gap-2 rounded-field border border-line bg-surface px-3 py-1.5 focus-within:shadow-focus">
+              <Image src="/icons/search.svg" alt="" width={16} height={16} />
+              <input
+                name="q"
+                maxLength={200}
+                placeholder={te("heroPlaceholder")}
+                aria-label={te("heroSearch")}
+                className="h-9 min-w-0 flex-1 bg-transparent text-sm text-ink outline-none placeholder:text-faint"
+              />
+              <button type="submit" className="rounded-lg px-3 py-1.5 text-sm font-bold text-brand hover:bg-brand-soft">
+                {te("searchButton")}
+              </button>
+            </form>
           </div>
 
           <RadarPreview />
@@ -134,7 +129,12 @@ export default async function LandingPage({ searchParams }: { searchParams: Prom
           <span className="hidden md:inline-flex">
             <Logo tone="yellow" />
           </span>
-          <p className="text-[13px] text-on-night">{t("footer")}</p>
+          <div className="flex flex-col items-center gap-1.5 md:items-end">
+            <Link href="/submit" className="text-[13px] font-bold text-on-night-strong underline-offset-4 hover:underline">
+              {t("orgs")} <span className="inline-block rtl:-scale-x-100">→</span>
+            </Link>
+            <p className="text-[13px] text-on-night">{t("footer")}</p>
+          </div>
         </div>
       </footer>
     </div>

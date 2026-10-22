@@ -65,6 +65,7 @@ def load_me(repo: Repository, user: CurrentUser) -> Me:
         user_id=user.id,
         email=user.email,
         is_demo=user.is_demo or bool(profile.get("is_demo")),
+        is_admin=user.is_admin,
         **{k: profile.get(k) for k in PROFILE_FIELDS if profile.get(k) is not None},
         skills=r["skills"],
         languages=r["languages"],

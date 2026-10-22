@@ -62,6 +62,9 @@
     "premiumReserved": "Votre réservation Premium",
     "profile": "Mon profil",
     "scan": "Démarrage de votre agent",
-    "settings": "Paramètres"
-  }
+    "settings": "Paramètres",
+    "submit": "Proposer une opportunité",
+    "admin": "Administration"
+  },
+  "suggestions": "Suggestions :"
 }

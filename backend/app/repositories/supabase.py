@@ -21,6 +21,10 @@ OPPORTUNITY_COLUMNS = (
     "id,external_id,title,organizer,type,mode,location,country,language,deadline,funding,"
     "eligibility,benefits,summary,url,source,trust_level,scam_flags,added_via,created_at"
 )
+REVIEW_COLUMNS = (
+    f"{OPPORTUNITY_COLUMNS},review_status,review_note,reviewed_at,contact_email,submitted_by,"
+    "updated_at"
+)
 
 
 def _json(fields: Row) -> Row:
@@ -290,6 +294,67 @@ class SupabaseRepository:
             .data
         )
         return len(data)
+
+    # -- review: any status ------------------------------------------------------------ #
+    def _review_query(
+        self, columns: str, statuses: list[str], trust_levels: list[str], head: bool = False
+    ) -> Any:
+        query: Any = self.db.table("opportunities").select(columns, count="exact", head=head)
+        if statuses:
+            query = query.in_("review_status", statuses)
+        if trust_levels:
+            query = query.in_("trust_level", trust_levels)
+        return query
+
+    def review_list(
+        self,
+        statuses: list[str],
+        trust_levels: list[str],
+        q: str | None,
+        submitted_by: str | None,
+        limit: int,
+        offset: int,
+    ) -> tuple[list[Row], int]:
+        query = self._review_query(REVIEW_COLUMNS, statuses, trust_levels)
+        if q:
+            query = query.filter("search", "wfts(simple)", q)
+        if submitted_by:
+            query = query.eq("submitted_by", submitted_by)
+        response = query.order("created_at", desc=True).range(offset, offset + limit - 1).execute()
+        return response.data, response.count or 0
+
+    def count_opportunities(
+        self, statuses: list[str], trust_levels: list[str], active_only: bool = False
+    ) -> int:
+        query = self._review_query("id", statuses, trust_levels, head=True)
+        if active_only:
+            query = query.or_(f"deadline.is.null,deadline.gte.{date.today().isoformat()}")
+        return query.execute().count or 0
+
+    def get_opportunity_any(self, opportunity_id: str) -> Row | None:
+        data = (
+            self.db.table("opportunities")
+            .select(REVIEW_COLUMNS)
+            .eq("id", opportunity_id)
+            .execute()
+            .data
+        )
+        return data[0] if data else None
+
+    def create_opportunity(self, row: Row) -> Row:
+        data = self.db.table("opportunities").insert(_json(row)).execute().data
+        return _first(data, "opportunity")
+
+    def update_opportunity(self, opportunity_id: str, fields: Row) -> Row:
+        self.db.table("opportunities").update(_json(fields)).eq("id", opportunity_id).execute()
+        row = self.get_opportunity_any(opportunity_id)
+        if row is None:
+            raise NotFoundError(f"opportunity {opportunity_id}")
+        return row
+
+    def delete_opportunity(self, opportunity_id: str) -> None:
+        data = self.db.table("opportunities").delete().eq("id", opportunity_id).execute().data
+        _first(data, f"opportunity {opportunity_id}")
 
     # -- applications ---------------------------------------------------------------- #
     def list_applications(self, user_id: str) -> list[Row]:

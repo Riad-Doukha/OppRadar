@@ -17,6 +17,9 @@ type Messages = {
   apply: typeof import("../messages/en/apply.json");
   applications: typeof import("../messages/en/applications.json");
   premium: typeof import("../messages/en/premium.json");
+  submit: typeof import("../messages/en/submit.json");
+  admin: typeof import("../messages/en/admin.json");
+  explore: typeof import("../messages/en/explore.json");
 };
 
 declare module "next-intl" {

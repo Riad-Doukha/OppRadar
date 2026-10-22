@@ -8,14 +8,16 @@
     "profile": "My profile",
     "applications": "Applications",
     "premium": "Premium",
-    "settings": "Settings"
+    "settings": "Settings",
+    "admin": "Admin"
   },
   "search": "Search opportunities",
   "account": {
     "menu": "Account menu",
     "yours": "Your account",
     "logOut": "Log out",
-    "leaveDemo": "Leave the demo"
+    "leaveDemo": "Leave the demo",
+    "submit": "Submit an opportunity"
   },
   "bell": {
     "label": "Notifications",

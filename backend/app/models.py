@@ -8,7 +8,7 @@ shapes come straight from oppradar_ai.schemas.
 from __future__ import annotations
 
 from datetime import date, datetime, time
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, HttpUrl, field_validator, model_validator
@@ -299,6 +299,7 @@ class Me(_Out):
     user_id: UUID
     email: str = ""
     is_demo: bool = False
+    is_admin: bool = False
     full_name: str = ""
     birth_year: int | None = None
     nationality: str | None = None
@@ -419,6 +420,108 @@ class OpportunityOut(_Out):
     scam_flags: list[dict[str, Any]] = Field(default_factory=list)
     added_via: str = "pipeline"
     created_at: datetime | None = None
+
+
+class OpportunityInput(_In):
+    """Fields an organisation (submission form) or an admin fills in."""
+
+    title: str = Field(min_length=3, max_length=200)
+    organizer: str = Field(min_length=2, max_length=200)
+    type: OpportunityTypeName = "other"
+    mode: Literal["remote", "hybrid", "onsite"] | None = None
+    location: str = Field("", max_length=120)
+    country: str = Field("", max_length=60)
+    language: Literal["en", "fr", "ar"] = "en"
+    deadline: date | None = None
+    funding: str | None = Field(None, max_length=120)
+    eligibility: list[Annotated[str, Field(min_length=1, max_length=300)]] = Field(
+        default_factory=list, max_length=20
+    )
+    benefits: list[Annotated[str, Field(min_length=1, max_length=120)]] = Field(
+        default_factory=list, max_length=20
+    )
+    summary: str = Field("", max_length=3000)
+    url: str = Field(min_length=1, max_length=500)
+
+    @field_validator("url")
+    @classmethod
+    def _official_url(cls, value: str) -> str:
+        if "://" not in value:
+            value = f"https://{value}"
+        HttpUrl(value)  # raises on garbage
+        return value
+
+
+class SubmissionIn(OpportunityInput):
+    """Organisation submission: reviewed by an admin before it goes public."""
+
+    contact_email: str = Field(min_length=3, max_length=200, pattern=r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+
+
+class AdminOpportunityIn(OpportunityInput):
+    trust_level: TrustLevelName = "likely_safe"
+
+
+class OpportunityPatch(_In):
+    """Admin edit: only the fields sent are changed."""
+
+    title: str | None = Field(None, min_length=3, max_length=200)
+    organizer: str | None = Field(None, min_length=2, max_length=200)
+    type: OpportunityTypeName | None = None
+    mode: Literal["remote", "hybrid", "onsite"] | None = None
+    location: str | None = Field(None, max_length=120)
+    country: str | None = Field(None, max_length=60)
+    language: Literal["en", "fr", "ar"] | None = None
+    deadline: date | None = None
+    funding: str | None = Field(None, max_length=120)
+    eligibility: list[Annotated[str, Field(min_length=1, max_length=300)]] | None = Field(
+        None, max_length=20
+    )
+    benefits: list[Annotated[str, Field(min_length=1, max_length=120)]] | None = Field(
+        None, max_length=20
+    )
+    summary: str | None = Field(None, max_length=3000)
+    url: str | None = Field(None, min_length=1, max_length=500)
+    trust_level: TrustLevelName | None = None
+
+    @field_validator("url")
+    @classmethod
+    def _official_url(cls, value: str | None) -> str | None:
+        return None if value is None else OpportunityInput._official_url(value)
+
+
+ReviewStatus = Literal["pending", "approved", "rejected"]
+
+
+class ReviewIn(_In):
+    status: Literal["approved", "rejected"]
+    note: str | None = Field(None, max_length=500)  # shown to the submitter
+    trust_level: TrustLevelName | None = None  # set at the same time (optional)
+
+
+class ReviewedOpportunity(OpportunityOut):
+    """An opportunity with its review state (admin screens, "My submissions")."""
+
+    review_status: ReviewStatus = "approved"
+    review_note: str | None = None
+    reviewed_at: datetime | None = None
+    contact_email: str | None = None
+    submitted_by: UUID | None = None
+    updated_at: datetime | None = None
+
+
+class ReviewedOpportunityPage(_Out):
+    items: list[ReviewedOpportunity]
+    total: int
+    limit: int
+    offset: int
+
+
+class AdminStats(_Out):
+    pending: int
+    flagged: int  # approved and suspicious or scam
+    published: int  # approved, not expired
+    rejected: int
 
 
 class OpportunityPage(_Out):

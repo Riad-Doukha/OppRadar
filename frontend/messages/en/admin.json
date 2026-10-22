@@ -1,0 +1,65 @@
+{
+  "title": "Admin",
+  "subtitle": "Review submissions, re-label suspicious sources and manage opportunities.",
+  "forbidden": "This area is for OppRadar admins.",
+  "forbiddenHint": "If you should have access, ask an admin to run scripts/make_admin.py with your email, then log out and back in.",
+  "stats": {
+    "pending": "waiting for review",
+    "flagged": "flagged sources",
+    "published": "published & open",
+    "rejected": "rejected"
+  },
+  "tabs": {
+    "label": "Admin sections",
+    "queue": "Review queue",
+    "flagged": "Flagged",
+    "all": "All opportunities",
+    "new": "Add opportunity"
+  },
+  "search": "Search title, organizer, description",
+  "loading": "Loading…",
+  "loadError": "We couldn't load the list: {error}",
+  "empty": {
+    "queue": "No submissions waiting. 🎉",
+    "flagged": "No flagged sources.",
+    "all": "No opportunities match."
+  },
+  "more": "Show more ({left} left)",
+  "review": {
+    "pending": "Pending",
+    "approved": "Published",
+    "rejected": "Rejected"
+  },
+  "via": {
+    "form": "submitted by an organisation",
+    "pipeline": "found by the agent",
+    "user": "added by an admin"
+  },
+  "contact": "Contact: {email}",
+  "created": "Added {date}",
+  "official": "Official page",
+  "approve": "Approve & publish",
+  "reject": "Reject",
+  "unpublish": "Unpublish",
+  "republish": "Publish",
+  "notePlaceholder": "Note to the submitter (optional, shown to them)",
+  "confirmReject": "Reject",
+  "trustLabel": "Trust level",
+  "trust": {
+    "verified": "Verified",
+    "likely_safe": "Looks legitimate",
+    "unknown": "Not verified",
+    "suspicious": "Suspicious",
+    "scam": "Scam"
+  },
+  "edit": "Edit",
+  "delete": "Delete",
+  "confirmDelete": "Delete \"{title}\" for good? Students' saves and tracked applications of it are removed too.",
+  "save": "Save changes",
+  "create": "Publish opportunity",
+  "cancel": "Cancel",
+  "published": "Published. It's now visible to students.",
+  "actionError": "That didn't work: {error}",
+  "flags": "Scam signals: {flags}",
+  "viewIt": "View it"
+}

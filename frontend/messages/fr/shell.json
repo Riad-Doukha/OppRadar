@@ -8,14 +8,16 @@
     "profile": "Mon profil",
     "applications": "Candidatures",
     "premium": "Premium",
-    "settings": "Paramètres"
+    "settings": "Paramètres",
+    "admin": "Administration"
   },
   "search": "Rechercher des opportunités",
   "account": {
     "menu": "Menu du compte",
     "yours": "Votre compte",
     "logOut": "Se déconnecter",
-    "leaveDemo": "Quitter la démo"
+    "leaveDemo": "Quitter la démo",
+    "submit": "Proposer une opportunité"
   },
   "bell": {
     "label": "Notifications",

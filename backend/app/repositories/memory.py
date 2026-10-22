@@ -57,6 +57,34 @@ def profile_defaults(user_id: str, full_name: str = "") -> Row:
     }
 
 
+def opportunity_defaults() -> Row:
+    """Column defaults of public.opportunities."""
+    return {
+        "external_id": None,
+        "type": "other",
+        "mode": None,
+        "location": "",
+        "country": "",
+        "language": "en",
+        "deadline": None,
+        "funding": None,
+        "eligibility": [],
+        "benefits": [],
+        "summary": "",
+        "url": "",
+        "source": "manual",
+        "trust_level": "unknown",
+        "scam_flags": [],
+        "added_via": "pipeline",
+        "review_status": "approved",
+        "review_note": None,
+        "reviewed_at": None,
+        "reviewed_by": None,
+        "contact_email": None,
+        "submitted_by": None,
+    }
+
+
 def notification_defaults(user_id: str) -> Row:
     """Column defaults of public.notification_settings."""
     return {
@@ -308,9 +336,8 @@ class MemoryRepository:
         return matched[filters.offset : filters.offset + filters.limit], len(matched)
 
     def get_opportunity(self, opportunity_id: str) -> Row | None:
-        with self._lock:
-            row = self.opportunities.get(opportunity_id)
-            return copy.deepcopy(row) if row else None
+        row = self.get_opportunity_any(opportunity_id)
+        return row if row and row.get("review_status", "approved") == "approved" else None
 
     def upsert_opportunities(self, rows: list[Row]) -> int:
         with self._lock:
@@ -323,6 +350,86 @@ class MemoryRepository:
                 base.update(copy.deepcopy(row))
                 self.opportunities[key] = base
         return len(rows)
+
+    # -- review: any status ------------------------------------------------------------ #
+    def _review_rows(self, statuses: list[str], trust_levels: list[str]) -> list[Row]:
+        with self._lock:
+            return [
+                copy.deepcopy(r)
+                for r in self.opportunities.values()
+                if (not statuses or r.get("review_status", "approved") in statuses)
+                and (not trust_levels or r.get("trust_level", "unknown") in trust_levels)
+            ]
+
+    def review_list(
+        self,
+        statuses: list[str],
+        trust_levels: list[str],
+        q: str | None,
+        submitted_by: str | None,
+        limit: int,
+        offset: int,
+    ) -> tuple[list[Row], int]:
+        words = (q or "").lower().split()
+
+        def keep(r: Row) -> bool:
+            text = " ".join(str(r.get(k) or "") for k in ("title", "organizer", "summary")).lower()
+            return all(w in text for w in words) and (
+                not submitted_by or r.get("submitted_by") == submitted_by
+            )
+
+        rows = [r for r in self._review_rows(statuses, trust_levels) if keep(r)]
+        rows.sort(key=lambda r: r["created_at"], reverse=True)
+        return rows[offset : offset + limit], len(rows)
+
+    def count_opportunities(
+        self, statuses: list[str], trust_levels: list[str], active_only: bool = False
+    ) -> int:
+        today = date.today()
+        return sum(
+            1
+            for r in self._review_rows(statuses, trust_levels)
+            if not active_only
+            or (deadline := _as_date(r.get("deadline"))) is None
+            or deadline >= today
+        )
+
+    def get_opportunity_any(self, opportunity_id: str) -> Row | None:
+        with self._lock:
+            row = self.opportunities.get(opportunity_id)
+            return copy.deepcopy(row) if row else None
+
+    def create_opportunity(self, row: Row) -> Row:
+        key = str(uuid.uuid4())
+        with self._lock:
+            self.opportunities[key] = {
+                **opportunity_defaults(),
+                **copy.deepcopy(row),
+                "id": key,
+                "created_at": _now(),
+                "updated_at": _now(),
+            }
+            return copy.deepcopy(self.opportunities[key])
+
+    def update_opportunity(self, opportunity_id: str, fields: Row) -> Row:
+        with self._lock:
+            row = self.opportunities.get(opportunity_id)
+            if row is None:
+                raise NotFoundError(f"opportunity {opportunity_id}")
+            row.update(copy.deepcopy(fields), updated_at=_now())
+            return copy.deepcopy(row)
+
+    def delete_opportunity(self, opportunity_id: str) -> None:
+        with self._lock:
+            if self.opportunities.pop(opportunity_id, None) is None:
+                raise NotFoundError(f"opportunity {opportunity_id}")
+            # on delete cascade (saves, applications)
+            self.applications = {
+                k: v for k, v in self.applications.items() if k[1] != opportunity_id
+            }
+            self.opportunity_states = {
+                k: v for k, v in self.opportunity_states.items() if k[1] != opportunity_id
+            }
 
     # -- applications ---------------------------------------------------------------- #
     def list_applications(self, user_id: str) -> list[Row]:

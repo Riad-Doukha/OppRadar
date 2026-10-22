@@ -18,7 +18,7 @@ import { api, type Me } from "@/lib/api/client";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 
-type NavItem = { key: "dashboard" | "agent" | "notifications" | "profile" | "applications" | "premium" | "settings"; icon: string; href?: string; soon?: boolean };
+type NavItem = { key: "dashboard" | "agent" | "notifications" | "profile" | "applications" | "premium" | "settings" | "admin"; icon: string; href?: string; soon?: boolean };
 
 const NAV: NavItem[] = [
   { key: "dashboard", icon: "nav-dashboard", href: "/dashboard" },
@@ -31,6 +31,7 @@ const NAV_MORE: NavItem[] = [
   { key: "premium", icon: "nav-premium", href: "/premium", soon: true },
   { key: "settings", icon: "nav-settings", href: "/settings" },
 ];
+const ADMIN: NavItem = { key: "admin", icon: "nav-admin", href: "/admin" };
 
 export const initialsOf = (name: string) =>
   name.split(/\s+/).filter(Boolean).map((w) => w[0]).slice(0, 2).join("").toUpperCase() || "?";
@@ -52,7 +53,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <aside className="sticky top-16 hidden h-[calc(100dvh-4rem)] w-[264px] shrink-0 flex-col gap-5 overflow-y-auto py-6 pe-4 ps-6 lg:flex">
           <Nav items={NAV} />
           <div className="h-px bg-line" />
-          <Nav items={NAV_MORE} />
+          <Nav items={me.data?.is_admin ? [...NAV_MORE, ADMIN] : NAV_MORE} />
           <UpgradeCard />
         </aside>
         <main id="main" tabIndex={-1} className="min-w-0 flex-1 px-4 pt-6 pb-12 outline-none sm:px-6 lg:pt-7 lg:pe-10 lg:ps-6">
@@ -204,6 +205,14 @@ function AccountMenu({ me }: { me?: Me }) {
           <Link role="menuitem" href="/settings" className="block rounded-lg px-3 py-2 text-sm text-body hover:bg-page" onClick={() => setOpen(false)}>
             {t("nav.settings")}
           </Link>
+          <Link role="menuitem" href="/submit" className="block rounded-lg px-3 py-2 text-sm text-body hover:bg-page" onClick={() => setOpen(false)}>
+            {t("account.submit")}
+          </Link>
+          {me?.is_admin && (
+            <Link role="menuitem" href="/admin" className="block rounded-lg px-3 py-2 text-sm text-body hover:bg-page lg:hidden" onClick={() => setOpen(false)}>
+              {t("nav.admin")}
+            </Link>
+          )}
           <button role="menuitem" type="button" onClick={logOut} className="block w-full rounded-lg px-3 py-2 text-start text-sm text-body hover:bg-page">
             {me?.is_demo ? t("account.leaveDemo") : t("account.logOut")}
           </button>

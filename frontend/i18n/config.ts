@@ -42,4 +42,7 @@ export const NAMESPACES = [
   "apply",
   "applications",
   "premium",
+  "submit",
+  "admin",
+  "explore",
 ] as const;
