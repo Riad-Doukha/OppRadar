@@ -1,9 +1,14 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 
-import { SignedInPlaceholder } from "@/components/auth/signed-in-placeholder";
+import { OnboardingWizard } from "@/components/onboarding/wizard";
 
 export const metadata: Metadata = { title: "Set up your profile" };
 
 export default function OnboardingPage() {
-  return <SignedInPlaceholder title="Set up your profile" />;
+  return (
+    <Suspense>
+      <OnboardingWizard />
+    </Suspense>
+  );
 }

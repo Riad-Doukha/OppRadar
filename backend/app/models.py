@@ -38,8 +38,17 @@ def _strip(value: Any) -> Any:
     return value.strip() if isinstance(value, str) else value
 
 
-class _In(BaseModel):
-    """Base for request bodies: trims strings, rejects unknown fields."""
+class _Out(BaseModel):
+    """Base for response models: fields with defaults are always present in
+    responses, so the OpenAPI schema (and the generated frontend types) mark
+    them required."""
+
+    model_config = ConfigDict(json_schema_serialization_defaults_required=True)
+
+
+class _In(_Out):
+    """Base for request bodies: trims strings, rejects unknown fields.
+    (Inherits _Out only for the read models built on these, e.g. Skill.)"""
 
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
@@ -137,7 +146,7 @@ class Certificate(CertificateIn):
     id: UUID
 
 
-class NotificationSettings(BaseModel):
+class NotificationSettings(_Out):
     email_enabled: bool = True
     telegram_enabled: bool = False
     telegram_linked: bool = False
@@ -221,14 +230,14 @@ class AlertsStep(_In):
 # --------------------------------------------------------------------------- #
 # Read model
 # --------------------------------------------------------------------------- #
-class OnboardingStatus(BaseModel):
+class OnboardingStatus(_Out):
     step: int
     completed_at: datetime | None = None
     agent_started_at: datetime | None = None
     missing: list[str] = Field(default_factory=list)  # required fields still empty
 
 
-class Me(BaseModel):
+class Me(_Out):
     """Everything the onboarding wizard and the profile review screen show."""
 
     user_id: UUID
@@ -266,7 +275,7 @@ class Me(BaseModel):
 # --------------------------------------------------------------------------- #
 # Documents
 # --------------------------------------------------------------------------- #
-class Document(BaseModel):
+class Document(_Out):
     id: UUID
     kind: DocumentKind
     file_name: str
@@ -279,7 +288,7 @@ class Document(BaseModel):
     created_at: datetime
 
 
-class CVPrefill(BaseModel):
+class CVPrefill(_Out):
     """Values found in a CV, shaped like the onboarding steps they pre-fill."""
 
     about: AboutYouStep = Field(default_factory=AboutYouStep)
@@ -298,7 +307,7 @@ class DocumentDetail(Document):
 # --------------------------------------------------------------------------- #
 # Opportunities
 # --------------------------------------------------------------------------- #
-class OpportunityOut(BaseModel):
+class OpportunityOut(_Out):
     id: UUID
     external_id: str | None = None
     title: str
@@ -321,7 +330,7 @@ class OpportunityOut(BaseModel):
     created_at: datetime | None = None
 
 
-class OpportunityPage(BaseModel):
+class OpportunityPage(_Out):
     items: list[OpportunityOut]
     total: int
     limit: int
@@ -340,7 +349,7 @@ class OpportunityFilters(BaseModel):
     offset: int = Field(0, ge=0)
 
 
-class DemoSession(BaseModel):
+class DemoSession(_Out):
     access_token: str
     refresh_token: str
     expires_in: int

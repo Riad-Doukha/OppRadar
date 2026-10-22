@@ -89,7 +89,7 @@
      "content": {
       "application/json": {
        "schema": {
-        "$ref": "#/components/schemas/AboutYouStep"
+        "$ref": "#/components/schemas/AboutYouStep-Input"
        }
       }
      },
@@ -136,7 +136,7 @@
      "content": {
       "application/json": {
        "schema": {
-        "$ref": "#/components/schemas/EducationStep"
+        "$ref": "#/components/schemas/EducationStep-Input"
        }
       }
      },
@@ -183,7 +183,7 @@
      "content": {
       "application/json": {
        "schema": {
-        "$ref": "#/components/schemas/SkillsStep"
+        "$ref": "#/components/schemas/SkillsStep-Input"
        }
       }
      },
@@ -230,7 +230,7 @@
      "content": {
       "application/json": {
        "schema": {
-        "$ref": "#/components/schemas/GoalsStep"
+        "$ref": "#/components/schemas/GoalsStep-Input"
        }
       }
      },
@@ -381,7 +381,7 @@
      "content": {
       "application/json": {
        "schema": {
-        "$ref": "#/components/schemas/ExperienceIn"
+        "$ref": "#/components/schemas/ExperienceIn-Input"
        }
       }
      },
@@ -524,7 +524,7 @@
      "content": {
       "application/json": {
        "schema": {
-        "$ref": "#/components/schemas/CertificateIn"
+        "$ref": "#/components/schemas/CertificateIn-Input"
        }
       }
      },
@@ -1050,7 +1050,7 @@
  },
  "components": {
   "schemas": {
-   "AboutYouStep": {
+   "AboutYouStep-Input": {
     "properties": {
      "full_name": {
       "anyOf": [
@@ -1117,7 +1117,7 @@
       "anyOf": [
        {
         "items": {
-         "$ref": "#/components/schemas/LanguageIn"
+         "$ref": "#/components/schemas/LanguageIn-Input"
         },
         "type": "array",
         "maxItems": 10
@@ -1131,6 +1131,98 @@
     },
     "additionalProperties": false,
     "type": "object",
+    "title": "AboutYouStep",
+    "description": "Step 1 \u00b7 About you."
+   },
+   "AboutYouStep-Output": {
+    "properties": {
+     "full_name": {
+      "anyOf": [
+       {
+        "type": "string",
+        "maxLength": 120
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Full Name"
+     },
+     "birth_year": {
+      "anyOf": [
+       {
+        "type": "integer",
+        "maximum": 2020.0,
+        "minimum": 1940.0
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Birth Year"
+     },
+     "nationality": {
+      "anyOf": [
+       {
+        "type": "string",
+        "maxLength": 60
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Nationality"
+     },
+     "country": {
+      "anyOf": [
+       {
+        "type": "string",
+        "maxLength": 60
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Country"
+     },
+     "wilaya": {
+      "anyOf": [
+       {
+        "type": "string",
+        "maxLength": 60
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Wilaya"
+     },
+     "languages": {
+      "anyOf": [
+       {
+        "items": {
+         "$ref": "#/components/schemas/LanguageIn-Output"
+        },
+        "type": "array",
+        "maxItems": 10
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Languages"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "full_name",
+     "birth_year",
+     "nationality",
+     "country",
+     "wilaya",
+     "languages"
+    ],
     "title": "AboutYouStep",
     "description": "Step 1 \u00b7 About you."
    },
@@ -1276,27 +1368,27 @@
    "CVPrefill": {
     "properties": {
      "about": {
-      "$ref": "#/components/schemas/AboutYouStep"
+      "$ref": "#/components/schemas/AboutYouStep-Output"
      },
      "education": {
-      "$ref": "#/components/schemas/EducationStep"
+      "$ref": "#/components/schemas/EducationStep-Output"
      },
      "skills": {
-      "$ref": "#/components/schemas/SkillsStep"
+      "$ref": "#/components/schemas/SkillsStep-Output"
      },
      "goals": {
-      "$ref": "#/components/schemas/GoalsStep"
+      "$ref": "#/components/schemas/GoalsStep-Output"
      },
      "experiences": {
       "items": {
-       "$ref": "#/components/schemas/ExperienceIn"
+       "$ref": "#/components/schemas/ExperienceIn-Output"
       },
       "type": "array",
       "title": "Experiences"
      },
      "certificates": {
       "items": {
-       "$ref": "#/components/schemas/CertificateIn"
+       "$ref": "#/components/schemas/CertificateIn-Output"
       },
       "type": "array",
       "title": "Certificates"
@@ -1310,6 +1402,15 @@
      }
     },
     "type": "object",
+    "required": [
+     "about",
+     "education",
+     "skills",
+     "goals",
+     "experiences",
+     "certificates",
+     "needs_review"
+    ],
     "title": "CVPrefill",
     "description": "Values found in a CV, shaped like the onboarding steps they pre-fill."
    },
@@ -1361,11 +1462,14 @@
     "type": "object",
     "required": [
      "title",
+     "issuer",
+     "year",
+     "credential_url",
      "id"
     ],
     "title": "Certificate"
    },
-   "CertificateIn": {
+   "CertificateIn-Input": {
     "properties": {
      "title": {
       "type": "string",
@@ -1409,6 +1513,56 @@
     "type": "object",
     "required": [
      "title"
+    ],
+    "title": "CertificateIn"
+   },
+   "CertificateIn-Output": {
+    "properties": {
+     "title": {
+      "type": "string",
+      "maxLength": 150,
+      "minLength": 1,
+      "title": "Title"
+     },
+     "issuer": {
+      "type": "string",
+      "maxLength": 150,
+      "title": "Issuer",
+      "default": ""
+     },
+     "year": {
+      "anyOf": [
+       {
+        "type": "integer",
+        "maximum": 2100.0,
+        "minimum": 1950.0
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Year"
+     },
+     "credential_url": {
+      "anyOf": [
+       {
+        "type": "string",
+        "maxLength": 300
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Credential Url"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "title",
+     "issuer",
+     "year",
+     "credential_url"
     ],
     "title": "CertificateIn"
    },
@@ -1493,7 +1647,8 @@
     "required": [
      "access_token",
      "refresh_token",
-     "expires_in"
+     "expires_in",
+     "token_type"
     ],
     "title": "DemoSession"
    },
@@ -1586,6 +1741,10 @@
      "file_name",
      "size_bytes",
      "status",
+     "read_method",
+     "warnings",
+     "extraction",
+     "error",
      "created_at"
     ],
     "title": "Document"
@@ -1689,11 +1848,16 @@
      "file_name",
      "size_bytes",
      "status",
-     "created_at"
+     "read_method",
+     "warnings",
+     "extraction",
+     "error",
+     "created_at",
+     "prefill"
     ],
     "title": "DocumentDetail"
    },
-   "EducationStep": {
+   "EducationStep-Input": {
     "properties": {
      "education_level": {
       "anyOf": [
@@ -1797,6 +1961,119 @@
     "title": "EducationStep",
     "description": "Step 2 \u00b7 Education & experience (experiences/certificates have their own CRUD)."
    },
+   "EducationStep-Output": {
+    "properties": {
+     "education_level": {
+      "anyOf": [
+       {
+        "type": "string",
+        "enum": [
+         "bac",
+         "licence",
+         "master",
+         "engineer",
+         "phd",
+         "other"
+        ]
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Education Level"
+     },
+     "field_of_study": {
+      "anyOf": [
+       {
+        "type": "string",
+        "maxLength": 120
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Field Of Study"
+     },
+     "institution": {
+      "anyOf": [
+       {
+        "type": "string",
+        "maxLength": 150
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Institution"
+     },
+     "current_year": {
+      "anyOf": [
+       {
+        "type": "integer",
+        "maximum": 10.0,
+        "minimum": 1.0
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Current Year"
+     },
+     "graduation_year": {
+      "anyOf": [
+       {
+        "type": "integer",
+        "maximum": 2100.0,
+        "minimum": 1950.0
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Graduation Year"
+     },
+     "gpa_value": {
+      "anyOf": [
+       {
+        "type": "number",
+        "minimum": 0.0
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Gpa Value"
+     },
+     "gpa_scale": {
+      "anyOf": [
+       {
+        "type": "integer",
+        "enum": [
+         4,
+         20
+        ]
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Gpa Scale"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "education_level",
+     "field_of_study",
+     "institution",
+     "current_year",
+     "graduation_year",
+     "gpa_value",
+     "gpa_scale"
+    ],
+    "title": "EducationStep",
+    "description": "Step 2 \u00b7 Education & experience (experiences/certificates have their own CRUD)."
+   },
    "Experience": {
     "properties": {
      "kind": {
@@ -1857,12 +2134,17 @@
     },
     "type": "object",
     "required": [
+     "kind",
      "title",
+     "organization",
+     "location",
+     "year",
+     "description",
      "id"
     ],
     "title": "Experience"
    },
-   "ExperienceIn": {
+   "ExperienceIn-Input": {
     "properties": {
      "kind": {
       "type": "string",
@@ -1919,6 +2201,71 @@
     "type": "object",
     "required": [
      "title"
+    ],
+    "title": "ExperienceIn"
+   },
+   "ExperienceIn-Output": {
+    "properties": {
+     "kind": {
+      "type": "string",
+      "enum": [
+       "internship",
+       "hackathon",
+       "job",
+       "volunteer",
+       "competition",
+       "other"
+      ],
+      "title": "Kind",
+      "default": "other"
+     },
+     "title": {
+      "type": "string",
+      "maxLength": 150,
+      "minLength": 1,
+      "title": "Title"
+     },
+     "organization": {
+      "type": "string",
+      "maxLength": 150,
+      "title": "Organization",
+      "default": ""
+     },
+     "location": {
+      "type": "string",
+      "maxLength": 100,
+      "title": "Location",
+      "default": ""
+     },
+     "year": {
+      "anyOf": [
+       {
+        "type": "integer",
+        "maximum": 2100.0,
+        "minimum": 1950.0
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Year"
+     },
+     "description": {
+      "type": "string",
+      "maxLength": 1000,
+      "title": "Description",
+      "default": ""
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "kind",
+     "title",
+     "organization",
+     "location",
+     "year",
+     "description"
     ],
     "title": "ExperienceIn"
    },
@@ -2010,7 +2357,7 @@
     "type": "object",
     "title": "ExperiencePatch"
    },
-   "GoalsStep": {
+   "GoalsStep-Input": {
     "properties": {
      "goal": {
       "anyOf": [
@@ -2043,6 +2390,46 @@
     },
     "additionalProperties": false,
     "type": "object",
+    "title": "GoalsStep",
+    "description": "Step 4 \u00b7 Goals & links."
+   },
+   "GoalsStep-Output": {
+    "properties": {
+     "goal": {
+      "anyOf": [
+       {
+        "type": "string",
+        "maxLength": 300,
+        "minLength": 20
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Goal"
+     },
+     "links": {
+      "anyOf": [
+       {
+        "items": {
+         "$ref": "#/components/schemas/LinkIn"
+        },
+        "type": "array",
+        "maxItems": 8
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Links"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "goal",
+     "links"
+    ],
     "title": "GoalsStep",
     "description": "Step 4 \u00b7 Goals & links."
    },
@@ -2092,11 +2479,13 @@
     },
     "type": "object",
     "required": [
-     "language"
+     "language",
+     "level",
+     "id"
     ],
     "title": "Language"
    },
-   "LanguageIn": {
+   "LanguageIn-Input": {
     "properties": {
      "language": {
       "type": "string",
@@ -2119,6 +2508,33 @@
     "type": "object",
     "required": [
      "language"
+    ],
+    "title": "LanguageIn"
+   },
+   "LanguageIn-Output": {
+    "properties": {
+     "language": {
+      "type": "string",
+      "maxLength": 40,
+      "minLength": 1,
+      "title": "Language"
+     },
+     "level": {
+      "type": "string",
+      "enum": [
+       "basic",
+       "good",
+       "fluent"
+      ],
+      "title": "Level",
+      "default": "good"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "language",
+     "level"
     ],
     "title": "LanguageIn"
    },
@@ -2156,7 +2572,8 @@
     "type": "object",
     "required": [
      "kind",
-     "url"
+     "url",
+     "id"
     ],
     "title": "Link"
    },
@@ -2481,6 +2898,34 @@
     "type": "object",
     "required": [
      "user_id",
+     "email",
+     "is_demo",
+     "full_name",
+     "birth_year",
+     "nationality",
+     "country",
+     "wilaya",
+     "education_level",
+     "field_of_study",
+     "institution",
+     "current_year",
+     "graduation_year",
+     "gpa_value",
+     "gpa_scale",
+     "interests",
+     "opportunity_types",
+     "preferred_location",
+     "availability",
+     "goal",
+     "skills",
+     "languages",
+     "experiences",
+     "certificates",
+     "links",
+     "notifications",
+     "consents",
+     "completeness",
+     "completeness_suggestions",
      "onboarding"
     ],
     "title": "Me",
@@ -2548,6 +2993,15 @@
      }
     },
     "type": "object",
+    "required": [
+     "email_enabled",
+     "telegram_enabled",
+     "telegram_linked",
+     "threshold",
+     "frequency",
+     "quiet_start",
+     "quiet_end"
+    ],
     "title": "NotificationSettings"
    },
    "OnboardingStatus": {
@@ -2590,7 +3044,10 @@
     },
     "type": "object",
     "required": [
-     "step"
+     "step",
+     "completed_at",
+     "agent_started_at",
+     "missing"
     ],
     "title": "OnboardingStatus"
    },
@@ -2763,9 +3220,25 @@
     "type": "object",
     "required": [
      "id",
+     "external_id",
      "title",
      "organizer",
-     "type"
+     "type",
+     "mode",
+     "location",
+     "country",
+     "language",
+     "deadline",
+     "funding",
+     "eligibility",
+     "benefits",
+     "summary",
+     "url",
+     "source",
+     "trust_level",
+     "scam_flags",
+     "added_via",
+     "created_at"
     ],
     "title": "OpportunityOut"
    },
@@ -2839,11 +3312,13 @@
     },
     "type": "object",
     "required": [
-     "name"
+     "name",
+     "level",
+     "id"
     ],
     "title": "Skill"
    },
-   "SkillIn": {
+   "SkillIn-Input": {
     "properties": {
      "name": {
       "type": "string",
@@ -2875,13 +3350,46 @@
     ],
     "title": "SkillIn"
    },
-   "SkillsStep": {
+   "SkillIn-Output": {
+    "properties": {
+     "name": {
+      "type": "string",
+      "maxLength": 60,
+      "minLength": 1,
+      "title": "Name"
+     },
+     "level": {
+      "anyOf": [
+       {
+        "type": "string",
+        "enum": [
+         "beginner",
+         "intermediate",
+         "advanced"
+        ]
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Level"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "name",
+     "level"
+    ],
+    "title": "SkillIn"
+   },
+   "SkillsStep-Input": {
     "properties": {
      "skills": {
       "anyOf": [
        {
         "items": {
-         "$ref": "#/components/schemas/SkillIn"
+         "$ref": "#/components/schemas/SkillIn-Input"
         },
         "type": "array",
         "maxItems": 40
@@ -2973,6 +3481,114 @@
     },
     "additionalProperties": false,
     "type": "object",
+    "title": "SkillsStep",
+    "description": "Step 3 \u00b7 Skills & interests."
+   },
+   "SkillsStep-Output": {
+    "properties": {
+     "skills": {
+      "anyOf": [
+       {
+        "items": {
+         "$ref": "#/components/schemas/SkillIn-Output"
+        },
+        "type": "array",
+        "maxItems": 40
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Skills"
+     },
+     "interests": {
+      "anyOf": [
+       {
+        "items": {
+         "type": "string"
+        },
+        "type": "array",
+        "maxItems": 30
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Interests"
+     },
+     "opportunity_types": {
+      "anyOf": [
+       {
+        "items": {
+         "type": "string",
+         "enum": [
+          "scholarship",
+          "job",
+          "internship",
+          "fellowship",
+          "hackathon",
+          "datathon",
+          "competition",
+          "bootcamp",
+          "research",
+          "volunteer",
+          "course",
+          "grant",
+          "other"
+         ]
+        },
+        "type": "array"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Opportunity Types"
+     },
+     "preferred_location": {
+      "anyOf": [
+       {
+        "type": "string",
+        "enum": [
+         "algeria",
+         "abroad",
+         "remote",
+         "anywhere"
+        ]
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Preferred Location"
+     },
+     "availability": {
+      "anyOf": [
+       {
+        "type": "string",
+        "enum": [
+         "full_time",
+         "part_time_10_20",
+         "under_10h",
+         "flexible"
+        ]
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Availability"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "skills",
+     "interests",
+     "opportunity_types",
+     "preferred_location",
+     "availability"
+    ],
     "title": "SkillsStep",
     "description": "Step 3 \u00b7 Skills & interests."
    },

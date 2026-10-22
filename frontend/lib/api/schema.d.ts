@@ -359,7 +359,7 @@ export interface components {
          * AboutYouStep
          * @description Step 1 · About you.
          */
-        AboutYouStep: {
+        "AboutYouStep-Input": {
             /** Full Name */
             full_name?: string | null;
             /** Birth Year */
@@ -371,7 +371,25 @@ export interface components {
             /** Wilaya */
             wilaya?: string | null;
             /** Languages */
-            languages?: components["schemas"]["LanguageIn"][] | null;
+            languages?: components["schemas"]["LanguageIn-Input"][] | null;
+        };
+        /**
+         * AboutYouStep
+         * @description Step 1 · About you.
+         */
+        "AboutYouStep-Output": {
+            /** Full Name */
+            full_name: string | null;
+            /** Birth Year */
+            birth_year: number | null;
+            /** Nationality */
+            nationality: string | null;
+            /** Country */
+            country: string | null;
+            /** Wilaya */
+            wilaya: string | null;
+            /** Languages */
+            languages: components["schemas"]["LanguageIn-Output"][] | null;
         };
         /**
          * AlertsStep
@@ -424,16 +442,16 @@ export interface components {
          * @description Values found in a CV, shaped like the onboarding steps they pre-fill.
          */
         CVPrefill: {
-            about?: components["schemas"]["AboutYouStep"];
-            education?: components["schemas"]["EducationStep"];
-            skills?: components["schemas"]["SkillsStep"];
-            goals?: components["schemas"]["GoalsStep"];
+            about: components["schemas"]["AboutYouStep-Output"];
+            education: components["schemas"]["EducationStep-Output"];
+            skills: components["schemas"]["SkillsStep-Output"];
+            goals: components["schemas"]["GoalsStep-Output"];
             /** Experiences */
-            experiences?: components["schemas"]["ExperienceIn"][];
+            experiences: components["schemas"]["ExperienceIn-Output"][];
             /** Certificates */
-            certificates?: components["schemas"]["CertificateIn"][];
+            certificates: components["schemas"]["CertificateIn-Output"][];
             /** Needs Review */
-            needs_review?: string[];
+            needs_review: string[];
         };
         /** Certificate */
         Certificate: {
@@ -445,9 +463,9 @@ export interface components {
              */
             issuer: string;
             /** Year */
-            year?: number | null;
+            year: number | null;
             /** Credential Url */
-            credential_url?: string | null;
+            credential_url: string | null;
             /**
              * Id
              * Format: uuid
@@ -455,7 +473,7 @@ export interface components {
             id: string;
         };
         /** CertificateIn */
-        CertificateIn: {
+        "CertificateIn-Input": {
             /** Title */
             title: string;
             /**
@@ -467,6 +485,20 @@ export interface components {
             year?: number | null;
             /** Credential Url */
             credential_url?: string | null;
+        };
+        /** CertificateIn */
+        "CertificateIn-Output": {
+            /** Title */
+            title: string;
+            /**
+             * Issuer
+             * @default
+             */
+            issuer: string;
+            /** Year */
+            year: number | null;
+            /** Credential Url */
+            credential_url: string | null;
         };
         /** CertificatePatch */
         CertificatePatch: {
@@ -515,15 +547,15 @@ export interface components {
              */
             status: "queued" | "reading" | "extracting" | "done" | "failed";
             /** Read Method */
-            read_method?: string | null;
+            read_method: string | null;
             /** Warnings */
-            warnings?: string[];
+            warnings: string[];
             /** Extraction */
-            extraction?: {
+            extraction: {
                 [key: string]: unknown;
             } | null;
             /** Error */
-            error?: string | null;
+            error: string | null;
             /**
              * Created At
              * Format: date-time
@@ -552,27 +584,27 @@ export interface components {
              */
             status: "queued" | "reading" | "extracting" | "done" | "failed";
             /** Read Method */
-            read_method?: string | null;
+            read_method: string | null;
             /** Warnings */
-            warnings?: string[];
+            warnings: string[];
             /** Extraction */
-            extraction?: {
+            extraction: {
                 [key: string]: unknown;
             } | null;
             /** Error */
-            error?: string | null;
+            error: string | null;
             /**
              * Created At
              * Format: date-time
              */
             created_at: string;
-            prefill?: components["schemas"]["CVPrefill"] | null;
+            prefill: components["schemas"]["CVPrefill"] | null;
         };
         /**
          * EducationStep
          * @description Step 2 · Education & experience (experiences/certificates have their own CRUD).
          */
-        EducationStep: {
+        "EducationStep-Input": {
             /** Education Level */
             education_level?: ("bac" | "licence" | "master" | "engineer" | "phd" | "other") | null;
             /** Field Of Study */
@@ -588,8 +620,61 @@ export interface components {
             /** Gpa Scale */
             gpa_scale?: (4 | 20) | null;
         };
+        /**
+         * EducationStep
+         * @description Step 2 · Education & experience (experiences/certificates have their own CRUD).
+         */
+        "EducationStep-Output": {
+            /** Education Level */
+            education_level: ("bac" | "licence" | "master" | "engineer" | "phd" | "other") | null;
+            /** Field Of Study */
+            field_of_study: string | null;
+            /** Institution */
+            institution: string | null;
+            /** Current Year */
+            current_year: number | null;
+            /** Graduation Year */
+            graduation_year: number | null;
+            /** Gpa Value */
+            gpa_value: number | null;
+            /** Gpa Scale */
+            gpa_scale: (4 | 20) | null;
+        };
         /** Experience */
         Experience: {
+            /**
+             * Kind
+             * @default other
+             * @enum {string}
+             */
+            kind: "internship" | "hackathon" | "job" | "volunteer" | "competition" | "other";
+            /** Title */
+            title: string;
+            /**
+             * Organization
+             * @default
+             */
+            organization: string;
+            /**
+             * Location
+             * @default
+             */
+            location: string;
+            /** Year */
+            year: number | null;
+            /**
+             * Description
+             * @default
+             */
+            description: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+        };
+        /** ExperienceIn */
+        "ExperienceIn-Input": {
             /**
              * Kind
              * @default other
@@ -615,14 +700,9 @@ export interface components {
              * @default
              */
             description: string;
-            /**
-             * Id
-             * Format: uuid
-             */
-            id: string;
         };
         /** ExperienceIn */
-        ExperienceIn: {
+        "ExperienceIn-Output": {
             /**
              * Kind
              * @default other
@@ -642,7 +722,7 @@ export interface components {
              */
             location: string;
             /** Year */
-            year?: number | null;
+            year: number | null;
             /**
              * Description
              * @default
@@ -668,11 +748,21 @@ export interface components {
          * GoalsStep
          * @description Step 4 · Goals & links.
          */
-        GoalsStep: {
+        "GoalsStep-Input": {
             /** Goal */
             goal?: string | null;
             /** Links */
             links?: components["schemas"]["LinkIn"][] | null;
+        };
+        /**
+         * GoalsStep
+         * @description Step 4 · Goals & links.
+         */
+        "GoalsStep-Output": {
+            /** Goal */
+            goal: string | null;
+            /** Links */
+            links: components["schemas"]["LinkIn"][] | null;
         };
         /** HTTPValidationError */
         HTTPValidationError: {
@@ -690,10 +780,21 @@ export interface components {
              */
             level: "basic" | "good" | "fluent";
             /** Id */
-            id?: string | null;
+            id: string | null;
         };
         /** LanguageIn */
-        LanguageIn: {
+        "LanguageIn-Input": {
+            /** Language */
+            language: string;
+            /**
+             * Level
+             * @default good
+             * @enum {string}
+             */
+            level: "basic" | "good" | "fluent";
+        };
+        /** LanguageIn */
+        "LanguageIn-Output": {
             /** Language */
             language: string;
             /**
@@ -713,7 +814,7 @@ export interface components {
             /** Url */
             url: string;
             /** Id */
-            id?: string | null;
+            id: string | null;
         };
         /** LinkIn */
         LinkIn: {
@@ -751,57 +852,57 @@ export interface components {
              */
             full_name: string;
             /** Birth Year */
-            birth_year?: number | null;
+            birth_year: number | null;
             /** Nationality */
-            nationality?: string | null;
+            nationality: string | null;
             /** Country */
-            country?: string | null;
+            country: string | null;
             /** Wilaya */
-            wilaya?: string | null;
+            wilaya: string | null;
             /** Education Level */
-            education_level?: ("bac" | "licence" | "master" | "engineer" | "phd" | "other") | null;
+            education_level: ("bac" | "licence" | "master" | "engineer" | "phd" | "other") | null;
             /** Field Of Study */
-            field_of_study?: string | null;
+            field_of_study: string | null;
             /** Institution */
-            institution?: string | null;
+            institution: string | null;
             /** Current Year */
-            current_year?: number | null;
+            current_year: number | null;
             /** Graduation Year */
-            graduation_year?: number | null;
+            graduation_year: number | null;
             /** Gpa Value */
-            gpa_value?: number | null;
+            gpa_value: number | null;
             /** Gpa Scale */
-            gpa_scale?: number | null;
+            gpa_scale: number | null;
             /** Interests */
-            interests?: string[];
+            interests: string[];
             /** Opportunity Types */
-            opportunity_types?: ("scholarship" | "job" | "internship" | "fellowship" | "hackathon" | "datathon" | "competition" | "bootcamp" | "research" | "volunteer" | "course" | "grant" | "other")[];
+            opportunity_types: ("scholarship" | "job" | "internship" | "fellowship" | "hackathon" | "datathon" | "competition" | "bootcamp" | "research" | "volunteer" | "course" | "grant" | "other")[];
             /** Preferred Location */
-            preferred_location?: ("algeria" | "abroad" | "remote" | "anywhere") | null;
+            preferred_location: ("algeria" | "abroad" | "remote" | "anywhere") | null;
             /** Availability */
-            availability?: ("full_time" | "part_time_10_20" | "under_10h" | "flexible") | null;
+            availability: ("full_time" | "part_time_10_20" | "under_10h" | "flexible") | null;
             /** Goal */
-            goal?: string | null;
+            goal: string | null;
             /** Skills */
-            skills?: components["schemas"]["Skill"][];
+            skills: components["schemas"]["Skill"][];
             /** Languages */
-            languages?: components["schemas"]["Language"][];
+            languages: components["schemas"]["Language"][];
             /** Experiences */
-            experiences?: components["schemas"]["Experience"][];
+            experiences: components["schemas"]["Experience"][];
             /** Certificates */
-            certificates?: components["schemas"]["Certificate"][];
+            certificates: components["schemas"]["Certificate"][];
             /** Links */
-            links?: components["schemas"]["Link"][];
-            notifications?: components["schemas"]["NotificationSettings"];
+            links: components["schemas"]["Link"][];
+            notifications: components["schemas"]["NotificationSettings"];
             /** Consents */
-            consents?: ("terms_privacy" | "agent_matching" | "ai_cv_processing")[];
+            consents: ("terms_privacy" | "agent_matching" | "ai_cv_processing")[];
             /**
              * Completeness
              * @default 0
              */
             completeness: number;
             /** Completeness Suggestions */
-            completeness_suggestions?: string[];
+            completeness_suggestions: string[];
             onboarding: components["schemas"]["OnboardingStatus"];
         };
         /** NotificationSettings */
@@ -848,11 +949,11 @@ export interface components {
             /** Step */
             step: number;
             /** Completed At */
-            completed_at?: string | null;
+            completed_at: string | null;
             /** Agent Started At */
-            agent_started_at?: string | null;
+            agent_started_at: string | null;
             /** Missing */
-            missing?: string[];
+            missing: string[];
         };
         /** OpportunityOut */
         OpportunityOut: {
@@ -862,7 +963,7 @@ export interface components {
              */
             id: string;
             /** External Id */
-            external_id?: string | null;
+            external_id: string | null;
             /** Title */
             title: string;
             /** Organizer */
@@ -873,7 +974,7 @@ export interface components {
              */
             type: "scholarship" | "job" | "internship" | "fellowship" | "hackathon" | "datathon" | "competition" | "bootcamp" | "research" | "volunteer" | "course" | "grant" | "other";
             /** Mode */
-            mode?: ("remote" | "hybrid" | "onsite") | null;
+            mode: ("remote" | "hybrid" | "onsite") | null;
             /**
              * Location
              * @default
@@ -890,13 +991,13 @@ export interface components {
              */
             language: string;
             /** Deadline */
-            deadline?: string | null;
+            deadline: string | null;
             /** Funding */
-            funding?: string | null;
+            funding: string | null;
             /** Eligibility */
-            eligibility?: string[];
+            eligibility: string[];
             /** Benefits */
-            benefits?: string[];
+            benefits: string[];
             /**
              * Summary
              * @default
@@ -919,7 +1020,7 @@ export interface components {
              */
             trust_level: "verified" | "likely_safe" | "unknown" | "suspicious" | "scam";
             /** Scam Flags */
-            scam_flags?: {
+            scam_flags: {
                 [key: string]: unknown;
             }[];
             /**
@@ -928,7 +1029,7 @@ export interface components {
              */
             added_via: string;
             /** Created At */
-            created_at?: string | null;
+            created_at: string | null;
         };
         /** OpportunityPage */
         OpportunityPage: {
@@ -946,24 +1047,31 @@ export interface components {
             /** Name */
             name: string;
             /** Level */
-            level?: ("beginner" | "intermediate" | "advanced") | null;
+            level: ("beginner" | "intermediate" | "advanced") | null;
             /** Id */
-            id?: string | null;
+            id: string | null;
         };
         /** SkillIn */
-        SkillIn: {
+        "SkillIn-Input": {
             /** Name */
             name: string;
             /** Level */
             level?: ("beginner" | "intermediate" | "advanced") | null;
         };
+        /** SkillIn */
+        "SkillIn-Output": {
+            /** Name */
+            name: string;
+            /** Level */
+            level: ("beginner" | "intermediate" | "advanced") | null;
+        };
         /**
          * SkillsStep
          * @description Step 3 · Skills & interests.
          */
-        SkillsStep: {
+        "SkillsStep-Input": {
             /** Skills */
-            skills?: components["schemas"]["SkillIn"][] | null;
+            skills?: components["schemas"]["SkillIn-Input"][] | null;
             /** Interests */
             interests?: string[] | null;
             /** Opportunity Types */
@@ -972,6 +1080,22 @@ export interface components {
             preferred_location?: ("algeria" | "abroad" | "remote" | "anywhere") | null;
             /** Availability */
             availability?: ("full_time" | "part_time_10_20" | "under_10h" | "flexible") | null;
+        };
+        /**
+         * SkillsStep
+         * @description Step 3 · Skills & interests.
+         */
+        "SkillsStep-Output": {
+            /** Skills */
+            skills: components["schemas"]["SkillIn-Output"][] | null;
+            /** Interests */
+            interests: string[] | null;
+            /** Opportunity Types */
+            opportunity_types: ("scholarship" | "job" | "internship" | "fellowship" | "hackathon" | "datathon" | "competition" | "bootcamp" | "research" | "volunteer" | "course" | "grant" | "other")[] | null;
+            /** Preferred Location */
+            preferred_location: ("algeria" | "abroad" | "remote" | "anywhere") | null;
+            /** Availability */
+            availability: ("full_time" | "part_time_10_20" | "under_10h" | "flexible") | null;
         };
         /** ValidationError */
         ValidationError: {
@@ -1066,7 +1190,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["AboutYouStep"];
+                "application/json": components["schemas"]["AboutYouStep-Input"];
             };
         };
         responses: {
@@ -1099,7 +1223,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["EducationStep"];
+                "application/json": components["schemas"]["EducationStep-Input"];
             };
         };
         responses: {
@@ -1132,7 +1256,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["SkillsStep"];
+                "application/json": components["schemas"]["SkillsStep-Input"];
             };
         };
         responses: {
@@ -1165,7 +1289,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["GoalsStep"];
+                "application/json": components["schemas"]["GoalsStep-Input"];
             };
         };
         responses: {
@@ -1273,7 +1397,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["ExperienceIn"];
+                "application/json": components["schemas"]["ExperienceIn-Input"];
             };
         };
         responses: {
@@ -1370,7 +1494,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["CertificateIn"];
+                "application/json": components["schemas"]["CertificateIn-Input"];
             };
         };
         responses: {
