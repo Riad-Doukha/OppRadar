@@ -44,6 +44,12 @@ OFFLINE_MARKERS = {
         "phrasing skipped (offline)",
         "score_user: 5 profiles x 32 opportunities",
     ),
+    "08_background_agent.ipynb": (
+        "drop consumed: ['demo_drop.json']",
+        "ingestion: offline",
+        "after stop -> stopped",
+        "quarantine: ['broken_drop.json']",
+    ),
 }
 
 # Kernel environment: offline provider, dummy keys, no gate, no downloads.

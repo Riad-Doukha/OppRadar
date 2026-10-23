@@ -35,6 +35,7 @@ htmlcov/
 ai/data/cache/
 ai/data/private/
 ai/data/store/
+ai/data/store_agent_demo/
 ai/data/vectorstore/
 ai/data/live_feed/*
 !ai/data/live_feed/.gitkeep

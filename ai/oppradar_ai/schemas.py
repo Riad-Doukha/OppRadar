@@ -635,3 +635,77 @@ class OpportunityExtraction(BaseModel):
     is_opportunity: bool = True
     not_opportunity_reason: str | None = None
     field_confidences: list[FieldConfidence] = Field(default_factory=list)
+
+
+# --------------------------------------------------------------------------- #
+# Background agent (Phase 5)
+# --------------------------------------------------------------------------- #
+class DropFolderReport(BaseModel):
+    """What one scan of `data/live_feed/` produced (files in, opportunities out).
+
+    Files are never deleted: parsed ones move to `consumed/`, broken ones to
+    `quarantine/`, and files still being written are left for the next cycle.
+
+    Example:
+        >>> report = DropFolderReport(folder="data/live_feed", scanned=1)
+        >>> report.consumed, report.quarantined
+        ([], [])
+    """
+
+    folder: str
+    scanned: int = 0  # candidate files (.json/.html) actually looked at
+    consumed: list[str] = Field(default_factory=list)  # parsed -> consumed/
+    quarantined: list[str] = Field(default_factory=list)  # broken -> quarantine/
+    skipped: list[str] = Field(default_factory=list)  # still being written
+    opportunities: list[Opportunity] = Field(default_factory=list)
+    errors: list[str] = Field(default_factory=list)
+
+
+class AgentCycleReport(BaseModel):
+    """One full agent cycle: drop folder -> (live) ingestion -> matching -> rules.
+
+    Every stage is best-effort: a failing stage lands in `errors` and the cycle
+    still returns, so the loop can never be killed by one broken source.
+
+    Example:
+        >>> from datetime import datetime, timezone
+        >>> now = datetime.now(timezone.utc)
+        >>> report = AgentCycleReport(started_at=now, finished_at=now)
+        >>> report.items_found, report.matches
+        (0, 0)
+    """
+
+    started_at: datetime
+    finished_at: datetime
+    mode: Literal["demo", "agent"] = "agent"
+    drop: DropFolderReport | None = None
+    ingestion: IngestionReport | None = None  # None = skipped (offline gate)
+    ingestion_skipped: str = ""  # why remote sources were not touched
+    items_found: int = 0  # new records this cycle (drop folder + ingestion)
+    matches: int = 0  # matches at/above the notification threshold
+    notifications_sent: int = 0
+    notifications_pending: int = 0
+    notifications_suppressed: int = 0
+    errors: list[str] = Field(default_factory=list)
+
+
+class AgentStatus(BaseModel):
+    """The agent's status table — one field per row the notebook displays.
+
+    Example:
+        >>> status = AgentStatus(state="running", mode="demo", interval_seconds=10)
+        >>> status.state, status.cycles_run
+        ('running', 0)
+    """
+
+    state: Literal["stopped", "running", "paused"] = "stopped"
+    mode: Literal["demo", "agent"] = "agent"
+    interval_seconds: float = 0.0
+    started_at: datetime | None = None
+    last_run: datetime | None = None
+    next_run: datetime | None = None
+    items_found: int = 0  # last cycle's new records
+    matches: int = 0  # last cycle's matches at/above the threshold
+    notifications: int = 0  # last cycle's SENT notifications
+    cycles_run: int = 0
+    last_error: str = ""
