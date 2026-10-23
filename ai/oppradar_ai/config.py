@@ -5,6 +5,8 @@
 from __future__ import annotations
 
 import os
+from collections.abc import Iterator
+from contextlib import contextmanager
 from functools import lru_cache
 from pathlib import Path
 from typing import Literal
@@ -194,6 +196,31 @@ class Settings(BaseSettings):
 def get_settings() -> Settings:
     """Return the process-wide settings (cached; call .model_copy() to mutate)."""
     return Settings()
+
+
+@contextmanager
+def forced_provider(name: str) -> Iterator[None]:
+    """Temporarily force LLM_PROVIDER for this process, then restore it.
+
+    Used where a document must NEVER reach a remote model (a user's own CV):
+    reading and extraction inside this block run with `name` whatever .env says.
+
+    Example:
+        >>> with forced_provider("fake"):   # doctest: +SKIP
+        ...     get_settings().llm_provider
+        'fake'
+    """
+    previous = os.environ.get("LLM_PROVIDER")
+    os.environ["LLM_PROVIDER"] = name
+    get_settings.cache_clear()
+    try:
+        yield
+    finally:
+        if previous is None:
+            os.environ.pop("LLM_PROVIDER", None)
+        else:
+            os.environ["LLM_PROVIDER"] = previous
+        get_settings.cache_clear()
 
 
 def setup_logging(level: str | None = None, rapidocr_level: str = "WARNING") -> None:

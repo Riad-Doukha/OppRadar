@@ -521,6 +521,23 @@ class ProfileBuildResult(BaseModel):
     document_errors: list[str] = Field(default_factory=list)
 
 
+class PrivateProfileFile(BaseModel):
+    """The saved data/private/my_profile.json: a Profile plus how it was built.
+
+    `route` records provenance so a consumer (notebook, test) can never be
+    ambiguous about where the data came from: "rules-only" = regex extraction
+    (nothing left the machine), "llm" = the configured provider was used with
+    the user's explicit `--allow-llm` consent.
+    """
+
+    profile: Profile
+    route: Literal["rules-only", "llm"]
+    llm_provider: str = ""  # "" for the rules-only route
+    source_file: str = ""
+    built_at: datetime
+    empty_fields: list[str] = Field(default_factory=list)  # what rules could not fill
+
+
 class DocumentContent(BaseModel):
     """Raw text read out of one file, plus how it was obtained."""
 
