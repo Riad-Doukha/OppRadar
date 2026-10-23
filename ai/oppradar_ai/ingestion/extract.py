@@ -17,12 +17,13 @@ from pydantic import BaseModel
 
 from oppradar_ai.config import Settings, get_settings
 from oppradar_ai.ingestion.budget import RunBudget
-from oppradar_ai.llm import LLM, get_llm
+from oppradar_ai.llm import LLM, QuotaExhausted, get_llm
 from oppradar_ai.schemas import (
     FieldConfidence,
     Opportunity,
     OpportunityExtraction,
     OpportunityType,
+    PendingLLMItem,
 )
 
 logger = logging.getLogger(__name__)
@@ -360,15 +361,19 @@ class RawExtraction(BaseModel):
 
     `rejected_reason` is set when the model says the text is not a real
     opportunity (listicle, career advice, news) — such items never become
-    Opportunity records. `extraction` always holds the raw model answer.
+    Opportunity records. `pending` is set when no model answered (quota gone,
+    transient 5xx, budget spent): the item waits for the next run and is
+    neither cached nor stored. `extraction` holds the raw model answer.
     """
 
     opportunity: Opportunity | None = None
     rejected_reason: str | None = None
+    pending: PendingLLMItem | None = None
     extraction: OpportunityExtraction | None = None
     url: str = ""
     llm_provider: str = ""  # "" = no LLM answered (budget skip/failure)
     llm_model: str = ""
+    llm_latency_ms: float = 0.0  # 0.0 when the answer came from the cache
 
 
 def extract_record(
@@ -391,6 +396,9 @@ def extract_record(
     `is_opportunity` gate (listicles/news/advice are rejected, kept in the
     report only) and provider/model provenance of the answering call.
 
+    When no model answers, the item comes back as `pending` (never as a
+    low-confidence record): nothing is cached, so the next run retries it.
+
     Example:
         >>> out = extract_record("Top 10 scholarships of 2026!", source_name="t")
         >>> bool(out.rejected_reason), out.extraction is not None
@@ -401,42 +409,55 @@ def extract_record(
     checked = checked_at or datetime.now(timezone.utc)
     system = (settings.prompts_dir / "extract_opportunity.md").read_text(encoding="utf-8")
     llm = get_llm()
-    extraction = _extract(llm, text, system, budget)
+    extraction, failure = _extract(llm, text, system, budget)
     provider, model = _llm_identity(llm, text, system)
-    if extraction is not None and not extraction.is_opportunity:
+    latency = llm.last_call.latency_ms if (llm.last_call and llm.last_call.ok) else 0.0
+    common = {
+        "extraction": extraction,
+        "url": url,
+        "llm_provider": provider,
+        "llm_model": model,
+        "llm_latency_ms": latency,
+    }
+    if extraction is None:
+        return RawExtraction(pending=_pending_item(text, url, source_name, title_hint, failure),
+                             **common)
+    if not extraction.is_opportunity:
         reason = extraction.not_opportunity_reason.strip() or "not a single opportunity"
         logger.info("rejected %s: %s", url or source_name, reason)
-        return RawExtraction(
-            rejected_reason=reason, extraction=extraction, url=url,
-            llm_provider=provider, llm_model=model,
-        )
+        return RawExtraction(rejected_reason=reason, **common)
     try:
-        opp = (
-            to_opportunity(
-                extraction,
-                url=url,
-                source_name=source_name,
-                source_checked=checked,
-                text=text,
-                title_hint=title_hint,
-                type_hint=type_hint,
-                language=language,
-                country=country,
-                settings=settings,
-                list_page=list_page,
-            )
-            if extraction is not None
-            else _fallback(
-                text, url, source_name, title_hint, type_hint, language, country, checked
-            )
+        opp = to_opportunity(
+            extraction,
+            url=url,
+            source_name=source_name,
+            source_checked=checked,
+            text=text,
+            title_hint=title_hint,
+            type_hint=type_hint,
+            language=language,
+            country=country,
+            settings=settings,
+            list_page=list_page,
         )
     except ValueError as exc:
         logger.warning("extraction unusable for %s: %s", url or source_name, exc)
         opp = None
-    return RawExtraction(
-        opportunity=opp, extraction=extraction, url=url,
-        llm_provider=provider, llm_model=model,
+    return RawExtraction(opportunity=opp, **common)
+
+
+def _pending_item(
+    text: str, url: str, source_name: str, title_hint: str, failure: str
+) -> PendingLLMItem:
+    """Report row for an item no model could answer (retried on the next run)."""
+    pending = PendingLLMItem(
+        source=source_name,
+        title=title_hint.strip() or _first_line(text) or "(no title)",
+        url=url,
+        reason=failure or "no LLM answer",
     )
+    logger.info("pending LLM %r: %s", pending.title[:60], pending.reason)
+    return pending
 
 
 def extract_from_text(
@@ -456,10 +477,10 @@ def extract_from_text(
     """Extract one opportunity from `text` (budgeted LLM, rules-backed).
 
     Thin wrapper over `extract_record` kept for notebooks: rejected items
-    (is_opportunity=false) return None here. Disk-cache hits are free;
-    when the budget is spent or the provider fails this degrades to a
-    rules-only Opportunity whose every field is marked "to verify".
-    Returns None only when no usable title exists at all.
+    (is_opportunity=false) and items no model could answer (budget spent,
+    quota gone, transient errors) return None here. Disk-cache hits are free;
+    the pending ones are retried on the next run instead of being stored as
+    low-confidence records.
 
     Example:
         >>> opp = extract_from_text("Deadline 15 March 2027", source_name="t")
@@ -495,57 +516,35 @@ def _extract(
     text: str,
     system: str,
     budget: RunBudget,
-) -> OpportunityExtraction | None:
-    """One budgeted, cached LLM call; None on skip/failure (never raises)."""
+) -> tuple[OpportunityExtraction | None, str]:
+    """One budgeted, cached LLM call; (None, reason) on skip/failure, never raising.
+
+    The reason explains why the item is pending, so the report can show it and
+    the next run retries it (nothing was cached on the way here).
+    """
     if llm.is_cached(text, OpportunityExtraction, system):
         budget.extractions.cached += 1
-    elif not budget.allow_extraction():
+        return llm.structured(text, OpportunityExtraction, system=system), ""
+    if budget.quota_exhausted:  # a 429 was already seen: no more calls today
+        budget.extractions.skipped += 1
+        return None, "quota exhausted earlier in this run"
+    if not budget.allow_extraction():
         budget.extractions.skipped += 1
         logger.warning(
-            "extraction budget (%d) spent; using rules only for the next page",
-            budget.extractions.limit,
+            "extraction budget (%d) spent; next items stay pending", budget.extractions.limit
         )
-        return None
+        return None, f"extraction budget ({budget.extractions.limit}) spent"
     try:
-        return llm.structured(text, OpportunityExtraction, system=system)
+        extraction = llm.structured(text, OpportunityExtraction, system=system)
+    except QuotaExhausted as exc:  # daily quota: retrying today cannot help
+        budget.record_extraction(ok=False)
+        budget.quota_exhausted = True
+        return None, f"quota exhausted: {exc}"
     except Exception as exc:  # provider errors must never kill a run
-        logger.warning("LLM extraction failed (%s); using rules only", exc)
-        return None
-
-
-def _fallback(
-    text: str,
-    url: str,
-    source_name: str,
-    title_hint: str,
-    type_hint: OpportunityType,
-    language: str,
-    country: str,
-    checked: datetime,
-) -> Opportunity | None:
-    """Rules-only opportunity (no LLM): every field marked "to verify"."""
-    title = title_hint.strip() or _first_line(text)
-    if not title:
-        logger.warning("no usable title for %s", url or source_name)
-        return None
-    deadline = parse_deadline(find_deadline(text))
-    marks = [
-        FieldConfidence(field=name, confidence=0.3, needs_review=True)
-        for name in _OUTPUT_FIELDS
-    ]
-    return Opportunity(
-        id=opportunity_id(title, url),
-        title=title,
-        organizer=_host_of(url) or source_name,
-        type=type_hint,
-        deadline=deadline,
-        deadline_source="rule" if deadline is not None else "none",
-        url=url,
-        source=source_name,
-        source_checked=checked,
-        language=language,
-        country=country,
-        added_via="pipeline",
-        field_confidences=marks,
-        review_notes=["llm skipped or failed - rules only"],
-    )
+        budget.record_extraction(ok=False)
+        logger.warning("LLM extraction failed; item left pending (%s)", exc)
+        return None, f"llm failed: {exc}"
+    budget.record_extraction(ok=True)
+    if llm.last_call is not None:  # a cache hit has no latency to report
+        budget.note_latency(llm.last_call.latency_ms)
+    return extraction, ""

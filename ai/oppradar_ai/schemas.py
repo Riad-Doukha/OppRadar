@@ -252,6 +252,7 @@ class SourceStats(BaseModel):
     rejected: int = 0  # is_opportunity=false (listicles, news, advice...)
     list_pages: int = 0  # index pages -> low-confidence "needs detail" records
     fields_filled: int = 0
+    pending: int = 0  # no LLM answered (quota/5xx/budget) -> retried next run
     duration_seconds: float = 0.0
     errors: list[str] = Field(default_factory=list)
 
@@ -269,12 +270,28 @@ class RejectedItem(BaseModel):
     reason: str = ""
 
 
+class PendingLLMItem(BaseModel):
+    """An item whose extraction awaits a working LLM — never stored.
+
+    A rules-only stand-in would pollute the store with junk records, so when no
+    model answers (daily quota gone, transient 5xx, budget spent) the item
+    waits in `IngestionReport.pending_llm`. Nothing was cached and nothing was
+    stored, so the next run simply extracts it again.
+    """
+
+    source: str
+    title: str
+    url: str = ""
+    reason: str = ""
+
+
 class CallUsage(BaseModel):
     """Free-tier accounting for one kind of remote call in a single run."""
 
-    made: int = 0  # real network/provider calls
+    made: int = 0  # real calls that succeeded (a failure is never "made")
     cached: int = 0  # served from the disk cache (free)
     skipped: int = 0  # blocked by the per-run limit or missing key
+    failed_attempts: int = 0  # real calls that failed (5xx, quota, bad reply)
     limit: int = 0  # hard cap on real calls (0 blocks them all)
 
 
@@ -299,13 +316,16 @@ class IngestionReport(BaseModel):
     detail_fetches: int = 0  # capped detail-page re-extractions for missing deadlines
     searches: CallUsage = Field(default_factory=CallUsage)
     extractions: CallUsage = Field(default_factory=CallUsage)
+    # Median latency of the successful LLM extractions (0.0 = no live call).
+    extraction_p50_latency_ms: float = 0.0
     rejected: list[RejectedItem] = Field(default_factory=list)
+    pending_llm: list[PendingLLMItem] = Field(default_factory=list)
     failures: list[str] = Field(default_factory=list)
 
-    @field_validator("searches", "extractions", mode="before")
+    @field_validator("searches", "extractions", "pending_llm", mode="before")
     @classmethod
     def _adopt_foreign_usage(cls, value: Any) -> Any:
-        """Accept a `CallUsage` built by another copy of this module.
+        """Accept instances of a schema built by another copy of this module.
 
         Notebook kernels run `%autoreload 2`: edited modules are re-executed
         but unchanged ones keep the old class, so one kernel can hold two live
@@ -323,6 +343,8 @@ class IngestionReport(BaseModel):
         """
         if isinstance(value, BaseModel):
             return value.model_dump()
+        if isinstance(value, list):
+            return [v.model_dump() if isinstance(v, BaseModel) else v for v in value]
         return value
 
 

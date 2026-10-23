@@ -4,6 +4,8 @@
 
 from __future__ import annotations
 
+import statistics
+
 from oppradar_ai.config import Settings, get_settings
 from oppradar_ai.schemas import CallUsage
 
@@ -35,14 +37,38 @@ class RunBudget:
         self.extractions = CallUsage(
             limit=settings.max_extractions_per_run if max_extractions is None else max_extractions
         )
+        self.latencies: list[float] = []  # ms of the successful LLM calls (report p50)
+        self.quota_exhausted = False  # set once a 429 is seen: stop calling the LLM
 
     def allow_search(self) -> bool:
         """Reserve quota for one real Tavily call (False once the cap is hit)."""
         return self._allow(self.searches)
 
     def allow_extraction(self) -> bool:
-        """Reserve quota for one real LLM extraction call (False at the cap)."""
-        return self._allow(self.extractions)
+        """Reserve one LLM slot while made+failed_attempts sit under the cap.
+
+        Unlike `allow_search` (a Tavily attempt is counted at once), the caller
+        records the outcome with `record_extraction`, so `made` only ever counts
+        successful responses and failures land in `failed_attempts`. A failed
+        attempt still consumes its slot: a dead endpoint must not loop forever.
+        """
+        return self._spent(self.extractions) < self.extractions.limit
+
+    def record_extraction(self, ok: bool) -> None:
+        """Count one finished LLM call: a success in `made`, a failure otherwise."""
+        if ok:
+            self.extractions.made += 1
+        else:
+            self.extractions.failed_attempts += 1
+
+    def note_latency(self, milliseconds: float) -> None:
+        """Remember the latency of one successful LLM call (for the run report)."""
+        if milliseconds > 0:
+            self.latencies.append(milliseconds)
+
+    def latency_p50_ms(self) -> float:
+        """Median latency of the successful LLM calls (0.0 when there were none)."""
+        return statistics.median(self.latencies) if self.latencies else 0.0
 
     @staticmethod
     def _allow(usage: CallUsage) -> bool:
@@ -50,3 +76,7 @@ class RunBudget:
             return False
         usage.made += 1
         return True
+
+    @staticmethod
+    def _spent(usage: CallUsage) -> int:
+        return usage.made + usage.failed_attempts

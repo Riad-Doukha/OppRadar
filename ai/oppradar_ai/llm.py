@@ -10,22 +10,25 @@ import hashlib
 import json
 import logging
 import re
+import statistics
 import threading
 import time
 import types
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any, TypeVar
 
 import httpx
 from pydantic import BaseModel
-from tenacity import Retrying, stop_after_attempt, wait_exponential
+from tenacity import Retrying, stop_after_attempt, wait_exponential_jitter
 
 from oppradar_ai.config import Settings, get_settings
 
 logger = logging.getLogger(__name__)
 
 T = TypeVar("T", bound=BaseModel)
+R = TypeVar("R")
 
 
 class LLMError(RuntimeError):
@@ -36,26 +39,97 @@ class LLMError(RuntimeError):
         self.retryable = retryable
 
 
+class QuotaExhausted(LLMError):
+    """Daily/rate quota is gone (429): retrying now cannot help, so we never do."""
+
+    def __init__(self, message: str) -> None:
+        super().__init__(message, retryable=False)
+
+
 # --------------------------------------------------------------------------- #
 # Stats (shown in 00_setup.ipynb and the eval notebook)
 # --------------------------------------------------------------------------- #
 class LLMStats(BaseModel):
-    calls: int = 0  # actual provider invocations
+    calls: int = 0  # successful provider calls
     cached: int = 0  # served from the disk cache
-    errors: int = 0
+    errors: int = 0  # logical calls that ended in an exception
+    failed_attempts: int = 0  # provider attempts that failed (retries included)
+    latency_p50_ms: float = 0.0  # median over the successful calls (0 = none)
 
 
 _stats = LLMStats()
+_latencies: list[float] = []  # ms of the successful calls, for the median
 
 
 def get_stats() -> LLMStats:
     """Return counters for calls / cache hits / errors since last reset."""
-    return _stats.model_copy()
+    stats = _stats.model_copy()
+    stats.latency_p50_ms = statistics.median(_latencies) if _latencies else 0.0
+    return stats
 
 
 def reset_stats() -> None:
     """Zero the counters (useful between evaluation runs)."""
-    _stats.calls = _stats.cached = _stats.errors = 0
+    _stats.calls = _stats.cached = _stats.errors = _stats.failed_attempts = 0
+    _latencies.clear()
+
+
+class CallTelemetry(BaseModel):
+    """One real provider call: which model answered, how long, how many tokens."""
+
+    model: str = ""
+    latency_ms: float = 0.0
+    input_tokens: int = 0
+    output_tokens: int = 0
+    ok: bool = True
+
+
+# --------------------------------------------------------------------------- #
+# Gemini error classification: 429 = quota (never retried), 5xx = transient
+# --------------------------------------------------------------------------- #
+_QUOTA_MARKERS = (
+    "429",
+    "quota",
+    "resource_exhausted",
+    "resource exhausted",
+    "resourc exhaust",
+    "rate limit",
+    "ratelimit",
+    "too many requests",
+)
+_TRANSIENT_MARKERS = (
+    "500",
+    "502",
+    "503",
+    "504",
+    "unavailable",
+    "overloaded",
+    "timeout",
+    "timed out",
+    "internal server",
+    "internalserver",
+    "internal error",
+    "connection reset",
+    "connection refused",
+    "try again",
+)
+
+
+def _classify_gemini_error(exc: Exception) -> LLMError:
+    """Map one SDK failure to QuotaExhausted (never retried) or a retryable error.
+
+    429 / RESOURCE_EXHAUSTED means the daily free-tier budget is gone: the item
+    becomes "pending LLM" instead of burning more calls. 5xx / timeouts are
+    transient, so tenacity backs off with jitter and retries them.
+    """
+    blob = f"{type(exc).__name__} {exc}".lower()
+    if getattr(exc, "code", None) == 429 or any(marker in blob for marker in _QUOTA_MARKERS):
+        return QuotaExhausted(f"gemini quota exhausted: {exc}")
+    if getattr(exc, "code", None) in (500, 502, 503, 504) or any(
+        marker in blob for marker in _TRANSIENT_MARKERS
+    ):
+        return LLMError(f"gemini transient failure: {exc}", retryable=True)
+    return LLMError(f"gemini call failed: {exc}", retryable=False)
 
 
 # --------------------------------------------------------------------------- #
@@ -110,20 +184,24 @@ class RateLimiter:
 # Providers
 # --------------------------------------------------------------------------- #
 class LLM(ABC):
-    """Base class: caching, rate limiting and retry wrap every provider."""
+    """Base class: caching, rate limiting, retry and telemetry for every provider."""
 
     name = "base"
 
-    def __init__(self) -> None:
-        settings = get_settings()
-        self.model = settings.gemini_model if self.name == "gemini" else settings.ollama_model
-        if self.name == "fake":
-            self.model = "fake"
-        self.cache = DiskCache()
+    def __init__(self, settings: Settings | None = None) -> None:
+        settings = settings or get_settings()
+        self.settings = settings
+        models = {"gemini": settings.gemini_model, "ollama": settings.ollama_model, "fake": "fake"}
+        self.model = models[self.name]
+        # Tried once when the primary model keeps failing on transient errors.
+        self.fallback_model = settings.gemini_fallback_model if self.name == "gemini" else ""
+        self.cache = DiskCache(settings.cache_dir / "llm")
         self.limiter = RateLimiter(settings.llm_min_delay_seconds)
         self.max_retries = settings.llm_max_retries
         self.retry_base_wait = settings.llm_retry_base_wait
         self.max_input_chars = settings.llm_max_input_chars
+        self.last_call: CallTelemetry | None = None  # most recent real call
+        self._last_tokens: tuple[int, int] = (0, 0)  # refilled by the provider
 
     # -- public API ---------------------------------------------------------
     def structured(self, prompt: str, schema: type[T], system: str | None = None) -> T:
@@ -133,13 +211,18 @@ class LLM(ABC):
             >>> opp = llm.structured("Extract: ...", Opportunity)
         """
         clean = self._truncate(prompt)
-        key = self.cache.key(self.name, self.model, f"{system or ''}\n{clean}", schema.__name__)
+        key = self._key(clean, schema.__name__, system)
+        self.last_call = None  # a cache hit is free: it makes no real call
         cached = self.cache.get(key)
         if cached is not None:
             _stats.cached += 1
             return schema.model_validate(cached["data"])
 
-        data = self._call_with_retry(clean, schema, system, key)
+        try:
+            data, _call = self._call_with_retry(clean, schema, system, key)
+        except LLMError:
+            _stats.errors += 1
+            raise
         try:
             return schema.model_validate(data)
         except Exception as exc:
@@ -152,9 +235,9 @@ class LLM(ABC):
         Lets callers check the cache BEFORE counting against a per-run
         budget, so cached answers never consume the free-tier quota.
         """
-        clean = self._truncate(prompt)
-        key = self.cache.key(self.name, self.model, f"{system or ''}\n{clean}", schema.__name__)
-        return self.cache.get(key) is not None
+        return (
+            self.cache.get(self._key(self._truncate(prompt), schema.__name__, system)) is not None
+        )
 
     def cached_meta(
         self, prompt: str, schema: type[T], system: str | None = None
@@ -162,16 +245,15 @@ class LLM(ABC):
         """Provider/model recorded with the cached answer (None when uncached).
 
         Records written before the provenance fields existed report "unknown".
-        Lets notebooks prove which provider produced a stored extraction.
+        The model field names the model that ACTUALLY answered, which may be
+        the fallback one. Lets notebooks prove which model produced a record.
 
         Example:
             >>> meta = llm.cached_meta("...", SomeSchema, system="...")
             >>> meta is None or {"provider", "model"} <= set(meta)
             True
         """
-        clean = self._truncate(prompt)
-        key = self.cache.key(self.name, self.model, f"{system or ''}\n{clean}", schema.__name__)
-        record = self.cache.get(key)
+        record = self.cache.get(self._key(self._truncate(prompt), schema.__name__, system))
         if record is None:
             return None
         return {
@@ -182,47 +264,111 @@ class LLM(ABC):
     def text(self, prompt: str, system: str | None = None) -> str:
         """Ask for a plain-text answer (cached on disk)."""
         clean = self._truncate(prompt)
-        key = self.cache.key(self.name, self.model, f"{system or ''}\n{clean}", "text")
+        key = self._key(clean, "text", system)
+        self.last_call = None
         cached = self.cache.get(key)
         if cached is not None:
             _stats.cached += 1
             return str(cached["text"])
 
-        self.limiter.wait()
         try:
-            result = self._retrying()(self._complete_text, clean, system)
+            result, call = self._with_fallback(
+                lambda model: self._complete_text(clean, system, model)
+            )
         except LLMError:
             _stats.errors += 1
             raise
         _stats.calls += 1
-        self.cache.put(key, {"text": result, "provider": self.name, "model": self.model})
+        self.cache.put(key, {"text": result, "provider": self.name, "model": call.model})
         return result
 
     # -- internals ------------------------------------------------------------
+    def _key(self, prompt: str, schema_name: str, system: str | None) -> str:
+        """Cache key of one (provider, primary model, system, prompt) request."""
+        return self.cache.key(self.name, self.model, f"{system or ''}\n{prompt}", schema_name)
+
     def _call_with_retry(
         self, prompt: str, schema: type[BaseModel], system: str | None, key: str
-    ) -> dict[str, Any]:
-        self.limiter.wait()
-        try:
-            result = self._retrying()(self._complete_structured, prompt, schema, system)
-        except LLMError:
-            _stats.errors += 1
-            raise
+    ) -> tuple[dict[str, Any], CallTelemetry]:
+        data, call = self._with_fallback(
+            lambda model: self._complete_structured(prompt, schema, system, model)
+        )
         _stats.calls += 1
         self.cache.put(
             key,
             {
                 "schema": schema.__name__,
-                "data": result,
+                "data": data,
                 "provider": self.name,
-                "model": self.model,
+                "model": call.model,  # the model that really answered
             },
         )
-        return result
+        return data, call
+
+    def _with_fallback(self, call: Callable[[str], R]) -> tuple[R, CallTelemetry]:
+        """One logical call: retried on the primary model, then the fallback once.
+
+        Only transient failures fall back; quota errors and malformed replies
+        propagate immediately (retrying them only burns the daily limit).
+        """
+        self.limiter.wait()
+        try:
+            return self._retrying()(self._attempt, call, self.model)
+        except LLMError as exc:
+            if not (exc.retryable and self.fallback_model):
+                raise
+            logger.warning(
+                "%s: %s failed after %d attempt(s) (%s); one call to %s",
+                self.name,
+                self.model,
+                self.max_retries,
+                exc,
+                self.fallback_model,
+            )
+            self.limiter.wait()
+            return self._attempt(call, self.fallback_model)
+
+    def _attempt(self, call: Callable[[str], R], model: str) -> tuple[R, CallTelemetry]:
+        """One timed provider attempt; tenacity retries it on transient errors."""
+        self._last_tokens = (0, 0)
+        started = time.perf_counter()  # perf_counter, not monotonic: on Windows
+        try:  # monotonic() ticks only ~15.6 ms, which would report 0 for a fast call
+            result = call(model)
+        except Exception:
+            self._note(model, started, ok=False)
+            raise
+        return result, self._note(model, started, ok=True)
+
+    def _note(self, model: str, started: float, ok: bool) -> CallTelemetry:
+        """Record and log one attempt: latency, input/output tokens, model."""
+        call = CallTelemetry(
+            model=model,
+            latency_ms=(time.perf_counter() - started) * 1000,
+            input_tokens=self._last_tokens[0],
+            output_tokens=self._last_tokens[1],
+            ok=ok,
+        )
+        self.last_call = call
+        if not ok:
+            _stats.failed_attempts += 1
+            return call
+        _latencies.append(call.latency_ms)
+        logger.info(
+            "%s answered with %s in %.0f ms (tokens in=%d out=%d)",
+            self.name,
+            model,
+            call.latency_ms,
+            call.input_tokens,
+            call.output_tokens,
+        )
+        return call
 
     def _retrying(self) -> Retrying:
+        """Exponential backoff plus jitter, so parallel runs never sync up."""
         return Retrying(
-            wait=wait_exponential(multiplier=self.retry_base_wait, max=60),
+            wait=wait_exponential_jitter(
+                initial=self.retry_base_wait, exp_base=2, max=60, jitter=self.retry_base_wait
+            ),
             stop=stop_after_attempt(self.max_retries),
             retry=self._is_retryable,
             reraise=True,
@@ -244,12 +390,12 @@ class LLM(ABC):
 
     @abstractmethod
     def _complete_structured(
-        self, prompt: str, schema: type[BaseModel], system: str | None
+        self, prompt: str, schema: type[BaseModel], system: str | None, model: str
     ) -> dict:
         """Provider call returning a plain dict matching `schema`."""
 
     @abstractmethod
-    def _complete_text(self, prompt: str, system: str | None) -> str:
+    def _complete_text(self, prompt: str, system: str | None, model: str) -> str:
         """Provider call returning text."""
 
 
@@ -258,9 +404,21 @@ class GeminiProvider(LLM):
 
     name = "gemini"
 
-    def __init__(self, settings: Settings | None = None) -> None:
-        super().__init__()
+    def __init__(
+        self,
+        settings: Settings | None = None,
+        *,
+        client: Any | None = None,
+        types_module: Any | None = None,
+    ) -> None:
+        super().__init__(settings)
         settings = settings or get_settings()
+        self.thinking_budget = settings.gemini_thinking_budget
+        self.max_output_tokens = settings.gemini_max_output_tokens
+        if client is not None:  # tests inject a scripted client (no SDK, no key)
+            self._client = client
+            self._types = types_module
+            return
         if not settings.gemini_key_value:
             raise LLMError("GEMINI_API_KEY is empty — set it in ai/.env or use LLM_PROVIDER=fake")
         try:
@@ -270,28 +428,63 @@ class GeminiProvider(LLM):
         self._client = genai.Client(api_key=settings.gemini_key_value)
         self._types = __import__("google.genai", fromlist=["types"]).types
 
-    def _generate(self, prompt: str, schema: type[BaseModel] | None, system: str | None):
-        config: dict[str, Any] = {"temperature": 0.2}
+    def _generate(
+        self, prompt: str, schema: type[BaseModel] | None, system: str | None, model: str
+    ):
+        """One SDK call; a model rejecting `thinking_config` loses it and retries once."""
+        config = self._config(schema, system)
+        try:
+            return self._sdk_call(config, model, prompt)
+        except Exception as exc:
+            if not self._drop_thinking_config(config, exc):
+                raise _classify_gemini_error(exc) from exc
+            logger.warning("%s rejected thinking_config; retrying without it", model)
+        try:
+            return self._sdk_call(config, model, prompt)
+        except Exception as exc:
+            raise _classify_gemini_error(exc) from exc
+
+    def _sdk_call(self, config: dict[str, Any], model: str, prompt: str) -> Any:
+        return self._client.models.generate_content(
+            model=model, contents=prompt, config=self._types.GenerateContentConfig(**config)
+        )
+
+    def _config(self, schema: type[BaseModel] | None, system: str | None) -> dict[str, Any]:
+        """No thinking plus a hard output cap: the answer is small, latency matters."""
+        config: dict[str, Any] = {
+            "temperature": 0.2,
+            "max_output_tokens": self.max_output_tokens,
+        }
+        thinking = self._thinking_config()
+        if thinking is not None:
+            config["thinking_config"] = thinking
         if system:
             config["system_instruction"] = system
         if schema is not None:
             config["response_schema"] = schema
             config["response_mime_type"] = "application/json"
-        try:
-            return self._client.models.generate_content(
-                model=self.model,
-                contents=prompt,
-                config=self._types.GenerateContentConfig(**config),
-            )
-        except Exception as exc:  # SDK raises google.genai errors of many kinds
-            retryable = any(
-                token in type(exc).__name__ + str(exc).lower()
-                for token in ("resourc exhaust", "429", "500", "503", "timeout", "internal")
-            )
-            raise LLMError(f"gemini call failed: {exc}", retryable=retryable) from exc
+        return config
 
-    def _complete_structured(self, prompt, schema, system) -> dict:
-        response = self._generate(prompt, schema, system)
+    def _thinking_config(self) -> Any | None:
+        """Smallest thinking level the SDK supports (0 = no thinking at all)."""
+        if self.thinking_budget < 0:
+            return None
+        cls = getattr(self._types, "ThinkingConfig", None)
+        return None if cls is None else cls(thinking_budget=self.thinking_budget)
+
+    def _drop_thinking_config(self, config: dict[str, Any], exc: Exception) -> bool:
+        """Self-heal: some model families reject `thinking_config` with a 400."""
+        if "thinking_config" not in config or getattr(exc, "code", None) != 400:
+            return False
+        if "thinking" not in f"{type(exc).__name__} {exc}".lower():
+            return False
+        config.pop("thinking_config", None)
+        self.thinking_budget = -1  # never send it again in this process
+        return True
+
+    def _complete_structured(self, prompt, schema, system, model) -> dict:
+        response = self._generate(prompt, schema, system, model)
+        self._last_tokens = _usage_of(response)
         parsed = getattr(response, "parsed", None)
         if parsed is not None:
             return parsed.model_dump(mode="json") if isinstance(parsed, BaseModel) else dict(parsed)
@@ -301,11 +494,23 @@ class GeminiProvider(LLM):
         except json.JSONDecodeError as exc:
             raise LLMError(f"gemini returned non-JSON: {text[:120]}", retryable=True) from exc
 
-    def _complete_text(self, prompt, system) -> str:
-        response = self._generate(prompt, None, system)
+    def _complete_text(self, prompt, system, model) -> str:
+        response = self._generate(prompt, None, system, model)
+        self._last_tokens = _usage_of(response)
         if not response.text:
             raise LLMError("gemini returned an empty response", retryable=True)
         return response.text
+
+
+def _usage_of(response: Any) -> tuple[int, int]:
+    """(input, output) token counts reported by Gemini (0 when unavailable)."""
+    usage = getattr(response, "usage_metadata", None)
+    if usage is None:
+        return 0, 0
+    return (
+        int(getattr(usage, "prompt_token_count", 0) or 0),
+        int(getattr(usage, "candidates_token_count", 0) or 0),
+    )
 
 
 class OllamaProvider(LLM):
@@ -313,9 +518,9 @@ class OllamaProvider(LLM):
 
     name = "ollama"
 
-    def __init__(self) -> None:
-        super().__init__()
-        self.base_url = get_settings().ollama_base_url.rstrip("/")
+    def __init__(self, settings: Settings | None = None) -> None:
+        super().__init__(settings)
+        self.base_url = self.settings.ollama_base_url.rstrip("/")
 
     def _post(self, payload: dict[str, Any]) -> dict[str, Any]:
         try:
@@ -325,22 +530,26 @@ class OllamaProvider(LLM):
         except httpx.HTTPError as exc:
             raise LLMError(f"ollama unreachable at {self.base_url}: {exc}", retryable=True) from exc
 
-    def _complete_structured(self, prompt, schema, system) -> dict:
+    def _complete_structured(self, prompt, schema, system, model) -> dict:
         payload = {
-            "model": self.model,
+            "model": model,
             "messages": self._messages(prompt, system),
             "format": schema.model_json_schema(),
             "stream": False,
         }
-        content = self._post(payload).get("message", {}).get("content", "")
+        reply = self._post(payload)
+        self._last_tokens = _eval_counts(reply)
+        content = reply.get("message", {}).get("content", "")
         try:
             return json.loads(content)
         except json.JSONDecodeError as exc:
             raise LLMError(f"ollama returned non-JSON: {content[:120]}", retryable=True) from exc
 
-    def _complete_text(self, prompt, system) -> str:
-        payload = {"model": self.model, "messages": self._messages(prompt, system), "stream": False}
-        return self._post(payload).get("message", {}).get("content", "")
+    def _complete_text(self, prompt, system, model) -> str:
+        payload = {"model": model, "messages": self._messages(prompt, system), "stream": False}
+        reply = self._post(payload)
+        self._last_tokens = _eval_counts(reply)
+        return reply.get("message", {}).get("content", "")
 
     @staticmethod
     def _messages(prompt: str, system: str | None) -> list[dict[str, str]]:
@@ -348,6 +557,11 @@ class OllamaProvider(LLM):
         if system:
             messages.insert(0, {"role": "system", "content": system})
         return messages
+
+
+def _eval_counts(reply: dict[str, Any]) -> tuple[int, int]:
+    """(prompt, output) token counts reported by Ollama (0 when unavailable)."""
+    return int(reply.get("prompt_eval_count") or 0), int(reply.get("eval_count") or 0)
 
 
 class FakeLLM(LLM):
@@ -359,14 +573,10 @@ class FakeLLM(LLM):
 
     name = "fake"
 
-    def __init__(self) -> None:
-        super().__init__()
-        self.model = "fake"
-
-    def _complete_structured(self, prompt, schema, system) -> dict:
+    def _complete_structured(self, prompt, schema, system, model) -> dict:
         return _canned(schema, prompt)
 
-    def _complete_text(self, prompt, system) -> str:
+    def _complete_text(self, prompt, system, model) -> str:
         digest = hashlib.sha256(prompt.encode("utf-8")).hexdigest()[:6]
         return f"[fake answer {digest}] Based on the provided sources, here is a short reply."
 

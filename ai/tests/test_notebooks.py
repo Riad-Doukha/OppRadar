@@ -44,6 +44,9 @@ OFFLINE_MARKERS = {
 # Kernel environment: offline provider, dummy keys, no gate, no downloads.
 OFFLINE_ENV = {
     "LLM_PROVIDER": "fake",
+    # ai/.env may hold RUN_LIVE_LLM=1 for a live session: an empty var does NOT
+    # override dotenv, so the gate has to be switched OFF explicitly.
+    "RUN_LIVE_LLM": "0",
     "GEMINI_API_KEY": "offline-test-key-not-a-secret",
     "TAVILY_API_KEY": "offline-test-key-not-a-secret",
     "LLM_MIN_DELAY_SECONDS": "0",  # 1s of politeness per fake call only slows the suite
@@ -95,7 +98,6 @@ def _run_offline(name: str, kernel: tuple[str, str]) -> str:
     with pytest.MonkeyPatch.context() as mp:
         for key, value in OFFLINE_ENV.items():
             mp.setenv(key, value)
-        mp.delenv("RUN_LIVE_LLM", raising=False)
         # conftest.py points the pytest process at a throwaway DATA_DIR; the
         # notebooks must read the committed samples from ai/data instead.
         mp.delenv("DATA_DIR", raising=False)

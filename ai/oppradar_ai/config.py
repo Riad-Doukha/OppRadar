@@ -35,6 +35,13 @@ class Settings(BaseSettings):
     llm_provider: Literal["gemini", "ollama", "fake"] = "fake"
     gemini_api_key: SecretStr = SecretStr("")
     gemini_model: str = "gemini-3.8-flash"
+    # Tried ONCE when the primary model keeps failing on transient errors
+    # (5xx / timeouts) after its retries. Empty string disables the fallback.
+    gemini_fallback_model: str = "gemini-3.5-flash"
+    # Latency controls: no thinking (0 = cheapest/fastest; -1 = never send the
+    # config at all), and a hard cap on the answer size in tokens.
+    gemini_thinking_budget: int = 0
+    gemini_max_output_tokens: int = 2048
     ollama_base_url: str = "http://localhost:11434"
     ollama_model: str = "llama3.2"
     # Live opt-in (RUN_LIVE_LLM=1 in the shell): False keeps every run offline —

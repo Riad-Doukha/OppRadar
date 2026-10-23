@@ -9,6 +9,7 @@ from oppradar_ai.config import get_settings
 from oppradar_ai.ingestion.budget import RunBudget
 from oppradar_ai.ingestion.extract import (
     extract_from_text,
+    extract_record,
     find_deadline,
     opportunity_id,
     parse_deadline,
@@ -195,26 +196,31 @@ def test_extract_from_text_end_to_end_on_fake_provider() -> None:
     assert budget.extractions.cached == 1 and budget.extractions.made == 1  # free
 
 
-def test_exhausted_budget_falls_back_to_rules_only() -> None:
+def test_exhausted_budget_leaves_the_item_pending() -> None:
     budget = RunBudget(get_settings(), max_extractions=1)
     first = extract_from_text(
         "budget unique text alpha 10 May 2029 qa1",
         url="https://example.org/b1",
         budget=budget,
     )
-    second = extract_from_text(
+    second = extract_record(
         "budget unique text beta 11 May 2029 qa2",
         url="https://example.org/b2",
+        source_name="unit",
         budget=budget,
     )
-    assert first is not None and second is not None
+    assert first is not None
+    assert second.opportunity is None  # never stored as a low-confidence record
+    assert second.pending is not None and second.pending.url == "https://example.org/b2"
+    assert "budget" in second.pending.reason
     assert budget.extractions.made == 1 and budget.extractions.skipped == 1
-    assert all(fc.needs_review for fc in second.field_confidences)  # degraded
-    assert second.deadline == date(2029, 5, 11)  # rules found it in the text
+    assert budget.extractions.failed_attempts == 0  # a skip is not an attempt
 
 
 def test_failing_llm_never_crashes(monkeypatch: pytest.MonkeyPatch) -> None:
     class BoomLLM:
+        last_call = None
+
         @staticmethod
         def is_cached(*args, **kwargs) -> bool:
             return False
@@ -225,11 +231,13 @@ def test_failing_llm_never_crashes(monkeypatch: pytest.MonkeyPatch) -> None:
 
     monkeypatch.setattr("oppradar_ai.ingestion.extract.get_llm", lambda: BoomLLM())
     budget = RunBudget(get_settings(), max_extractions=3)
-    opp = extract_from_text(
+    out = extract_record(
         "llm failure unique text 12 May 2029 qa3",
         url="https://example.org/boom",
+        source_name="unit",
         budget=budget,
     )
-    assert opp is not None  # rules-only fallback, not an exception
-    assert all(fc.needs_review for fc in opp.field_confidences)
-    assert budget.extractions.made == 1  # the failed attempt still consumed quota
+    assert out.opportunity is None and out.pending is not None  # no junk record
+    assert "provider down" in out.pending.reason
+    assert budget.extractions.made == 0  # a failed call is never "made"
+    assert budget.extractions.failed_attempts == 1  # ...but it spent a slot

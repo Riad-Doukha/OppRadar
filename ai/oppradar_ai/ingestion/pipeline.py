@@ -29,6 +29,7 @@ from oppradar_ai.schemas import (
     CallUsage,
     IngestionReport,
     Opportunity,
+    PendingLLMItem,
     RejectedItem,
     Source,
     SourceStats,
@@ -63,6 +64,7 @@ def run_ingestion(
     detail_usage = CallUsage(limit=settings.max_detail_fetches_per_run)
     opportunities: list[Opportunity] = []
     rejected: list[RejectedItem] = []
+    pending: list[PendingLLMItem] = []  # no model answered -> retried next run
     stats: list[SourceStats] = []
     seen: set[str] = set()
 
@@ -77,11 +79,11 @@ def run_ingestion(
             stat.errors.append(str(exc))
             outcomes = []
         stat.duration_seconds = round(time.monotonic() - start, 2)
-        _collect(outcomes, source, stat, seen, opportunities, rejected)
+        _collect(outcomes, source, stat, seen, opportunities, rejected, pending)
         failures.extend(f"{source.name}: {message}" for message in stat.errors)
         stats.append(stat)
     return _report(started, opportunities, stats, failures, budget,
-                   searcher.usage, rejected, detail_usage)
+                   searcher.usage, rejected, pending, detail_usage)
 
 
 def _resolve_sources(
@@ -310,9 +312,14 @@ def _collect(
     seen: set[str],
     opportunities: list[Opportunity],
     rejected: list[RejectedItem],
+    pending: list[PendingLLMItem],
 ) -> None:
-    """Split outcomes into rejected items and deduped opportunities."""
+    """Split outcomes into rejected items, pending LLM items and opportunities."""
     for outcome in outcomes:
+        if outcome.pending is not None:
+            stat.pending += 1
+            pending.append(outcome.pending)
+            continue
         if outcome.rejected_reason is not None:
             stat.rejected += 1
             rejected.append(
@@ -360,6 +367,7 @@ def _report(
     budget: RunBudget,
     search_usage: CallUsage,
     rejected: list[RejectedItem],
+    pending: list[PendingLLMItem],
     detail_usage: CallUsage,
 ) -> IngestionReport:
     deadlines = _deadline_counts(opportunities)
@@ -381,24 +389,30 @@ def _report(
         detail_fetches=detail_usage.made,
         searches=search_usage,
         extractions=budget.extractions,
+        extraction_p50_latency_ms=budget.latency_p50_ms(),
         rejected=rejected,
+        pending_llm=pending,
         failures=failures,
     )
     logger.info(
         "ingestion finished: %d new / %d fetched from %d source(s) | "
-        "accepted %d / rejected %d / flagged %d | deadlines rule %d llm %d "
+        "accepted %d / rejected %d / flagged %d / pending %d | deadlines rule %d llm %d "
         "mismatch %d null %d | detail fetches %d (%d declined offline) | "
         "Tavily %d made / %d cached / %d skipped (cap %d) | "
-        "LLM %d made / %d cached / %d skipped (cap %d) | %d failure(s)",
+        "LLM %d made / %d failed / %d cached / %d skipped (cap %d) | p50 %.0f ms | "
+        "%d failure(s)",
         report.items_new, report.items_fetched, len(stats),
         report.items_new, report.items_rejected, report.items_flagged,
+        len(report.pending_llm),
         report.deadline_from_rule, report.deadline_from_llm,
         report.deadline_mismatches, report.deadline_null, report.detail_fetches,
         detail_usage.skipped,
         report.searches.made, report.searches.cached, report.searches.skipped,
         report.searches.limit,
-        report.extractions.made, report.extractions.cached, report.extractions.skipped,
-        report.extractions.limit, len(report.failures),
+        report.extractions.made, report.extractions.failed_attempts,
+        report.extractions.cached, report.extractions.skipped,
+        report.extractions.limit, report.extraction_p50_latency_ms,
+        len(report.failures),
     )
     return report
 
