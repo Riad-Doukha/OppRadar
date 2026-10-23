@@ -351,8 +351,45 @@ class IngestionReport(BaseModel):
 # --------------------------------------------------------------------------- #
 # Matching
 # --------------------------------------------------------------------------- #
+class DropReason(str, Enum):
+    """Why a hard filter removed an opportunity before it could be scored."""
+
+    EXPIRED = "expired"
+    SCAM = "scam"
+    TYPE_MISMATCH = "type_mismatch"
+    MODE_MISMATCH = "mode_mismatch"
+    COUNTRY_MISMATCH = "country_mismatch"
+    NO_FUNDING = "no_funding"
+
+
+class DroppedOpportunity(BaseModel):
+    """One opportunity a hard filter removed, with a human explanation."""
+
+    opportunity_id: str
+    title: str
+    reason: DropReason
+    detail: str = ""
+
+
+class FilterOutcome(BaseModel):
+    """Hard-filter pass: what may be scored (`passed`) and what was dropped.
+
+    Missing data never filters — only contradicting data does (an unknown
+    country or mode stays, flagged for verification, like a null deadline).
+    """
+
+    passed: list[Opportunity] = Field(default_factory=list)
+    dropped: list[DroppedOpportunity] = Field(default_factory=list)
+
+
 class MatchResult(BaseModel):
-    """One opportunity scored (0-100) for one profile, with reasons."""
+    """One opportunity scored (0-100) for one profile, with reasons.
+
+    The score is reproducible from its parts:
+    `100 * (semantic_weight * semantic_similarity + criteria_weight *
+    criteria_ratio + bonus_weight * bonus)` where `criteria_ratio` is
+    `met / (met + missed)` (0.5 when no requirement could be checked).
+    """
 
     profile_id: str
     opportunity: Opportunity
@@ -362,11 +399,61 @@ class MatchResult(BaseModel):
     bonus: float = Field(0.0, ge=0, le=1)
     top_reasons: list[str] = Field(default_factory=list)
     unmet_requirements: list[str] = Field(default_factory=list)
+    # "llm" only when the rules' reasons were rephrased by the model (score
+    # >= notify_threshold, gate open); everything else is rules-only.
+    reasons_source: Literal["rules", "llm"] = "rules"
+
+
+class PhrasedReasons(BaseModel):
+    """The LLM's rewording of rule-generated match reasons (facts unchanged).
+
+    The model may only rephrase what the rules produced: it never sees a CV,
+    never sees the profile and never invents a new fact.
+
+    Example:
+        >>> PhrasedReasons(reasons=["Your Python skills fit this internship"])
+        PhrasedReasons(reasons=['Your Python skills fit this internship'])
+    """
+
+    reasons: list[str] = Field(min_length=1, max_length=3)
 
 
 # --------------------------------------------------------------------------- #
 # Notifications
 # --------------------------------------------------------------------------- #
+class NotificationPrefs(BaseModel):
+    """Delivery rules of ONE user, filled from Settings (never hardcoded here).
+
+    Build it with `matching.prefs_from_settings(profile_id)`.
+
+    Example:
+        >>> prefs = NotificationPrefs(daily_cap=5, quiet_hours_start=22,
+        ...                           quiet_hours_end=8, threshold=70.0)
+        >>> prefs.daily_cap, prefs.mode
+        (5, <NotificationMode.INSTANT: 'instant'>)
+    """
+
+    profile_id: str = "local-user"
+    mode: NotificationMode = NotificationMode.INSTANT
+    daily_cap: int = Field(ge=0)
+    quiet_hours_start: int = Field(ge=0, le=23)
+    quiet_hours_end: int = Field(ge=0, le=23)
+    threshold: float = Field(ge=0, le=100)
+
+    @field_validator("mode", mode="before")
+    @classmethod
+    def _digest_is_a_mode(cls, value: object) -> object:
+        """Accept the Settings spelling "daily"/"weekly" as NotificationMode.DIGEST.
+
+        Example:
+            >>> NotificationPrefs._digest_is_a_mode("daily")
+            <NotificationMode.DIGEST: 'digest'>
+        """
+        if isinstance(value, str) and value in ("daily", "weekly"):
+            return NotificationMode.DIGEST
+        return value
+
+
 class Notification(BaseModel):
     """One alert for the user (or a suppressed/pending one kept for history)."""
 

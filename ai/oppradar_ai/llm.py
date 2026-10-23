@@ -622,6 +622,14 @@ _CANNED: dict[str, dict[str, Any]] = {
         "gaps": ["No profile information available to compare."],
         "next_steps": ["Upload a CV to assess eligibility."],
     },
+    # matching/ (Phase 4) — the fake model rewords whatever rules it is given
+    "PhrasedReasons": {
+        "reasons": [
+            "[fake] The rules confirmed this matches your background.",
+            "[fake] It also fits what you said you are looking for.",
+            "[fake] The deadline in the source is still open.",
+        ],
+    },
     # documents/ (Phase 2) — empty e-mail/links so the regex backfill is exercised
     "CVExtraction": {
         "full_name": "Fake Person",

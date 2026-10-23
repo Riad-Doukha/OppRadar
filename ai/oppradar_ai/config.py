@@ -68,6 +68,9 @@ class Settings(BaseSettings):
     respect_robots: bool = True
 
     # --- Embeddings ---------------------------------------------------------
+    # `fake` = deterministic local hashing encoder (tests/offline, no model
+    # download); `sentence_transformers` = the real local model below.
+    embedding_provider: Literal["sentence_transformers", "fake"] = "sentence_transformers"
     embedding_model: str = "BAAI/bge-m3"
     embedding_fallback_model: str = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
     embedding_batch_size: int = 32
@@ -82,6 +85,12 @@ class Settings(BaseSettings):
     semantic_weight: float = 0.5
     criteria_weight: float = 0.35
     bonus_weight: float = 0.15
+    # rapidfuzz score (0-100) a profile word needs to count as satisfying a
+    # requirement of an opportunity (matching/criteria.py).
+    criteria_fuzzy_threshold: float = 85.0
+    # Minimum cosine similarity before "your background matches this offer" is
+    # worth saying as a reason (below it, only skill overlap is mentioned).
+    reason_min_similarity: float = 0.3
     scanned_text_min_chars: int = 200
 
     # --- Notifications ------------------------------------------------------
@@ -99,6 +108,9 @@ class Settings(BaseSettings):
     llm_max_retries: int = 4
     llm_retry_base_wait: float = 2.0
     llm_max_input_chars: int = 8000
+    # One call per match >= NOTIFY_THRESHOLD would burn the free tier: only the
+    # best matches get their rule-generated reasons rephrased by the LLM.
+    max_phrases_per_run: int = 5
 
     # --- Logging ---------------------------------------------------------------
     log_level: str = "INFO"

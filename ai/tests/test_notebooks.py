@@ -39,11 +39,20 @@ OFFLINE_MARKERS = {
         "LLM usage for this step:",
         "skipped (OFFLINE mode): set RUN_LIVE_LLM=1",
     ),
+    "05_matching.ipynb": (
+        "live LLM: no",
+        "phrasing skipped (offline)",
+        "score_user: 5 profiles x 32 opportunities",
+    ),
 }
 
 # Kernel environment: offline provider, dummy keys, no gate, no downloads.
 OFFLINE_ENV = {
     "LLM_PROVIDER": "fake",
+    # The notebook kernel deliberately uses the REAL local embedding model (from
+    # the HuggingFace cache, with downloads forbidden): 05_matching must prove
+    # score_user works end-to-end with real vectors, not only with the fake one.
+    "EMBEDDING_PROVIDER": "sentence_transformers",
     # ai/.env may hold RUN_LIVE_LLM=1 for a live session: an empty var does NOT
     # override dotenv, so the gate has to be switched OFF explicitly.
     "RUN_LIVE_LLM": "0",
