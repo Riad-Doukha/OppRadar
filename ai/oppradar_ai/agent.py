@@ -87,13 +87,12 @@ class BackgroundAgent:
                 misfire_grace_time=max(int(interval), 1),
             )
             self._scheduler.start()
-            self._status = AgentStatus(
-                state="running",
-                mode=mode,
-                interval_seconds=interval,
-                started_at=datetime.now(timezone.utc),
-                cycles_run=self._status.cycles_run,
-            )
+            # Keep the last cycle's numbers: a (re)start changes only the
+            # loop's control fields, never the status table's history.
+            self._status.state = "running"
+            self._status.mode = mode
+            self._status.interval_seconds = interval
+            self._status.started_at = datetime.now(timezone.utc)
         logger.info("agent started: %s mode, every %s s", mode, interval)
         return self.status()
 
@@ -142,15 +141,15 @@ class BackgroundAgent:
     def run_cycle(self, *, mode: Literal["demo", "agent"] | None = None) -> AgentCycleReport:
         """One full cycle: drop folder -> (live) ingestion -> matching -> rules.
 
-        Never raises: every failure lands in the report's `errors`. Demo mode
-        closes the model gate for scoring too — a 10 s loop must never burn the
-        free tier; only the hourly agent mode honors RUN_LIVE_LLM as configured.
+        Never raises: every failure lands in the report's `errors`. A demo
+        cycle never touches the network at all — no feeds, no model calls, no
+        phrasing; only the agent mode honors RUN_LIVE_LLM as configured.
         """
         mode = mode or self._status.mode
         started = datetime.now(timezone.utc)
         report = AgentCycleReport(started_at=started, finished_at=started, mode=mode)
         with self._lock:
-            self._collect(report)
+            self._collect(report, mode)
             self._match_and_notify(report, mode)
             report.finished_at = datetime.now(timezone.utc)
             self.last_cycle = report
@@ -165,8 +164,8 @@ class BackgroundAgent:
             logger.exception("agent cycle crashed outside the report")
 
     # -- stages --------------------------------------------------------------- #
-    def _collect(self, report: AgentCycleReport) -> None:
-        """Drop folder (always local) + remote ingestion (live gate only)."""
+    def _collect(self, report: AgentCycleReport, mode: str) -> None:
+        """Drop folder (always local) + remote ingestion (agent mode + gate)."""
         try:
             report.drop = scan_drop_folder(self.settings)
             report.errors.extend(report.drop.errors)  # broken files belong here too
@@ -174,7 +173,7 @@ class BackgroundAgent:
             report.errors.append(f"drop folder: {exc}")
             logger.exception("drop folder scan failed")
         try:
-            if self._remote_allowed():
+            if self._remote_allowed(mode):
                 report.ingestion = run_ingestion(sources=self.sources, settings=self.settings)
             else:
                 report.ingestion_skipped = (
@@ -224,11 +223,16 @@ class BackgroundAgent:
             return self.settings.model_copy(update={"run_live_llm": False})
         return self.settings
 
-    def _remote_allowed(self) -> bool:
-        """Remote calls need the same opt-in as everywhere else: RUN_LIVE_LLM=1
-        with a real provider. This also keeps the 10 s demo loop away from the
-        public feeds — politeness and the offline notebook guarantee in one rule."""
-        return self.settings.run_live_llm and self.settings.llm_provider != "fake"
+    def _remote_allowed(self, mode: str) -> bool:
+        """Remote ingestion needs BOTH the agent mode AND the same opt-in as
+        everywhere else (RUN_LIVE_LLM=1 with a real provider). A demo cycle —
+        the 10 s loop, or any cycle after stop() — never touches the network:
+        that is what keeps the public feeds safe and the free tier unspent."""
+        return (
+            mode == "agent"
+            and self.settings.run_live_llm
+            and self.settings.llm_provider != "fake"
+        )
 
     def _count(
         self,

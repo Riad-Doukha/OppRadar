@@ -8,7 +8,7 @@ from __future__ import annotations
 import json
 import os
 import time
-from datetime import date
+from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -230,6 +230,36 @@ def test_a_broken_ingestion_is_reported_not_fatal(
     assert agent.status().cycles_run == 1  # the cycle still completed
 
 
+def test_demo_cycle_never_touches_remote_sources(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Demo mode closes the INGESTION gate too, even with RUN_LIVE_LLM=1.
+
+    Regression: the scheduled 10 s ticks used to live-ingest the real feeds
+    because _collect() ignored the cycle's mode (3 full ingestions per
+    notebook run, 429 quota walls included).
+    """
+    from oppradar_ai.schemas import IngestionReport
+
+    calls: list[int] = []
+
+    def _spy(*_args: Any, **_kwargs: Any) -> IngestionReport:
+        calls.append(1)
+        now = datetime.now(timezone.utc)
+        return IngestionReport(started_at=now, finished_at=now)
+
+    monkeypatch.setattr("oppradar_ai.agent.run_ingestion", _spy)
+    settings = _settings(tmp_path, run_live_llm=True, llm_provider="gemini")
+    agent = BackgroundAgent(settings=settings, store=_store(tmp_path), sources=[])
+
+    report = agent.run_cycle(mode="demo")
+    assert calls == []  # demo: local drop folder only, whatever the gate says
+    assert "offline" in report.ingestion_skipped
+
+    agent.run_cycle(mode="agent")
+    assert calls == [1]  # agent mode honors the open gate exactly once
+
+
 def test_demo_mode_closes_the_gate_agent_mode_honors_it(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -287,6 +317,27 @@ def test_controls_on_a_stopped_agent_do_not_raise(tmp_path: Path) -> None:
     assert agent.resume().state == "stopped"
     assert agent.stop().state == "stopped"
     assert agent.stop().cycles_run == 0
+
+
+def test_start_keeps_the_last_cycle_in_the_status_table(tmp_path: Path) -> None:
+    """A (re)start changes only the loop's controls, never the table's history.
+
+    Regression: start() used to rebuild AgentStatus and wiped last_run /
+    items_found / matches / notifications (cycles_run was kept -> inconsistent
+    table: "cycles run: 1" with "last run: -").
+    """
+    settings = _settings(tmp_path, demo_interval_seconds=3600)
+    agent = BackgroundAgent(settings=settings, store=_store(tmp_path), sources=[])
+    _drop(settings.live_feed_dir, "one.json", DROP_ROW)
+    first = agent.run_cycle()
+
+    agent.start(mode="demo")
+    status = agent.status()
+
+    assert status.cycles_run == 1
+    assert status.last_run is not None
+    assert status.items_found == first.items_found == 1
+    agent.stop()
 
 
 def test_status_rows_show_the_table_the_notebook_displays() -> None:
