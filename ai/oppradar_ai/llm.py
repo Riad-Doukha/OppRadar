@@ -722,6 +722,61 @@ _CANNED: dict[str, dict[str, Any]] = {
 }
 
 
+_LISTICLE_RE = re.compile(r"\btop\s+\d+\b", re.IGNORECASE)
+_ITEM_BLOCK_RE = re.compile(r"===\s*ITEM\s+\d+\s*===\s*\n?")
+
+# Batch templates: 0/1 cycle for real entries, 2 is the listicle used for
+# "Top 10 ..." blocks — so the offline provider exercises acceptance and
+# rejection inside one batch.
+_BATCH_TEMPLATES: list[dict[str, Any]] = [
+    {
+        "title": "Atlas Merit Scholarship 2027",
+        "organizer": "Atlas Digital Foundation",
+        "type": "scholarship",
+        "mode": "remote",
+        "location": "Online",
+        "country": "Algeria",
+        "funding": "Full funding",
+        "eligibility": ["Open to students", "Under 30 years old"],
+        "benefits": ["Tuition covered", "Mentorship"],
+        "summary": "A synthetic scholarship returned by the fake LLM provider.",
+        "deadline": "March 15, 2027",
+        "is_opportunity": True,
+        "field_confidences": [
+            {"field": "title", "confidence": 0.95},
+            {"field": "deadline", "confidence": 0.9},
+        ],
+    },
+    {
+        "title": "Cedar Hackathon 2027",
+        "organizer": "Cedar Labs",
+        "type": "hackathon",
+        "mode": "hybrid",
+        "location": "Algiers",
+        "country": "Algeria",
+        "funding": None,
+        "eligibility": ["Students only"],
+        "benefits": ["Mentorship", "Prizes"],
+        "summary": "A synthetic hackathon returned by the fake LLM provider.",
+        "deadline": "",
+        "is_opportunity": True,
+        "field_confidences": [
+            {"field": "title", "confidence": 0.9},
+            {"field": "deadline", "confidence": 0.2},
+        ],
+    },
+    {
+        "title": "Top 10 Scholarships of 2026",
+        "organizer": "",
+        "summary": "A ranked listicle returned by the fake LLM provider.",
+        "deadline": "",
+        "is_opportunity": False,
+        "not_opportunity_reason": "listicle (fake-provider rule)",
+        "field_confidences": [{"field": "title", "confidence": 0.9}],
+    },
+]
+
+
 def _canned(schema: type[BaseModel], prompt: str) -> dict[str, Any]:
     """Build a deterministic, schema-valid dict for any Pydantic schema."""
     canned = _CANNED.get(schema.__name__)
@@ -731,13 +786,13 @@ def _canned(schema: type[BaseModel], prompt: str) -> dict[str, Any]:
         data = {k: v for k, v in data.items() if k in schema.model_fields}
     else:
         data = {}
-    if schema.__name__ == "OpportunityExtraction" and re.search(
-        r"\btop\s+\d+\b", prompt[:300], re.IGNORECASE
-    ):
+    if schema.__name__ == "OpportunityExtraction" and _LISTICLE_RE.search(prompt[:300]):
         # Deterministic fake rule: "Top 10 ..." headlines are listicles, so
         # the offline provider exercises the is_opportunity rejection path.
         data["is_opportunity"] = False
         data["not_opportunity_reason"] = "listicle (fake-provider rule)"
+    if schema.__name__ == "OpportunityBatchExtraction":
+        data["items"] = _canned_batch_items(prompt)
     for name, field in schema.model_fields.items():
         if name not in data:
             data[name] = _default_for(field.annotation, name, depth=0)
@@ -747,6 +802,33 @@ def _canned(schema: type[BaseModel], prompt: str) -> dict[str, Any]:
         hashlib.sha1(prompt.encode()).hexdigest()[:8],
     )
     return data
+
+
+def _canned_batch_items(prompt: str) -> list[dict[str, Any]]:
+    """One canned item per "=== ITEM n ===" block, cycled from the templates.
+
+    A block whose text matches the single-item listicle rule ("Top 10 ...")
+    becomes is_opportunity=false, so the offline pipeline exercises acceptance
+    and rejection inside one batch. Titles carry their 1-based item number so
+    every extracted record gets a distinct deterministic id.
+
+    Example:
+        >>> items = _canned_batch_items("=== ITEM 1 ===\\nTop 10 scholarships")
+        >>> len(items), items[0]["is_opportunity"], items[0]["title"]
+        (1, False, 'Top 10 Scholarships of 2026 #1')
+    """
+    blocks = [b.strip() for b in _ITEM_BLOCK_RE.split(prompt) if b.strip()]
+    return [_canned_batch_item(i, block) for i, block in enumerate(blocks)]
+
+
+def _canned_batch_item(index: int, block: str) -> dict[str, Any]:
+    is_listicle = bool(_LISTICLE_RE.search(block[:300]))
+    item = dict(_BATCH_TEMPLATES[2] if is_listicle else _BATCH_TEMPLATES[index % 2])
+    item["title"] = f"{item['title']} #{index + 1}"
+    if is_listicle:
+        item["is_opportunity"] = False
+        item["not_opportunity_reason"] = "listicle (fake-provider rule)"
+    return item
 
 
 def _default_for(annotation, name: str, depth: int) -> Any:

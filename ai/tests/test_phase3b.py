@@ -20,7 +20,7 @@ from oppradar_ai.ingestion.extract import (
     truncate_text,
 )
 from oppradar_ai.ingestion.fetch import PageDoc, PageFetcher
-from oppradar_ai.ingestion.pipeline import _detail_fetch_allowed, run_ingestion
+from oppradar_ai.ingestion.pipeline import live_fetch_allowed, run_ingestion
 from oppradar_ai.schemas import (
     Opportunity,
     OpportunityExtraction,
@@ -263,6 +263,11 @@ def _accept_without_deadline(text: str, **kwargs) -> RawExtraction:
     return RawExtraction(opportunity=opp, url=kwargs.get("url", ""))
 
 
+def _accept_batch_without_deadline(inputs, **kwargs) -> list[RawExtraction]:
+    """Batch extractor stub: every entry accepted with NO deadline."""
+    return [_accept_without_deadline(item.text, url=item.url, **kwargs) for item in inputs]
+
+
 def test_detail_fetch_is_capped_and_only_fills_missing_deadlines(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -279,7 +284,8 @@ def test_detail_fetch_is_capped_and_only_fills_missing_deadlines(
         max_detail_fetches_per_run=2, llm_provider="ollama", run_live_llm=True
     )
     monkeypatch.setattr(
-        "oppradar_ai.ingestion.pipeline.extract_record", _accept_without_deadline
+        "oppradar_ai.ingestion.pipeline.extract_records_batch",
+        _accept_batch_without_deadline,
     )
     report = run_ingestion(sources=[source], settings=settings, fetcher=fetcher)
 
@@ -307,7 +313,8 @@ def test_detail_fetch_never_touches_the_network_offline(
 
     monkeypatch.setattr("httpx.Client.request", _no_http)
     monkeypatch.setattr(
-        "oppradar_ai.ingestion.pipeline.extract_record", _accept_without_deadline
+        "oppradar_ai.ingestion.pipeline.extract_records_batch",
+        _accept_batch_without_deadline,
     )
     settings = _settings(**updates)
     report = run_ingestion(
@@ -326,7 +333,8 @@ def test_detail_fetch_refuses_placeholder_urls_even_when_live(
     source = Source(name="t", url=str(feed), kind="rss")
     fetcher = _StubFetcher()
     monkeypatch.setattr(
-        "oppradar_ai.ingestion.pipeline.extract_record", _accept_without_deadline
+        "oppradar_ai.ingestion.pipeline.extract_records_batch",
+        _accept_batch_without_deadline,
     )
     settings = _settings(llm_provider="gemini", run_live_llm=True)
     report = run_ingestion(sources=[source], settings=settings, fetcher=fetcher)
@@ -345,7 +353,7 @@ def test_detail_fetch_refuses_placeholder_urls_even_when_live(
 ])
 def test_detail_fetch_gate_classifies_urls(url: str, expected: bool) -> None:
     live = _settings(llm_provider="gemini", run_live_llm=True)
-    assert _detail_fetch_allowed(live, url) is expected
+    assert live_fetch_allowed(live, url) is expected
 
 
 def test_detail_fetch_skipped_when_deadline_already_present(

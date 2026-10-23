@@ -50,6 +50,15 @@ OFFLINE_MARKERS = {
         "after stop -> stopped",
         "quarantine: ['broken_drop.json']",
     ),
+    "09_evaluation.ipynb": (
+        "provider: fake",
+        "reader text recall:",
+        "document grading: overall accuracy=",
+        "rule deadline:",
+        "batched:",
+        "cap honored",
+        "run live:",
+    ),
 }
 
 # Kernel environment: offline provider, dummy keys, no gate, no downloads.

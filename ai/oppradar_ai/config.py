@@ -58,6 +58,12 @@ class Settings(BaseSettings):
     # hits are always allowed and never counted against these limits).
     tavily_max_searches_per_run: int = 5
     max_extractions_per_run: int = 20
+    # Feed entries are extracted in batches of this many per single LLM call
+    # (free-tier batching: one run's `max_extractions_per_run` calls then cover
+    # `max_extractions_per_run * extraction_batch_size` entries). 1 disables
+    # batching (one call per entry). Keep it small: the reply of one call must
+    # fit `gemini_max_output_tokens`.
+    extraction_batch_size: int = 5
     # Accepted RSS entry with no deadline -> fetch its detail page and
     # re-extract once, at most this many times per run (free-tier protection).
     max_detail_fetches_per_run: int = 5

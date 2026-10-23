@@ -1,9 +1,9 @@
 # One ingestion run over the configured sources: fetch -> clean/parse ->
-# budgeted extract (is_opportunity gate + rule-first deadlines) -> dedupe by
-# URL, collecting per-source stats, rejected items, deadline provenance,
-# remote call usage and failures. NEVER raises: every problem becomes a
-# failure entry in the returned IngestionReport.
-# Called by: api.py (Phase 7), notebooks 03_discovery / 04_page_extraction.
+# budgeted extract (feed entries in BATCHES, is_opportunity gate, rule-first
+# deadlines) -> dedupe by URL, collecting per-source stats, rejected items,
+# deadline provenance, remote call usage and failures. NEVER raises: every
+# problem becomes a failure entry in the returned IngestionReport.
+# Called by: api.py (run_ingestion), agent.py, notebooks 03/04.
 
 from __future__ import annotations
 
@@ -13,6 +13,7 @@ from datetime import datetime, timezone
 from urllib.parse import urlsplit
 
 from oppradar_ai.config import Settings, get_settings
+from oppradar_ai.ingestion.batch import BatchInput, extract_records_batch
 from oppradar_ai.ingestion.budget import RunBudget
 from oppradar_ai.ingestion.clean import clean_html, looks_like_list_page
 from oppradar_ai.ingestion.extract import (
@@ -118,45 +119,36 @@ def _ingest_source(
         entries, errors = read_feed(source.url, fetcher)
         stat.errors.extend(errors)
         stat.fetched = len(entries)
-        return [
-            _from_entry(entry, source, budget, settings, fetcher, detail_usage)
-            for entry in entries
-        ]
+        outcomes = extract_records_batch(
+            [_entry_input(entry, source, settings) for entry in entries],
+            budget=budget,
+            settings=settings,
+        )
+        for entry, outcome in zip(entries, outcomes, strict=True):
+            _fill_deadline_from_detail(
+                outcome, entry, source, budget, settings, fetcher, detail_usage
+            )
+        return outcomes
     if source.kind == "page":
         return _from_page(source, budget, fetcher, settings, stat)
     return _from_search(source, budget, fetcher, searcher, settings, stat)
 
 
-def _from_entry(
-    entry: FeedEntry,
-    source: Source,
-    budget: RunBudget,
-    settings: Settings,
-    fetcher: PageFetcher,
-    detail_usage: CallUsage,
-) -> RawExtraction:
-    """One feed entry from its title+summary; one capped detail re-extract."""
-    text = truncate_text(
-        f"{entry.title}\n{entry.summary}", settings.feed_text_max_chars
-    )
-    outcome = extract_record(
-        text,
+def _entry_input(entry: FeedEntry, source: Source, settings: Settings) -> BatchInput:
+    """One feed entry -> batch input (title+summary, capped to the feed limit)."""
+    return BatchInput(
+        text=truncate_text(f"{entry.title}\n{entry.summary}", settings.feed_text_max_chars),
         url=entry.url,
         source_name=source.name,
         title_hint=entry.title,
         type_hint=source.type_hint,
         language=source.language,
         country=source.country,
-        budget=budget,
-        settings=settings,
     )
-    _fill_deadline_from_detail(outcome, entry, source, budget, settings,
-                               fetcher, detail_usage)
-    return outcome
 
 
-def _detail_fetch_allowed(settings: Settings, url: str) -> bool:
-    """May a missing deadline trigger a live detail-page fetch for `url`?
+def live_fetch_allowed(settings: Settings, url: str) -> bool:
+    """May a single URL be fetched live (detail page, api.extract_opportunity)?
 
     Offline runs must never touch the network: the fake provider has
     nothing to re-extract with, and without the RUN_LIVE_LLM=1 opt-in no
@@ -165,12 +157,12 @@ def _detail_fetch_allowed(settings: Settings, url: str) -> bool:
 
     Example:
         >>> live = Settings(llm_provider="gemini", run_live_llm=True)
-        >>> _detail_fetch_allowed(live, "https://example.org/job/1")
+        >>> live_fetch_allowed(live, "https://example.org/job/1")
         False
-        >>> _detail_fetch_allowed(Settings(llm_provider="fake", run_live_llm=True),
-        ...                       "https://host.tld/job/1")
+        >>> live_fetch_allowed(Settings(llm_provider="fake", run_live_llm=True),
+        ...                    "https://host.tld/job/1")
         False
-        >>> _detail_fetch_allowed(live, "https://host.tld/job/1")
+        >>> live_fetch_allowed(live, "https://host.tld/job/1")
         True
     """
     if settings.llm_provider == "fake" or not settings.run_live_llm:
@@ -201,7 +193,7 @@ def _fill_deadline_from_detail(
     """Accepted entry without a deadline -> one capped detail-page re-extract."""
     if outcome.opportunity is None or outcome.opportunity.deadline is not None:
         return
-    if not _detail_fetch_allowed(settings, entry.url):
+    if not live_fetch_allowed(settings, entry.url):
         logger.info("detail fetch skipped (offline): %s", entry.url)
         detail_usage.skipped += 1  # declined on purpose, not by budget
         return

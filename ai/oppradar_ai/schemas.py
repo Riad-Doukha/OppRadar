@@ -637,6 +637,21 @@ class OpportunityExtraction(BaseModel):
     field_confidences: list[FieldConfidence] = Field(default_factory=list)
 
 
+class OpportunityBatchExtraction(BaseModel):
+    """One LLM answer covering several numbered feed entries (free-tier batching).
+
+    `items` holds one `OpportunityExtraction` per input entry, in the same
+    order. A short reply never fabricates data: the entries it did not cover
+    come back as `pending` and wait for the next run.
+
+    Example:
+        >>> OpportunityBatchExtraction(items=[OpportunityExtraction(title="X")]).items[0].title
+        'X'
+    """
+
+    items: list[OpportunityExtraction] = Field(default_factory=list)
+
+
 # --------------------------------------------------------------------------- #
 # Background agent (Phase 5)
 # --------------------------------------------------------------------------- #

@@ -3,7 +3,7 @@
 # None), rule-first "Deadline:" lines that beat the model, the
 # is_opportunity gate (listicles/news -> rejected) and per-field
 # confidence that marks weak fields "to verify".
-# Called by: ingestion/pipeline.py, api.py (Phase 7), notebooks 03/04.
+# Called by: ingestion/pipeline.py, ingestion/batch.py, api.py, notebooks 03/04.
 
 from __future__ import annotations
 
@@ -11,6 +11,7 @@ import hashlib
 import logging
 import re
 from datetime import date, datetime, timezone
+from typing import TypeVar
 from urllib.parse import urlsplit
 
 from pydantic import BaseModel
@@ -27,6 +28,9 @@ from oppradar_ai.schemas import (
 )
 
 logger = logging.getLogger(__name__)
+
+# Any schema the budgeted LLM call may answer with (single or batch extraction).
+_T = TypeVar("_T", bound=BaseModel)
 
 # Rolling/no-fixed-deadline phrasing (EN + FR): treated as null per spec.
 _ONGOING_RE = re.compile(
@@ -406,22 +410,76 @@ def extract_record(
     """
     settings = settings or get_settings()
     budget = budget or RunBudget(settings)
-    checked = checked_at or datetime.now(timezone.utc)
     system = (settings.prompts_dir / "extract_opportunity.md").read_text(encoding="utf-8")
     llm = get_llm()
-    extraction, failure = _extract(llm, text, system, budget)
-    provider, model = _llm_identity(llm, text, system)
+    extraction, failure = budgeted_structured(
+        llm, text, system, budget, OpportunityExtraction
+    )
+    provider, model = llm_identity(llm, text, system, OpportunityExtraction)
     latency = llm.last_call.latency_ms if (llm.last_call and llm.last_call.ok) else 0.0
+    return outcome_from_extraction(
+        extraction,
+        text=text,
+        url=url,
+        source_name=source_name,
+        title_hint=title_hint,
+        type_hint=type_hint,
+        language=language,
+        country=country,
+        settings=settings,
+        checked_at=checked_at,
+        list_page=list_page,
+        failure=failure,
+        provider=provider,
+        model=model,
+        latency_ms=latency,
+    )
+
+
+def outcome_from_extraction(
+    extraction: OpportunityExtraction | None,
+    *,
+    text: str,
+    url: str = "",
+    source_name: str = "unknown",
+    title_hint: str = "",
+    type_hint: OpportunityType = OpportunityType.OTHER,
+    language: str = "en",
+    country: str = "",
+    settings: Settings | None = None,
+    checked_at: datetime | None = None,
+    list_page: bool = False,
+    failure: str = "",
+    provider: str = "",
+    model: str = "",
+    latency_ms: float = 0.0,
+) -> RawExtraction:
+    """A model answer (or None) -> RawExtraction: accepted / rejected / pending.
+
+    Shared by `extract_record` (one item per LLM call) and
+    `batch.extract_records_batch` (one call per N items), so the is_opportunity
+    gate, the rule-first deadline policy and the pending-never-fake rule are
+    identical on both paths. `failure` explains why no model answered;
+    `provider`/`model`/`latency_ms` carry the answering call's provenance.
+
+    Example:
+        >>> ext = OpportunityExtraction(title="Top 10 scholarships of 2026!")
+        >>> bool(outcome_from_extraction(ext, text="").rejected_reason)
+        True
+    """
+    settings = settings or get_settings()
+    checked = checked_at or datetime.now(timezone.utc)
     common = {
         "extraction": extraction,
         "url": url,
         "llm_provider": provider,
         "llm_model": model,
-        "llm_latency_ms": latency,
+        "llm_latency_ms": latency_ms,
     }
     if extraction is None:
-        return RawExtraction(pending=_pending_item(text, url, source_name, title_hint, failure),
-                             **common)
+        return RawExtraction(
+            pending=_pending_item(text, url, source_name, title_hint, failure), **common
+        )
     if not extraction.is_opportunity:
         reason = extraction.not_opportunity_reason.strip() or "not a single opportunity"
         logger.info("rejected %s: %s", url or source_name, reason)
@@ -502,29 +560,38 @@ def extract_from_text(
     ).opportunity
 
 
-def _llm_identity(llm: LLM, text: str, system: str) -> tuple[str, str]:
-    """Provider/model recorded with the (possibly cached) extraction call."""
+def llm_identity(llm: LLM, prompt: str, system: str, schema: type[_T]) -> tuple[str, str]:
+    """Provider/model recorded with the (possibly cached) call that answered.
+
+    Example:
+        >>> llm_identity(get_llm(), "p", "", OpportunityExtraction)  # doctest: +SKIP
+        ('fake', 'fake')
+    """
     meta_fn = getattr(llm, "cached_meta", None)
-    meta = meta_fn(text, OpportunityExtraction, system=system) if callable(meta_fn) else None
+    meta = meta_fn(prompt, schema, system=system) if callable(meta_fn) else None
     if not meta:
         return "", ""  # no record: budget skipped the call or the provider failed
     return str(meta.get("provider", "")), str(meta.get("model", ""))
 
 
-def _extract(
-    llm: LLM,
-    text: str,
-    system: str,
-    budget: RunBudget,
-) -> tuple[OpportunityExtraction | None, str]:
-    """One budgeted, cached LLM call; (None, reason) on skip/failure, never raising.
+def budgeted_structured(
+    llm: LLM, prompt: str, system: str, budget: RunBudget, schema: type[_T]
+) -> tuple[_T | None, str]:
+    """One budgeted, cached LLM call for `schema`; (None, reason) on skip/failure.
 
     The reason explains why the item is pending, so the report can show it and
     the next run retries it (nothing was cached on the way here).
+
+    Example:
+        >>> out, reason = budgeted_structured(
+        ...     get_llm(), "text", "", RunBudget(), OpportunityExtraction
+        ... )
+        >>> out is not None, reason
+        (True, '')
     """
-    if llm.is_cached(text, OpportunityExtraction, system):
+    if llm.is_cached(prompt, schema, system):
         budget.extractions.cached += 1
-        return llm.structured(text, OpportunityExtraction, system=system), ""
+        return llm.structured(prompt, schema, system=system), ""
     if budget.quota_exhausted:  # a 429 was already seen: no more calls today
         budget.extractions.skipped += 1
         return None, "quota exhausted earlier in this run"
@@ -535,7 +602,7 @@ def _extract(
         )
         return None, f"extraction budget ({budget.extractions.limit}) spent"
     try:
-        extraction = llm.structured(text, OpportunityExtraction, system=system)
+        result = llm.structured(prompt, schema, system=system)
     except QuotaExhausted as exc:  # daily quota: retrying today cannot help
         budget.record_extraction(ok=False)
         budget.quota_exhausted = True
@@ -547,4 +614,4 @@ def _extract(
     budget.record_extraction(ok=True)
     if llm.last_call is not None:  # a cache hit has no latency to report
         budget.note_latency(llm.last_call.latency_ms)
-    return extraction, ""
+    return result, ""
