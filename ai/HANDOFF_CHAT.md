@@ -1,7 +1,7 @@
 # OppRadar AI — Handoff: the Chat phase (notebook 06)
 
 **For:** the colleague building the conversational Q&A layer.
-**Baseline:** branch `feature/ai-pipeline` @ `e6f0fcf` — 300 tests green on Python 3.13 *and* 3.10, `ruff` clean on both.
+**Baseline:** branch `feature/ai-pipeline` @ `8c1ed2d` (Phase 7 landed) — 335 tests green on Python 3.13 *and* 3.10, `ruff` clean on both. Start here; for the overall picture, limitations and small fixes see [`README.md`](README.md).
 **Notebook numbering:** 00–05 done (setup, documents, profile, discovery, extraction, matching), **06 = chat (yours)**, 07 = security (someone else), 08 = background agent (done).
 
 ---
@@ -15,7 +15,7 @@ Build, in this order:
 3. `ai/notebooks/06_chat.ipynb` — the demo notebook;
 4. `ai/tests/test_chat.py` — offline tests.
 
-**Not in scope:** the `api.py` façade (a later phase — we only guarantee your `answer()` signature stays usable by it) and the security notebook 07.
+**Not in scope:** the `api.py` façade (it already exists from Phase 7 and lazily proxies your `answer()` — its signature is frozen, see §3) and the security notebook 07.
 
 Everything is **free-tier only**: Gemini Flash via `google-genai` (structured output), local embeddings, disk cache, no vector DB, no Docker, no web framework.
 
@@ -111,7 +111,7 @@ Keep `answer()` a thin orchestrator over small functions (<40 lines each), like 
 
 ### 4.2 FakeLLM canned answer
 
-`llm.py` keeps a `_CANNED` dict keyed by **schema class name** and falls back to generic defaults (`_default_for`) for unknown schemas. Add a `"ChatAnswer"` entry (deterministic text, `in_source=True`, one `Citation`) so offline tests and the offline notebook assert stable values. If you touch `_CANNED`, keep the "listicle" special rule for `OpportunityExtraction` intact (tests depend on it).
+`llm.py` keeps a `_CANNED` dict keyed by **schema class name** and falls back to generic defaults (`_default_for`) for unknown schemas. A `"ChatAnswer"` entry (deterministic text, `in_source=True`, one `Citation`) **already exists** — keep it in sync with your prompt/schema so offline tests and the offline notebook assert stable values. If you touch `_CANNED`, keep the "listicle" special rule for `OpportunityExtraction` intact (tests depend on it).
 
 ### 4.3 `oppradar_ai/chat_ui.py`
 
