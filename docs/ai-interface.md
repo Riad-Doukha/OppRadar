@@ -15,6 +15,10 @@ There is **no database and no web framework** in the AI layer: every function
 takes plain Pydantic objects (or plain lists of them) and returns plain Pydantic
 objects. Persisting them is the backend's job.
 
+> **Fetching results end to end** (background agent, store collections, result
+> schemas, suggested endpoints, frontend rendering): see
+> `docs/ai-pipeline-integration.md`.
+
 ---
 
 ## 1. `parse_documents` — the user's files → one `Profile`
