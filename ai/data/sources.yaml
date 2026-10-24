@@ -1,0 +1,308 @@
+# Real, public sources for OppRadar ingestion. NOTHING in this file may
+# be invented: `verified: true` means the URL was confirmed reachable by
+# a live fetch on the date given in `notes`; `verified: false` means it
+# could NOT be confirmed — check it manually before enabling.
+#
+# Fields:
+#   kind      rss   -> feedparser reads the URL as RSS/Atom
+#             page  -> fetch + trafilatura, one page-level extraction
+#             search-> `url` carries a Tavily query string instead
+#   enabled   false -> listed for transparency but skipped by runs
+#   notes     what the source provides + verification date + caveats
+#
+# Re-verified 2026-10-22. Sources the maintainers tried and REJECTED
+# (do not re-add without checking again):
+#   - greatyop.com/feed/            robots.txt disallows /feed/
+#   - afterschoolafrica.com/feed/   automated access disallowed
+#   - youthop.com/feed              fetch error (client error)
+#   - scholarshipsforafricans.com/feed/  fetch error (client error)
+#   - remotive.com API              could not be verified (access refused)
+#   - opportunitydesk.org/category/scholarships/feed/ and
+#     /category/competitions/feed/  valid XML but EMPTY (no items)
+#   - devpost RSS, Mastercard feed, DAAD path, scholarshipset (see Phase 3)
+#
+#   Also tried and REJECTED on 2026-10-22 (second verification pass):
+#   - opportunitiescorner.com/feed/   TLS certificate expired
+#   - scholarship-positions.com/feed/ connection timeout (never answers)
+#   - postgradopportunities.com/feed/ connection timeout
+#   - campusbourses.org               DNS name does not resolve
+#   - chevening.org/blog/feed/        valid RSS but EMPTY (comments feed)
+#   - aiesec.org/feed                 404
+#   - ruforum.org/feed/               returns the homepage HTML, not a feed
+#   - devex.com                       403 (bot protection)
+#   - institutfrancais.dz             transport error (unreachable)
+#   - impactpool.org                  no RSS autodiscovery link found
+#   - campusfrance.org/fr/bourse-eiffel  404 — the live URL (link found on
+#     the homepage) is /fr/le-programme-de-bourses-france-excellence-eiffel
+
+sources:
+  # ---------------------------------------------------------------- RSS
+  - name: opportunity-desk-all
+    url: https://opportunitydesk.org/feed/
+    kind: rss
+    type_hint: other
+    language: en
+    country: ""
+    enabled: true
+    verified: true
+    notes: >-
+      Live RSS 2.0 confirmed 2026-10-22 (lastBuildDate 2026-10-21,
+      updated hourly). Best single source: every item starts with
+      "Deadline: <date>" and covers fellowships, internships, grants,
+      conferences and scholarships worldwide, many open to Africa.
+      robots.txt contains no Disallow rules (only content-signal
+      comments), so reading the public feed is allowed. Use title,
+      summary and link only and always keep the link back.
+
+  - name: opportunity-desk-internships
+    url: https://opportunitydesk.org/category/jobs/internships/feed/
+    kind: rss
+    type_hint: internship
+    language: en
+    country: ""
+    enabled: true
+    verified: true
+    notes: >-
+      Live RSS 2.0 confirmed 2026-10-22: internship and traineeship
+      posts (UNU, DW, Google, IMF, Afreximbank...). Deadlines are in
+      the first line; some say "On Rolling Basis", "Varies" or
+      "Unspecified" -> must become a null deadline, never a made-up one.
+      Overlaps with opportunity-desk-all: the URL dedupe handles it.
+
+  - name: opportunity-desk-grants
+    url: https://opportunitydesk.org/category/grants/feed/
+    kind: rss
+    type_hint: grant
+    language: en
+    country: ""
+    enabled: true
+    verified: true
+    notes: >-
+      Live RSS 2.0 confirmed 2026-10-22 (latest item 2026-10-15):
+      grants, research awards and call-for-proposals with deadlines.
+      Lower volume than the main feed; good for the grant/funding type.
+
+  - name: opportunities-for-africans
+    url: https://www.opportunitiesforafricans.com/feed/
+    kind: rss
+    type_hint: other
+    language: en
+    country: ""
+    enabled: true
+    verified: true
+    notes: >-
+      Live RSS 2.0 confirmed 2026-10-21 (re-checked robots.txt
+      2026-10-22: "User-agent: * Disallow:" = crawling fully allowed).
+      Deadline-rich announcements for scholarships, fellowships and
+      jobs across Africa.
+
+  - name: scholars4dev
+    url: https://www.scholars4dev.com/feed/
+    kind: rss
+    type_hint: scholarship
+    language: en
+    country: ""
+    enabled: true
+    verified: true
+    notes: >-
+      Live RSS 2.0 confirmed 2026-10-22 (lastBuildDate 2026-10-21).
+      International scholarships for students from developing
+      countries, strong for Master/PhD and Algeria-eligible awards.
+      Two kinds of items: single scholarships (with a "Deadline:" line
+      in the body) and "Top 10 ..." list articles (NOT opportunities:
+      expect the extractor to flag or discard them). robots.txt only
+      blocks /wp-admin/. Feed bodies are long -> truncate before the LLM.
+
+  - name: alx-insights
+    url: https://www.alxafrica.com/feed/
+    kind: rss
+    type_hint: bootcamp
+    language: en
+    country: ""
+    enabled: true
+    verified: true
+    notes: >-
+      Live RSS 2.0 confirmed 2026-10-21: official ALX (African tech
+      training) feed — program/opportunity posts mixed with career
+      articles, so expect some non-opportunity items. No robots.txt
+      found (crawling allowed by default).
+
+  - name: weworkremotely-programming
+    url: https://weworkremotely.com/categories/remote-programming-jobs.rss
+    kind: rss
+    type_hint: job
+    language: en
+    country: ""
+    enabled: false
+    verified: true
+    notes: >-
+      Live RSS 2.0 confirmed 2026-10-22; robots.txt "Allow: /" (only
+      admin/account paths blocked). Kept DISABLED by default: items are
+      mostly senior roles, have NO application deadline, and each
+      description is very long (token-heavy). Enable it for a demo of
+      the "job" type, and keep the per-run Gemini cap low.
+
+  - name: fundsforngos-grants
+    url: https://www.fundsforngos.org/feed/
+    kind: rss
+    type_hint: grant
+    language: en
+    country: ""
+    enabled: true
+    verified: true
+    notes: >-
+      Live RSS 2.0 confirmed 2026-10-22 (lastBuildDate 2026-10-22,
+      hourly items): grants, call-for-proposals and funding for NGOs
+      and development practitioners, deadlines in the item bodies.
+      robots.txt answers 403 to non-browser clients, i.e. it is
+      UNAVAILABLE — per RFC 9309 that means "no restrictions", and
+      the feed itself returns 200. Bodies are long -> truncate
+      before the LLM.
+
+  # --------------------------------------------------------------- pages
+  - name: euraxess-jobs
+    url: https://euraxess.ec.europa.eu/jobs
+    kind: page
+    type_hint: other
+    language: en
+    country: ""
+    enabled: false
+    verified: true
+    notes: >-
+      European Commission EURAXESS "Jobs & opportunities" portal
+      confirmed 2026-10-21. DISABLED after the Phase 3b live probe
+      (2026-10-22): it is a LIST page (117 links, 82% teaser lines) and
+      robots.txt disallows the detail paths (/jobs/*) and query strings,
+      so neither extraction nor list-fan-out can reach a real
+      opportunity. Re-enable only after robots allows detail pages.
+
+  - name: chevening-awards
+    url: https://www.chevening.org/
+    kind: page
+    type_hint: scholarship
+    language: en
+    country: ""
+    enabled: false
+    verified: true
+    notes: >-
+      UK Government Chevening Scholarships/Fellowships site confirmed
+      2026-10-21. DISABLED after the Phase 3b live probe (2026-10-22):
+      the URL is the HOMEPAGE (a landing page, not a programme page) —
+      extraction returned only the title "Chevening" with no deadline or
+      eligibility. To use Chevening, add the specific country programme
+      page (discovered via Tavily: /scholarship/algeria) as a new source.
+
+  - name: mlh-hackathons
+    url: https://www.mlh.com/seasons/2027/events
+    kind: page
+    type_hint: hackathon
+    language: en
+    country: ""
+    enabled: false
+    verified: true
+    notes: >-
+      Major League Hacking 2027 season schedule confirmed reachable
+      2026-10-22 (redirects from mlh.io): list of upcoming student
+      hackathons with dates and cities. DISABLED: a list page gives one
+      low-confidence record, almost all events are in-person in
+      US/Canada/Europe, and robots.txt was not checked. Use it only as
+      a manual reference, or after adding list-page fan-out.
+
+  - name: mesrs-algerie
+    url: https://www.mesrs.dz/
+    kind: page
+    type_hint: scholarship
+    language: fr
+    country: Algeria
+    enabled: false
+    verified: true
+    notes: >-
+      Algeria's Ministry of Higher Education (MESRS) confirmed live
+      2026-10-21 (FR/AR/EN, WordPress robots.txt allows crawling).
+      Kept DISABLED: only the homepage was confirmed — no dedicated
+      scholarship-announcement ("bourses") page URL is verified yet.
+      Find the right sub-page, then set enabled: true.
+
+  # - name: euraxess-algeria
+  #   url: https://euraxess.algeria.dz/
+  #   kind: page
+  #   type_hint: research
+  #   language: en
+  #   country: Algeria
+  #   enabled: false
+  #   verified: false
+  #   notes: >-
+  #     EURAXESS Algeria national portal (historical URL) — UNREACHABLE
+  #     (transport error) when checked on 2026-10-21, so it is marked
+  #     verified: false and disabled. Check it manually; if it works,
+  #     set verified: true and enabled: true.
+
+  - name: emploitic-algeria
+    url: https://emploitic.com/
+    kind: page
+    type_hint: job
+    language: fr
+    country: Algeria
+    enabled: false
+    verified: false
+    notes: >-
+      Algerian job board (state/ANEM-approved placement agency); public
+      offer pages exist and robots.txt (checked 2026-10-22) only blocks
+      /partenaires/. Marked verified: false and DISABLED because no
+      stable listing or RSS URL was confirmed and individual offers are
+      mostly not student opportunities. If you enable it, find a real
+      listing URL (e.g. a "jeune diplômé" or "stage" search page) and
+      check the site's terms of use first.
+
+  - name: campusfrance-eiffel
+    url: https://www.campusfrance.org/fr/le-programme-de-bourses-france-excellence-eiffel
+    kind: page
+    type_hint: scholarship
+    language: fr
+    country: France
+    enabled: true
+    verified: true
+    notes: >-
+      "France Excellence Eiffel" scholarship programme page confirmed
+      2026-10-22 (the URL is a link discovered on the campusfrance.org
+      homepage, not guessed). Drupal robots.txt allows it (only
+      /admin, /search etc. blocked). Single static programme page: the
+      ONLY kind:page source that survived the Phase 3b live probe
+      (2026-10-22) — it yielded a real record (organizer
+      "Ministère de l'Europe et des Affaires étrangères", deadline
+      2027-01-06 from the page). The list-page heuristic leaves it
+      alone (flowing prose, not teaser lines). Any deadline must come
+      from the page text only — never invented.
+
+  - name: francophonie-appels
+    url: https://www.francophonie.org/appels-projets-candidatures-initiatives-1111
+    kind: page
+    type_hint: other
+    language: fr
+    country: ""
+    enabled: false
+    verified: true
+    notes: >-
+      OIF (Organisation internationale de la Francophonie) "Appels à
+      projets, candidatures, initiatives" page confirmed 2026-10-22 —
+      open calls for the 90+ member states including Algeria. DISABLED
+      after the Phase 3b live probe (2026-10-22): it is a PORTAL page
+      (general guidance + navigation); the extractor's is_opportunity
+      gate rejected it as "general information", not a single call.
+      Re-enable only with per-call detail URLs (list-page fan-out).
+
+  - name: britishcouncil-algeria-scholarships
+    url: https://www.britishcouncil.dz/study-uk/scholarships
+    kind: page
+    type_hint: scholarship
+    language: ar
+    country: Algeria
+    enabled: false
+    verified: true
+    notes: >-
+      British Council Algeria "المنح الدراسية" (scholarships) page
+      confirmed 2026-10-22; robots.txt allows /study-uk/*. DISABLED
+      after the Phase 3b live probe (2026-10-22): the site returns
+      HTTP 403 to our non-browser fetcher (bot protection), so no page
+      can be fetched. It would otherwise be a good real-world test for
+      Arabic extraction — revisit with a browser-like fetch if needed.

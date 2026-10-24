@@ -82,7 +82,13 @@ def test_borderline_free_email_offer_is_labelled_legit(opportunities, labels) ->
 
 def test_all_fixtures_schema_valid_and_one_expired(opportunities) -> None:
     models = [Opportunity.model_validate(o) for o in opportunities]
-    assert sum(1 for m in models if m.is_expired) == 1
+    # Deadlines are stamped relative to the generation day, so rows with small day
+    # counts expire as the stamp ages. "Exactly one closed" therefore holds AT
+    # GENERATION TIME (deadline before the stamp); the deliberate one stays closed.
+    stamp = date.fromisoformat((FIXTURES / "generated_on.txt").read_text(encoding="utf-8").strip())
+    closed_at_generation = [m for m in models if m.deadline and m.deadline < stamp]
+    assert len(closed_at_generation) == 1
+    assert closed_at_generation[0].is_expired
 
 
 def test_opp28_typo_fixed(opportunities) -> None:

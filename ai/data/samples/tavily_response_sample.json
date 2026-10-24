@@ -1,0 +1,24 @@
+{
+  "query": "scholarships for students in Algeria 2027",
+  "response_time": 1.42,
+  "results": [
+    {
+      "title": "Atlas Merit Scholarship 2027 — Atlas Digital Foundation",
+      "url": "https://example.org/atlas-merit-scholarship-2027",
+      "content": "Full tuition and a monthly stipend for computer science students in Algeria. Application deadline: 15 March 2027.",
+      "score": 0.9421
+    },
+    {
+      "title": "Green Shield Research Fellowship 2027",
+      "url": "https://example.org/fellowships/green-shield-2027",
+      "content": "One-year climate research placements for graduate students with travel coverage. Application Deadline: 30 November 2026.",
+      "score": 0.8977
+    },
+    {
+      "title": "Sahara Code Jam 2027 — Open Hackathon",
+      "url": "https://example.org/events/sahara-code-jam-2027",
+      "content": "48-hour online student hackathon with a 1,200,000 DZD prize pool. Registration closes on 2027-04-10.",
+      "score": 0.8613
+    }
+  ]
+}

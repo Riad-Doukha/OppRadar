@@ -3,6 +3,9 @@
 .env.*
 !.env.example
 
+# --- Local-only test rig (never push; private like .env) ---
+test_platform/
+
 # --- CVs & private user data (never commit) ---
 *.pdf
 !docs/*.pdf
@@ -35,6 +38,8 @@ htmlcov/
 ai/data/cache/
 ai/data/private/
 ai/data/store/
+ai/data/store_agent_demo/
+ai/data/store_chat_demo/
 ai/data/vectorstore/
 ai/data/live_feed/*
 !ai/data/live_feed/.gitkeep
