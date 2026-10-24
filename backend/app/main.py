@@ -25,7 +25,7 @@ from app.routers import (
     premium,
     submissions,
 )
-from app.services.ai import LLMError
+from app.services.ai import AIError, LLMError
 from app.sockets import sio_app
 
 settings = get_settings()
@@ -35,6 +35,11 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)-7s %(na
 @asynccontextmanager
 async def lifespan(_: FastAPI):  # type: ignore[no-untyped-def]
     """Start the agent's timer (AGENT_SCHEDULER=1) for the life of the app."""
+    import asyncio
+
+    from app.sockets.events import bind_loop
+
+    bind_loop(asyncio.get_running_loop())
     scheduler = None
     if settings.agent_scheduler:
         from apscheduler.schedulers.background import BackgroundScheduler
@@ -93,6 +98,12 @@ app.add_middleware(
 @app.exception_handler(NotFoundError)
 async def not_found(_: Request, exc: NotFoundError) -> JSONResponse:
     return JSONResponse({"detail": "Not found."}, status_code=status.HTTP_404_NOT_FOUND)
+
+
+@app.exception_handler(AIError)
+async def ai_error(_: Request, exc: AIError) -> JSONResponse:
+    """The AI refused or failed (gate closed, page unreadable, not an opportunity…)."""
+    return JSONResponse({"detail": str(exc), "code": exc.code}, status_code=exc.status)
 
 
 @app.exception_handler(LLMError)

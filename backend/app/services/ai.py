@@ -10,7 +10,7 @@ extraction. Later phases are listed at the bottom.
 from __future__ import annotations
 
 import re
-from datetime import date
+from datetime import date, datetime
 from pathlib import Path
 from typing import Any
 
@@ -51,7 +51,15 @@ from app.models import (
     SkillsStep,
 )
 
-__all__ = ["LLMError", "cv_prefill", "process_document", "score", "run_ingestion", "to_ai_profile"]
+__all__ = [
+    "AIError",
+    "LLMError",
+    "cv_prefill",
+    "process_document",
+    "score",
+    "run_ingestion",
+    "to_ai_profile",
+]
 
 
 # --------------------------------------------------------------------------- #
@@ -304,25 +312,49 @@ def _api() -> Any:
     return api
 
 
-def api_error_type() -> type[Exception]:
-    return _api().ApiError
+class AIError(Exception):
+    """oppradar_ai.api.ApiError, re-raised as ours so the app can map it to HTTP
+    without importing the AI stack at start-up. `code` is the AI's error code."""
+
+    # docs/ai-pipeline-integration.md §2.6
+    HTTP = {"empty": 400, "arguments": 400, "unreadable": 422, "unusable": 422, "rejected": 422,
+            "pending": 422, "offline": 503, "chat-unavailable": 503, "fetch": 502}  # fmt: skip
+
+    def __init__(self, code: str, message: str) -> None:
+        super().__init__(message)
+        self.code = code
+
+    @property
+    def status(self) -> int:
+        return self.HTTP.get(self.code, 500)
+
+
+def _call(name: str, *args: Any, **kwargs: Any) -> Any:
+    api = _api()
+    try:
+        return getattr(api, name)(*args, **kwargs)
+    except api.ApiError as exc:
+        raise AIError(getattr(exc, "code", "api_error"), str(exc)) from exc
 
 
 def run_ingestion() -> IngestionReport:
     """Fetch + extract + dedupe + scam-check the configured sources. Remote calls
     only happen when the AI gate is open (RUN_LIVE_LLM=1 + a real provider)."""
-    return _api().run_ingestion()
+    return _call("run_ingestion")
 
 
 def score(profile: Profile, opportunities: list[Opportunity]) -> list[MatchResult]:
     """Hard filters (expired, application fee) + 0-100 score with reasons, best first."""
-    return _api().score_user(profile, opportunities)
+    return _call("score_user", profile, opportunities)
 
 
 def decide_notifications(
-    matches: list[MatchResult], prefs: NotificationPrefs, history: list[AINotification]
+    matches: list[MatchResult],
+    prefs: NotificationPrefs,
+    history: list[AINotification],
+    now: datetime | None = None,
 ) -> list[AINotification]:
-    return _api().decide_notifications(matches, prefs, history)
+    return _call("decide_notifications", matches, prefs, history, now=now)
 
 
 def notification_prefs(user_id: str, settings: dict[str, Any]) -> NotificationPrefs:
@@ -346,8 +378,8 @@ def answer(
     profile: Profile, opportunity: Opportunity | None, history: list[ChatTurn], message: str
 ) -> ChatAnswer:
     """Grounded chat answer; raises the API error `chat-unavailable` if absent."""
-    return _api().answer(profile, opportunity, history, message)
+    return _call("answer", profile, opportunity, history, message)
 
 
 def extract_opportunity(url: str | None = None, text: str | None = None) -> Opportunity:
-    return _api().extract_opportunity(url=url, text=text, source_name="user")
+    return _call("extract_opportunity", url=url, text=text, source_name="user")

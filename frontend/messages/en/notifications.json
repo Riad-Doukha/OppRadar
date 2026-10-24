@@ -31,6 +31,7 @@
     "improveProfile": "Improve my profile",
     "openApplications": "Open my applications",
     "open": "Open",
-    "unread": "Unread"
+    "unread": "Unread",
+    "held": "Held — quiet hours, daily limit or digest"
   }
 }

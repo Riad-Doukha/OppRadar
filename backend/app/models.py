@@ -355,6 +355,8 @@ class NotificationOut(_Out):
     deadline: date | None = None
     action_url: str | None = None
     read: bool = False
+    # Match alerts: "pending" = held by quiet hours, the daily limit or the digest.
+    status: Literal["sent", "pending", "suppressed"] = "sent"
     created_at: datetime
 
 
@@ -420,6 +422,8 @@ class OpportunityOut(_Out):
     scam_flags: list[dict[str, Any]] = Field(default_factory=list)
     added_via: str = "pipeline"
     created_at: datetime | None = None
+    deadline_source: Literal["rule", "llm", "none"] | None = None
+    review_notes: list[str] = Field(default_factory=list)  # extractor's "needs review"
 
 
 class OpportunityInput(_In):
@@ -580,6 +584,8 @@ class ChatMessageOut(_Out):
     citations: list[dict[str, Any]] = Field(default_factory=list)
     opportunities: list[OpportunityOut] = Field(default_factory=list)
     in_source: bool = True  # False: the answer isn't stated in the source — show it as such
+    # An opportunity the AI read from a pasted link/text that OppRadar doesn't have yet.
+    extracted: dict[str, Any] | None = None
     eligibility: Eligibility | None = None
     created_at: datetime
 
@@ -668,7 +674,6 @@ class MyOpportunity(OpportunityOut):
     saved: bool = False
     dismissed: bool = False
     is_new: bool = False
-    deadline_source: Literal["rule", "llm", "none"] | None = None
     match: MatchInfo | None = None
 
 

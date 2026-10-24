@@ -40,5 +40,9 @@
   "next": "Next steps",
   "about": "Asking about: {title}",
   "clearAbout": "Ask about anything",
-  "aiBadge": "AI answer, grounded in the opportunity"
+  "aiBadge": "AI answer, grounded in the opportunity",
+  "extracted": {
+    "title": "Read from what you shared",
+    "submit": "Send it for review"
+  }
 }

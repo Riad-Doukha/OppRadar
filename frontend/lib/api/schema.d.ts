@@ -1204,6 +1204,10 @@ export interface components {
              * @default true
              */
             in_source: boolean;
+            /** Extracted */
+            extracted: {
+                [key: string]: unknown;
+            } | null;
             eligibility: components["schemas"]["Eligibility"] | null;
             /**
              * Created At
@@ -1833,6 +1837,10 @@ export interface components {
             added_via: string;
             /** Created At */
             created_at: string | null;
+            /** Deadline Source */
+            deadline_source: ("rule" | "llm" | "none") | null;
+            /** Review Notes */
+            review_notes: string[];
             /**
              * Saved
              * @default false
@@ -1848,8 +1856,6 @@ export interface components {
              * @default false
              */
             is_new: boolean;
-            /** Deadline Source */
-            deadline_source: ("rule" | "llm" | "none") | null;
             match: components["schemas"]["MatchInfo"] | null;
         };
         /** MyOpportunityPage */
@@ -1908,6 +1914,12 @@ export interface components {
              * @default false
              */
             read: boolean;
+            /**
+             * Status
+             * @default sent
+             * @enum {string}
+             */
+            status: "sent" | "pending" | "suppressed";
             /**
              * Created At
              * Format: date-time
@@ -2069,6 +2081,10 @@ export interface components {
             added_via: string;
             /** Created At */
             created_at: string | null;
+            /** Deadline Source */
+            deadline_source: ("rule" | "llm" | "none") | null;
+            /** Review Notes */
+            review_notes: string[];
         };
         /** OpportunityPage */
         OpportunityPage: {
@@ -2269,6 +2285,10 @@ export interface components {
             added_via: string;
             /** Created At */
             created_at: string | null;
+            /** Deadline Source */
+            deadline_source: ("rule" | "llm" | "none") | null;
+            /** Review Notes */
+            review_notes: string[];
             /**
              * Review Status
              * @default approved

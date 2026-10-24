@@ -13,8 +13,9 @@ from __future__ import annotations
 
 import logging
 import threading
-from datetime import datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from typing import Any
+from zoneinfo import ZoneInfo
 
 from oppradar_ai.schemas import Notification as AINotification
 
@@ -22,10 +23,19 @@ from app.auth import CurrentUser
 from app.models import IngestionRun, OpportunityFilters, ScanResult
 from app.repositories import Repository
 from app.services import ai, notifications, profiles
+from app.sockets.events import push
 
 log = logging.getLogger(__name__)
 MAX_OPPORTUNITIES = 500  # matched per user per scan
+MANUAL_COOLDOWN = timedelta(minutes=15)  # free tier: no tighter than this from /admin
+DAILY_CAP = 5  # instant match alerts per user per day
+DIGEST_EVERY = {"daily": timedelta(days=1), "weekly": timedelta(days=7)}
+LOCAL = ZoneInfo("Africa/Algiers")  # quiet hours are local time
 _cycle_lock = threading.Lock()  # one ingestion at a time (free-tier budget)
+
+
+class CooldownError(RuntimeError):
+    """A manual ingestion ran too recently."""
 
 
 def _now() -> datetime:
@@ -36,6 +46,16 @@ def _now() -> datetime:
 def ingest(
     repo: Repository, *, trigger: str = "manual", admin_id: str | None = None
 ) -> IngestionRun:
+    if trigger == "manual":
+        last = repo.list_ingestion_runs(1)
+        if last:
+            started = last[0]["started_at"]
+            if isinstance(started, str):
+                started = datetime.fromisoformat(started.replace("Z", "+00:00"))
+            wait = started + MANUAL_COOLDOWN - _now()
+            if wait > timedelta(0):
+                minutes = int(wait.total_seconds() // 60) + 1
+                raise CooldownError(f"The last run was just now — try again in {minutes} min.")
     if not _cycle_lock.acquire(blocking=False):
         raise RuntimeError("An ingestion run is already in progress.")
     started = _now()
@@ -74,22 +94,73 @@ def _open_opportunities(repo: Repository) -> list[dict[str, Any]]:
     return rows
 
 
-def _history(repo: Repository, user_id: str) -> list[AINotification]:
-    """Match alerts already sent — the AI uses them for dedupe and the daily cap."""
+def _match_alerts(repo: Repository, user_id: str) -> list[dict[str, Any]]:
     since = datetime(2000, 1, 1, tzinfo=timezone.utc)
-    rows = repo.list_notifications(user_id, ["match"], since, 500)
+    return repo.list_notifications(user_id, ["match"], since, 500)
+
+
+def _history(rows: list[dict[str, Any]], user_id: str) -> list[AINotification]:
+    """Match alerts sent or held — the AI uses them for dedupe and the daily cap."""
     return [
         AINotification(
             profile_id=user_id,
             opportunity_id=str(r["opportunity_id"]),
             title=r["title"],
             score=float(r.get("score") or 0),
-            status="sent",
+            status=r.get("status") or "sent",
             created_at=r["created_at"],
         )
         for r in rows
         if r.get("opportunity_id")
     ]
+
+
+def _local_day(value: Any) -> date:
+    text = value if isinstance(value, datetime) else str(value).replace("Z", "+00:00")
+    when = text if isinstance(text, datetime) else datetime.fromisoformat(text)
+    return when.astimezone(LOCAL).date()
+
+
+def _quiet(now: datetime, start: int, end: int) -> bool:
+    h = now.hour
+    return start != end and (start <= h < end if start < end else h >= start or h < end)
+
+
+def _release(
+    repo: Repository,
+    user_id: str,
+    rows: list[dict[str, Any]],
+    settings: dict[str, Any],
+    now: datetime,
+) -> int:
+    """Turn held alerts into sent ones once their reason is over (the AI queues
+    them; delivering them later is ours)."""
+    held = sorted(
+        (r for r in rows if r.get("status") == "pending"), key=lambda r: str(r["created_at"])
+    )
+    if not held:
+        return 0
+    frequency = settings.get("frequency", "instant")
+    if frequency in DIGEST_EVERY:
+        oldest = held[0]["created_at"]
+        if isinstance(oldest, str):
+            oldest = datetime.fromisoformat(oldest.replace("Z", "+00:00"))
+        if now - oldest < DIGEST_EVERY[frequency]:
+            return 0
+        ids = [str(r["id"]) for r in held]
+    else:
+        prefs = ai.notification_prefs(user_id, settings)
+        if _quiet(now, prefs.quiet_hours_start, prefs.quiet_hours_end):
+            return 0
+        today = now.date()
+        sent_today = sum(
+            1 for r in rows if r.get("status") == "sent" and _local_day(r["created_at"]) == today
+        )  # fmt: skip
+        ids = [str(r["id"]) for r in held][: max(0, DAILY_CAP - sent_today)]
+    repo.update_notifications(
+        user_id, ids, {"status": "sent", "suppressed_reason": None, "created_at": now}
+    )
+    return len(ids)
 
 
 def match_user(
@@ -121,10 +192,14 @@ def match_user(
 
     sent = 0
     if not me.is_demo and me.notifications.rule_new_match:
-        prefs = ai.notification_prefs(user.id, me.notifications.model_dump())
-        for note in ai.decide_notifications(results, prefs, _history(repo, user.id)):
-            if note.status != "sent" or note.opportunity_id not in by_id:
-                continue  # pending = quiet hours / cap (re-decided next scan); suppressed = dedupe
+        settings = me.notifications.model_dump()
+        prefs = ai.notification_prefs(user.id, settings)
+        now = datetime.now(LOCAL)
+        alerts = _match_alerts(repo, user.id)
+        sent += _release(repo, user.id, alerts, settings, now)
+        for note in ai.decide_notifications(results, prefs, _history(alerts, user.id), now):
+            if note.status == "suppressed" or note.opportunity_id not in by_id:
+                continue  # suppressed = already notified (dedupe)
             added = repo.add_notification(
                 {
                     "user_id": user.id,
@@ -136,14 +211,17 @@ def match_user(
                     "deadline": note.deadline,
                     "url": note.url,
                     "mode": note.mode.value if hasattr(note.mode, "value") else note.mode,
-                    "status": "sent",
+                    "status": note.status.value if hasattr(note.status, "value") else note.status,
+                    "suppressed_reason": note.suppressed_reason,
                     "opportunity_id": note.opportunity_id,
                     "action_url": f"/opportunities/{note.opportunity_id}",
                     "dedupe_key": f"match:{note.opportunity_id}",
                 }
             )
-            sent += added is not None
+            sent += added is not None and added.get("status") == "sent"
         notifications.invalidate(user.id)
+        if sent:
+            push(user.id, "notification:new", {"kind": "match", "count": sent})
     return ScanResult(
         matches=len(results), notifications_sent=sent, scanned=len(rows), finished_at=_now()
     )

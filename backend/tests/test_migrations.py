@@ -22,7 +22,7 @@ def test_migrations_parse():
 
 
 def test_every_public_table_has_rls():
-    tables = set(re.findall(r"create table public\.(\w+)", SQL))
+    tables = set(re.findall(r"create table (?:if not exists )?public\.(\w+)", SQL))
     with_rls = set(re.findall(r"alter table public\.(\w+) enable row level security", SQL))
     assert tables and tables == with_rls
 

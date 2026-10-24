@@ -14,7 +14,8 @@ from __future__ import annotations
 
 import logging
 import re
-from datetime import datetime, timezone
+import threading
+from datetime import date, datetime, timezone
 from typing import Any
 from urllib.parse import urlparse
 
@@ -53,7 +54,10 @@ TYPE_WORDS: dict[str, str] = {
     **dict.fromkeys(["course", "courses", "formation"], "course"),
     **dict.fromkeys(["research"], "research"),
 }
-NOT_YET = "Conversational answers and eligibility checks arrive with the AI agent."
+NOT_YET = (
+    "Open an opportunity and ask from its page for an answer grounded in its official text, "
+    "with your eligibility."
+)
 
 
 log = logging.getLogger(__name__)
@@ -147,6 +151,23 @@ def _citations(rows: list[Row]) -> list[dict]:
     return [{"url": r.get("url") or "", "title": r["title"], "quote": ""} for r in rows]
 
 
+AI_ANSWERS_PER_DAY = 20  # free-tier budget per user; then answers fall back to search
+_ai_used: dict[str, tuple[date, int]] = {}
+_ai_lock = threading.Lock()
+
+
+def _ai_budget_left(user_id: str) -> bool:
+    """Count one AI answer for today; False once the daily limit is reached."""
+    today = date.today()
+    with _ai_lock:
+        day, used = _ai_used.get(user_id, (today, 0))
+        used = used if day == today else 0
+        if used >= AI_ANSWERS_PER_DAY:
+            return False
+        _ai_used[user_id] = (today, used + 1)
+        return True
+
+
 def _ai_reply(
     repo: Repository, user: CurrentUser, message: str, opportunity_id: str | None, ids: list[str]
 ) -> dict[str, Any] | None:
@@ -156,6 +177,9 @@ def _ai_reply(
     row = repo.get_opportunity(opportunity_id) if opportunity_id else None
     if row is None:
         # The AI answers about one opportunity; open questions stay a search.
+        return None
+    if not _ai_budget_left(user.id):
+        log.info("daily AI answer limit reached for %s; search answer used", user.id)
         return None
     try:
         me = profiles.load_me(repo, user)
@@ -174,6 +198,30 @@ def _ai_reply(
     }
 
 
+EXTRACT_MIN_CHARS = 300  # a pasted announcement (no link) long enough to read
+
+
+def _extract(user: CurrentUser, message: str, ids: list[str]) -> dict[str, Any] | None:
+    """A link we don't know, or a pasted announcement: let the AI read it so the
+    user can send it for review. None when nothing usable came out."""
+    link = URL_RE.search(message)
+    if ids or (not link and len(message) < EXTRACT_MIN_CHARS) or not _ai_budget_left(user.id):
+        return None
+    try:
+        if link:
+            url = link.group(0).rstrip(").,;")
+            opp = ai.extract_opportunity(url=url if "://" in url else f"https://{url}")
+        else:
+            opp = ai.extract_opportunity(text=message)
+    except Exception as exc:  # gate closed (offline), unreadable page, not an opportunity…
+        log.info("extraction skipped: %s", exc)
+        return None
+    row = ai.opportunity_row(opp)
+    keep = ("title", "organizer", "type", "mode", "location", "country", "language", "deadline",
+            "funding", "eligibility", "benefits", "summary", "url")  # fmt: skip
+    return {k: row.get(k) for k in keep}
+
+
 def ask(
     repo: Repository, user: CurrentUser, message: str, opportunity_id: str | None = None
 ) -> ChatHistory:
@@ -181,13 +229,28 @@ def ask(
     saved = _keeps_history(repo, user)
     text, ids, citations = answer(repo, message.strip())
     reply = _ai_reply(repo, user, message.strip(), opportunity_id, ids)
+    extracted = None if reply else _extract(user, message.strip(), ids)
+    if extracted:
+        text = (
+            f"I read “{extracted['title']}” by {extracted['organizer']}. "
+            "It isn't in OppRadar yet — check the details below and send it for review "
+            "if it's worth sharing."
+        )
     turns: list[ChatMessageOut] = []
     for row in (
         {"user_id": user.id, "role": "user", "content": message.strip()},
         {
             "user_id": user.id,
             "role": "assistant",
-            **(reply or {"content": text, "citations": citations, "opportunity_ids": ids}),
+            **(
+                reply
+                or {
+                    "content": text,
+                    "citations": citations,
+                    "opportunity_ids": ids,
+                    "extracted": extracted,
+                }
+            ),
         },
     ):
         stored = repo.add_chat(row) if saved else {**row, "id": None, "created_at": _now()}

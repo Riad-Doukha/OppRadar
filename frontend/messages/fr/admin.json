@@ -73,8 +73,10 @@
     "manual": "manuelle",
     "scheduled": "planifiée",
     "counts": "{fetched} récupérées · {new} nouvelles · {saved} enregistrées · {flagged} signalées",
-    "budget": "Quota gratuit : {searches} recherches, {extractions} extractions",
+    "budget": "Quota gratuit : {searches}/{searchLimit} recherches · {extractions}/{extractionLimit} extractions",
     "failures": "Échecs : {list}",
-    "error": "Échec : {error}"
+    "error": "Échec : {error}",
+    "rejected": "Pas des opportunités ({count})",
+    "pendingLlm": "En attente du modèle ({count})"
   }
 }

@@ -40,5 +40,9 @@
   "next": "Prochaines étapes",
   "about": "Question sur : {title}",
   "clearAbout": "Question générale",
-  "aiBadge": "Réponse IA, fondée sur l'opportunité"
+  "aiBadge": "Réponse IA, fondée sur l'opportunité",
+  "extracted": {
+    "title": "Lu à partir de ce que vous avez partagé",
+    "submit": "L'envoyer pour vérification"
+  }
 }

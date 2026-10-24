@@ -37,6 +37,8 @@ def ingest(admin: Admin, repo: Repo) -> IngestionRun:
     then re-match every active agent. Remote calls need the AI gate open."""
     try:
         run = agent.ingest(repo, trigger="manual", admin_id=admin.id)
+    except agent.CooldownError as exc:
+        raise HTTPException(status.HTTP_429_TOO_MANY_REQUESTS, str(exc)) from exc
     except RuntimeError as exc:
         raise HTTPException(status.HTTP_409_CONFLICT, str(exc)) from exc
     agent.match_everyone(repo)

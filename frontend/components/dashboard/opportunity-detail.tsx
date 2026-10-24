@@ -8,13 +8,13 @@ import { useRouter } from "next/navigation";
 
 import { Alert } from "@/components/ui/alert";
 import { Button, ButtonLink } from "@/components/ui/button";
-import { Criteria, MatchReasons, MatchScore } from "@/components/match/match";
+import { Criteria, MatchReasons, MatchScore, ScoreBar } from "@/components/match/match";
 import { Pill, SectionLabel } from "@/components/ui/inputs";
 import { Loading, Skeleton } from "@/components/ui/skeleton";
 import { ApiError, api, type Me } from "@/lib/api/client";
 import { STATUS, useApplications } from "@/lib/applications";
 import { useOpportunityAction } from "@/lib/hooks/use-opportunity-actions";
-import { sourceHost, useOpportunityText, type MyOpportunity } from "@/lib/opportunities";
+import { asksForFee, sourceHost, useOpportunityText, type MyOpportunity } from "@/lib/opportunities";
 import { cn } from "@/lib/utils";
 
 const TRUST = {
@@ -62,6 +62,7 @@ export function OpportunityDetail({ id }: { id: string }) {
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <Pill className="h-8 px-4 text-sm">{typeLabel(o.type)}</Pill>
+            {asksForFee(o) && <span className="flex h-8 items-center rounded-full bg-danger-soft px-3.5 text-[13px] font-bold text-danger">{t("chips.fee")}</span>}
             {o.is_new && (
               <span className="flex h-8 items-center gap-1.5 rounded-full bg-signal px-3.5 text-[13px] font-bold text-on-signal">
                 <Image src="/icons/sparkle-dark.svg" alt="" width={13} height={13} />
@@ -87,7 +88,10 @@ export function OpportunityDetail({ id }: { id: string }) {
       </div>
       {o.match && (
         <div className="mt-4 flex flex-col gap-3 rounded-card border border-brand-soft bg-surface p-4 sm:flex-row sm:items-start">
-          <MatchScore match={o.match} className="h-8 self-start px-4 text-sm" />
+          <div className="flex shrink-0 flex-col gap-2 sm:w-56">
+            <MatchScore match={o.match} className="h-8 self-start px-4 text-sm" />
+            <ScoreBar match={o.match} threshold={me.data?.notifications.threshold} />
+          </div>
           <MatchReasons match={o.match} className="text-sm" />
         </div>
       )}

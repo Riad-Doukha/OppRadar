@@ -18,6 +18,28 @@ export function MatchScore({ match, className }: { match: Match; className?: str
   );
 }
 
+/** 0-100 bar with a marker at the user's alert threshold. */
+export function ScoreBar({ match, threshold }: { match: Match; threshold?: number }) {
+  const t = useTranslations("opportunity.match");
+  const score = Math.round(match.score);
+  return (
+    <div className="w-full">
+      <div
+        className="relative h-2.5 rounded-full bg-line"
+        role="meter"
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={score}
+        aria-label={t("bar", { score })}
+      >
+        <div className={cn("h-full rounded-full", threshold !== undefined && score >= threshold ? "bg-brand" : "bg-brand/50")} style={{ width: `${score}%` }} />
+        {threshold !== undefined && <span aria-hidden className="absolute -top-1 h-4.5 w-0.5 rounded bg-ink" style={{ insetInlineStart: `${threshold}%` }} />}
+      </div>
+      {threshold !== undefined && <p className="pt-1 text-[11px] text-muted">{t("threshold", { n: threshold })}</p>}
+    </div>
+  );
+}
+
 /** "Why you're seeing this" + "Still missing" (AI text is rendered as plain text). */
 export function MatchReasons({ match, limit, className }: { match: Match; limit?: number; className?: string }) {
   const t = useTranslations("opportunity.match");

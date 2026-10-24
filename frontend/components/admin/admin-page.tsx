@@ -188,6 +188,15 @@ function Row({ o }: { o: Reviewed }) {
       </p>
       {o.summary && <p className="line-clamp-3 pt-2 text-sm text-body">{o.summary}</p>}
       {flags.length > 0 && <p className="pt-2 text-xs font-bold text-danger">{t("flags", { flags: flags.join(" · ") })}</p>}
+      {o.review_notes.length > 0 && (
+        <div className="flex flex-wrap gap-1.5 pt-2">
+          {o.review_notes.map((note) => (
+            <span key={note} className="rounded-full bg-warning-tint px-2.5 py-0.5 text-[11px] font-bold text-warning">
+              {to("chips.needsReview")}: {note}
+            </span>
+          ))}
+        </div>
+      )}
       <p className="flex flex-wrap gap-x-3 gap-y-1 pt-2 text-xs text-muted">
         {o.created_at && <span>{t("created", { date: new Date(o.created_at).toLocaleDateString(locale, { day: "numeric", month: "short", year: "numeric" }) })}</span>}
         {o.contact_email && <span dir="ltr">{t("contact", { email: o.contact_email })}</span>}
@@ -317,7 +326,9 @@ function Ingestion() {
         {runs.data?.length === 0 && <p className="pt-2 text-sm text-muted">{t("none")}</p>}
         <ul className="mt-2 divide-y divide-line">
           {runs.data?.map((r) => {
-            const rep = r.report as { searches?: { made?: number }; extractions?: { made?: number }; failures?: string[] };
+            type Usage = { made?: number; limit?: number };
+            type Item = { title: string; url?: string; reason?: string; source?: string };
+            const rep = r.report as { searches?: Usage; extractions?: Usage; failures?: string[]; rejected?: Item[]; pending_llm?: Item[] };
             return (
               <li key={r.id} className="py-3 text-sm">
                 <p className="flex flex-wrap items-center gap-2">
@@ -328,7 +339,36 @@ function Ingestion() {
                 <p className="pt-1 font-mono text-xs text-body">
                   {t("counts", { fetched: r.items_fetched, new: r.items_new, saved: r.items_saved, flagged: r.items_flagged })}
                 </p>
-                <p className="text-xs text-muted">{t("budget", { searches: rep.searches?.made ?? 0, extractions: rep.extractions?.made ?? 0 })}</p>
+                <p className="text-xs text-muted">
+                  {t("budget", {
+                    searches: rep.searches?.made ?? 0,
+                    searchLimit: rep.searches?.limit ?? 0,
+                    extractions: rep.extractions?.made ?? 0,
+                    extractionLimit: rep.extractions?.limit ?? 0,
+                  })}
+                </p>
+                {(["rejected", "pending_llm"] as const).map((key) => {
+                  const items = rep[key] ?? [];
+                  return items.length > 0 ? (
+                    <details key={key} className="pt-1 text-xs text-body">
+                      <summary className="cursor-pointer font-bold">{t(key === "rejected" ? "rejected" : "pendingLlm", { count: items.length })}</summary>
+                      <ul className="list-disc ps-5 pt-1">
+                        {items.slice(0, 20).map((it, i) => (
+                          <li key={i}>
+                            {it.url ? (
+                              <a href={it.url} target="_blank" rel="noopener noreferrer" className="underline">
+                                {it.title}
+                              </a>
+                            ) : (
+                              it.title
+                            )}
+                            {it.reason && <span className="text-muted"> — {it.reason}</span>}
+                          </li>
+                        ))}
+                      </ul>
+                    </details>
+                  ) : null;
+                })}
                 {rep.failures && rep.failures.length > 0 && <p className="pt-1 text-xs text-warning">{t("failures", { list: rep.failures.slice(0, 3).join(" · ") })}</p>}
               </li>
             );

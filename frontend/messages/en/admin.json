@@ -73,8 +73,10 @@
     "manual": "manual",
     "scheduled": "scheduled",
     "counts": "{fetched} fetched · {new} new · {saved} saved · {flagged} flagged",
-    "budget": "Free-tier use: {searches} searches, {extractions} extractions",
+    "budget": "Free tier: {searches}/{searchLimit} searches · {extractions}/{extractionLimit} extractions",
     "failures": "Failures: {list}",
-    "error": "Run failed: {error}"
+    "error": "Run failed: {error}",
+    "rejected": "Not opportunities ({count})",
+    "pendingLlm": "Waiting for the model ({count})"
   }
 }

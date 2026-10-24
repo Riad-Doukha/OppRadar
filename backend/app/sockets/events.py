@@ -11,6 +11,7 @@ Events the frontend listens to:
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from typing import Any
 
@@ -53,6 +54,26 @@ async def disconnect(sid: str) -> None:
 
 async def emit_to_user(user_id: str, event: str, payload: dict[str, Any]) -> None:
     await sio_app.emit(event, payload, room=user_room(user_id))
+
+
+_loop: asyncio.AbstractEventLoop | None = None
+
+
+def bind_loop(loop: asyncio.AbstractEventLoop) -> None:
+    """Remember the server's event loop (app start-up) for emits from worker threads."""
+    global _loop
+    _loop = loop
+
+
+def push(user_id: str, event: str, payload: dict[str, Any]) -> None:
+    """Emit from sync code (request threads, the scheduler). No-op without a loop
+    (tests, scripts) — clients also poll, so a missed push is never lost data."""
+    if _loop is None or _loop.is_closed():
+        return
+    try:
+        asyncio.run_coroutine_threadsafe(emit_to_user(user_id, event, payload), _loop)
+    except RuntimeError:
+        logger.debug("push skipped: loop not running")
 
 
 async def broadcast_ingest_progress(payload: dict) -> None:

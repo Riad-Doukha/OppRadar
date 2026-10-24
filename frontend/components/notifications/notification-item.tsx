@@ -83,6 +83,9 @@ export function NotificationItem({ n, compact, readOnly, onNavigate }: { n: Noti
         ) : (
           <p className={cn("font-bold", compact ? "text-sm" : "text-[15px]", n.read ? "text-body" : "text-ink")}>{n.title}</p>
         )}
+        {n.kind === "match" && n.status === "pending" && (
+          <p className="mt-1 w-fit rounded-full bg-warning-tint px-2.5 py-0.5 text-[11px] font-bold text-warning">{t("held")}</p>
+        )}
         {n.body && <p className={cn("pt-[3px] text-body", compact ? "line-clamp-2 text-xs" : "text-sm")}>{n.body}</p>}
         {actions && <div className="flex flex-wrap gap-2 pt-[9px]">{actions}</div>}
       </div>

@@ -8,7 +8,7 @@ import { Button, ButtonLink } from "@/components/ui/button";
 import { MatchReasons, MatchScore } from "@/components/match/match";
 import { Pill } from "@/components/ui/inputs";
 import { useOpportunityAction } from "@/lib/hooks/use-opportunity-actions";
-import { metaLine, sourceHost, useOpportunityText, type MyOpportunity } from "@/lib/opportunities";
+import { asksForFee, daysLeft, metaLine, sourceHost, useOpportunityText, type MyOpportunity } from "@/lib/opportunities";
 import { cn } from "@/lib/utils";
 
 /**
@@ -47,6 +47,8 @@ export function OpportunityCard({ item, readOnly }: { item: MyOpportunity; readO
             {item.trust_level === "scam" ? t("trust.likelyScam") : t("trust.check")}
           </span>
         )}
+        {asksForFee(item) && <span className="flex h-7 items-center rounded-full bg-danger-soft px-3 text-xs font-bold text-danger">{t("chips.fee")}</span>}
+        {(daysLeft(item.deadline) ?? 0) < 0 && <span className="flex h-7 items-center rounded-full bg-line px-3 text-xs font-bold text-muted">{t("chips.closed")}</span>}
         {item.match && <MatchScore match={item.match} className="ms-auto" />}
       </div>
 

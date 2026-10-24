@@ -3,7 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { OpportunityForm } from "@/components/opportunity-form/opportunity-form";
 import { Alert } from "@/components/ui/alert";
@@ -12,7 +12,8 @@ import { SectionLabel } from "@/components/ui/inputs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { intlLocale, type Locale } from "@/i18n/config";
 import { api, type Me } from "@/lib/api/client";
-import { REVIEW_TONE, useMySubmissions, useSubmit, type SubmissionIn } from "@/lib/review";
+import { takePrefill } from "@/lib/prefill";
+import { REVIEW_TONE, useMySubmissions, useSubmit, type Reviewed, type SubmissionIn } from "@/lib/review";
 import { cn } from "@/lib/utils";
 
 /** Organisations propose an opportunity; it goes public after an admin review. */
@@ -21,6 +22,15 @@ export function SubmitPage() {
   const me = useQuery({ queryKey: ["me"], queryFn: () => api<Me>("/me") });
   const submit = useSubmit();
   const [formKey, setFormKey] = useState(0);
+  // An opportunity the agent read in chat ("Send it for review").
+  const [prefill, setPrefill] = useState<Reviewed | null>(null);
+  useEffect(() => {
+    const values = takePrefill();
+    if (values) {
+      setPrefill(values as unknown as Reviewed);
+      setFormKey((k) => k + 1); // remount the form with the values
+    }
+  }, []);
   const readOnly = me.data?.is_demo ?? false;
 
   return (
@@ -45,6 +55,7 @@ export function SubmitPage() {
                 size="md"
                 onClick={() => {
                   submit.reset();
+                  setPrefill(null);
                   setFormKey((k) => k + 1);
                 }}
               >
@@ -55,6 +66,7 @@ export function SubmitPage() {
             <OpportunityForm
               key={formKey}
               variant="submit"
+              initial={prefill ?? undefined}
               submitLabel={submit.isPending ? t("sending") : t("send")}
               busy={submit.isPending}
               disabled={readOnly}

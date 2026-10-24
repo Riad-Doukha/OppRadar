@@ -12,6 +12,7 @@ import { LanguageMenu } from "@/components/app/language-menu";
 import { ThemeToggle } from "@/components/app/theme-toggle";
 import { NotificationBell } from "@/components/notifications/bell";
 import { UpgradeCard } from "@/components/premium/upgrade-card";
+import { useLiveUpdates } from "@/lib/live";
 import { useNotificationSummary } from "@/lib/notifications";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api, type Me } from "@/lib/api/client";
@@ -40,6 +41,7 @@ export const initialsOf = (name: string) =>
 export function AppShell({ children }: { children: ReactNode }) {
   const t = useTranslations("shell");
   const me = useQuery({ queryKey: ["me"], queryFn: () => api<Me>("/me") });
+  useLiveUpdates();
   return (
     <div className="min-h-dvh bg-page">
       <a

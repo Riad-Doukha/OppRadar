@@ -19,7 +19,8 @@ from app.repositories.base import POSITIONED, ChildTable, NotFoundError, Row
 
 OPPORTUNITY_COLUMNS = (
     "id,external_id,title,organizer,type,mode,location,country,language,deadline,funding,"
-    "eligibility,benefits,summary,url,source,trust_level,scam_flags,added_via,created_at"
+    "eligibility,benefits,summary,url,source,trust_level,scam_flags,added_via,created_at,"
+    "deadline_source,review_notes"
 )
 REVIEW_COLUMNS = (
     f"{OPPORTUNITY_COLUMNS},review_status,review_note,reviewed_at,contact_email,submitted_by,"
@@ -517,6 +518,12 @@ class SupabaseRepository:
                 return None
             raise
         return data[0] if data else None
+
+    def update_notifications(self, user_id: str, ids: list[str], fields: Row) -> None:
+        if ids:
+            self.db.table("notifications").update(_json(fields)).eq("user_id", user_id).in_(
+                "id", ids
+            ).execute()
 
     def mark_notifications_read(self, user_id: str, ids: list[str] | None) -> None:
         query: Any = (

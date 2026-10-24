@@ -90,7 +90,14 @@
     "met": "rempli",
     "unmet": "non rempli",
     "unknown": "à vérifier",
-    "noMatch": "Pas encore de score — lancez une analyse depuis votre tableau de bord."
+    "noMatch": "Pas encore de score — lancez une analyse depuis votre tableau de bord.",
+    "threshold": "Votre seuil d'alerte : {n} %",
+    "bar": "Score de correspondance {score} sur 100"
   },
-  "noDeadline": "En continu — aucune date limite indiquée"
+  "noDeadline": "En continu — aucune date limite indiquée",
+  "chips": {
+    "fee": "Demande des frais",
+    "closed": "Clôturée",
+    "needsReview": "À vérifier"
+  }
 }

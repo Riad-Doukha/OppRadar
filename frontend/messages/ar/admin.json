@@ -73,8 +73,10 @@
     "manual": "يدوي",
     "scheduled": "مجدول",
     "counts": "{fetched} مُجلوبة · {new} جديدة · {saved} محفوظة · {flagged} مُبلّغ عنها",
-    "budget": "الاستخدام المجاني: {searches} عمليات بحث، {extractions} عمليات استخراج",
+    "budget": "الحصة المجانية: {searches}/{searchLimit} بحث · {extractions}/{extractionLimit} استخراج",
     "failures": "إخفاقات: {list}",
-    "error": "فشل التشغيل: {error}"
+    "error": "فشل التشغيل: {error}",
+    "rejected": "ليست فرصًا ({count})",
+    "pendingLlm": "بانتظار النموذج ({count})"
   }
 }

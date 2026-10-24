@@ -3799,6 +3799,18 @@
       "title": "In Source",
       "default": true
      },
+     "extracted": {
+      "anyOf": [
+       {
+        "additionalProperties": true,
+        "type": "object"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Extracted"
+     },
      "eligibility": {
       "anyOf": [
        {
@@ -3823,6 +3835,7 @@
      "citations",
      "opportunities",
      "in_source",
+     "extracted",
      "eligibility",
      "created_at"
     ],
@@ -5625,21 +5638,6 @@
       ],
       "title": "Created At"
      },
-     "saved": {
-      "type": "boolean",
-      "title": "Saved",
-      "default": false
-     },
-     "dismissed": {
-      "type": "boolean",
-      "title": "Dismissed",
-      "default": false
-     },
-     "is_new": {
-      "type": "boolean",
-      "title": "Is New",
-      "default": false
-     },
      "deadline_source": {
       "anyOf": [
        {
@@ -5655,6 +5653,28 @@
        }
       ],
       "title": "Deadline Source"
+     },
+     "review_notes": {
+      "items": {
+       "type": "string"
+      },
+      "type": "array",
+      "title": "Review Notes"
+     },
+     "saved": {
+      "type": "boolean",
+      "title": "Saved",
+      "default": false
+     },
+     "dismissed": {
+      "type": "boolean",
+      "title": "Dismissed",
+      "default": false
+     },
+     "is_new": {
+      "type": "boolean",
+      "title": "Is New",
+      "default": false
      },
      "match": {
       "anyOf": [
@@ -5689,10 +5709,11 @@
      "scam_flags",
      "added_via",
      "created_at",
+     "deadline_source",
+     "review_notes",
      "saved",
      "dismissed",
      "is_new",
-     "deadline_source",
      "match"
     ],
     "title": "MyOpportunity",
@@ -5841,6 +5862,16 @@
       "title": "Read",
       "default": false
      },
+     "status": {
+      "type": "string",
+      "enum": [
+       "sent",
+       "pending",
+       "suppressed"
+      ],
+      "title": "Status",
+      "default": "sent"
+     },
      "created_at": {
       "type": "string",
       "format": "date-time",
@@ -5858,6 +5889,7 @@
      "deadline",
      "action_url",
      "read",
+     "status",
      "created_at"
     ],
     "title": "NotificationOut"
@@ -6182,6 +6214,29 @@
        }
       ],
       "title": "Created At"
+     },
+     "deadline_source": {
+      "anyOf": [
+       {
+        "type": "string",
+        "enum": [
+         "rule",
+         "llm",
+         "none"
+        ]
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Deadline Source"
+     },
+     "review_notes": {
+      "items": {
+       "type": "string"
+      },
+      "type": "array",
+      "title": "Review Notes"
      }
     },
     "type": "object",
@@ -6205,7 +6260,9 @@
      "trust_level",
      "scam_flags",
      "added_via",
-     "created_at"
+     "created_at",
+     "deadline_source",
+     "review_notes"
     ],
     "title": "OpportunityOut"
    },
@@ -6827,6 +6884,29 @@
       ],
       "title": "Created At"
      },
+     "deadline_source": {
+      "anyOf": [
+       {
+        "type": "string",
+        "enum": [
+         "rule",
+         "llm",
+         "none"
+        ]
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Deadline Source"
+     },
+     "review_notes": {
+      "items": {
+       "type": "string"
+      },
+      "type": "array",
+      "title": "Review Notes"
+     },
      "review_status": {
       "type": "string",
       "enum": [
@@ -6918,6 +6998,8 @@
      "scam_flags",
      "added_via",
      "created_at",
+     "deadline_source",
+     "review_notes",
      "review_status",
      "review_note",
      "reviewed_at",

@@ -573,6 +573,12 @@ class MemoryRepository:
             self.notifications[new["id"]] = new
             return copy.deepcopy(new)
 
+    def update_notifications(self, user_id: str, ids: list[str], fields: Row) -> None:
+        with self._lock:
+            for n in self.notifications.values():
+                if n["user_id"] == user_id and n["id"] in ids:
+                    n.update(copy.deepcopy(fields))
+
     def mark_notifications_read(self, user_id: str, ids: list[str] | None) -> None:
         with self._lock:
             for n in self.notifications.values():

@@ -23,6 +23,10 @@ export function daysLeft(deadline: string | null): number | null {
   return Math.round((new Date(`${deadline}T00:00:00`).getTime() - today.getTime()) / DAY);
 }
 
+/** The scam check found an application fee (the matcher already drops these). */
+export const asksForFee = (o: Pick<MyOpportunity, "scam_flags">) =>
+  o.scam_flags.some((f) => (f as { flag?: string }).flag === "application_fee");
+
 /** "Organizer · Algiers, Algeria · $5,000/mo" */
 export function metaLine(o: Pick<MyOpportunity, "organizer" | "location" | "country" | "funding">) {
   const place = [o.location, o.country].filter((p, i, all) => p && all.indexOf(p) === i).join(", ");

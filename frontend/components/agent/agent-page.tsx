@@ -8,10 +8,11 @@ import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 
 import { Alert } from "@/components/ui/alert";
-import { Spinner } from "@/components/ui/button";
+import { ButtonLink, Spinner } from "@/components/ui/button";
 import { Pill, SectionLabel } from "@/components/ui/inputs";
 import { Loading, Skeleton } from "@/components/ui/skeleton";
 import { api, type Me, type Schemas } from "@/lib/api/client";
+import { stashPrefill } from "@/lib/prefill";
 import { useOpportunityText } from "@/lib/opportunities";
 import { cn } from "@/lib/utils";
 
@@ -214,6 +215,7 @@ function AgentCard({ m }: { m: Msg }) {
       {!m.in_source && <p className="mb-2 w-fit rounded-full bg-warning-tint px-3 py-1 text-xs font-bold text-warning">{t("notInSource")}</p>}
       {/* AI text is untrusted: rendered as plain text, never as HTML. */}
       <p className="text-sm whitespace-pre-wrap text-ink">{m.content}</p>
+      {m.extracted && <Extracted values={m.extracted} />}
       {e && (
         <div className="mt-3 rounded-field border border-line bg-page/60 p-3.5 text-[13px]">
           <p className={cn("font-bold", e.eligible ? "text-success" : e.eligible === false ? "text-warning" : "text-muted")}>
@@ -279,6 +281,24 @@ function AgentCard({ m }: { m: Msg }) {
           })}
         </ul>
       )}
+    </div>
+  );
+}
+
+/** An opportunity the AI read from a pasted link/announcement → "Send it for review". */
+function Extracted({ values }: { values: Record<string, unknown> }) {
+  const t = useTranslations("agent.extracted");
+  const { deadlineText } = useOpportunityText();
+  const v = values as { title?: string; organizer?: string; deadline?: string | null; url?: string; summary?: string };
+  return (
+    <div className="mt-3 rounded-field border border-brand-soft bg-page/60 p-3.5">
+      <p className="text-[11px] font-bold text-muted uppercase">{t("title")}</p>
+      <p className="pt-1 text-[15px] font-bold text-ink">{v.title}</p>
+      <p className="text-[13px] text-muted">{[v.organizer, deadlineText(v.deadline ?? null).text].filter(Boolean).join(" · ")}</p>
+      {v.summary && <p className="line-clamp-3 pt-1.5 text-[13px] text-body">{v.summary}</p>}
+      <ButtonLink href="/submit" size="sm" className="mt-3" onClick={() => stashPrefill(values)}>
+        {t("submit")}
+      </ButtonLink>
     </div>
   );
 }

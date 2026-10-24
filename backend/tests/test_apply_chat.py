@@ -80,7 +80,7 @@ def test_keyword_question_finds_opportunities(client, auth, opps):
     user, agent = reply["messages"]
     assert user["role"] == "user" and agent["role"] == "assistant"
     assert [o["title"] for o in agent["opportunities"]][0] == "Young Engineers Scholarship"
-    assert "AI agent" in agent["content"]  # honest about what isn't available yet
+    assert "ask from its page" in agent["content"]  # points to the grounded AI answer
     assert agent["citations"][0]["url"] == "https://nae-society.org/scholarship"
 
 

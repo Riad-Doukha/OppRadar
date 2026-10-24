@@ -90,7 +90,14 @@
     "met": "met",
     "unmet": "not met",
     "unknown": "to check",
-    "noMatch": "No match score yet — run a scan from your dashboard."
+    "noMatch": "No match score yet — run a scan from your dashboard.",
+    "threshold": "Your alert threshold: {n}%",
+    "bar": "Match score {score} out of 100"
   },
-  "noDeadline": "Rolling — no deadline stated"
+  "noDeadline": "Rolling — no deadline stated",
+  "chips": {
+    "fee": "Asks for a fee",
+    "closed": "Closed",
+    "needsReview": "Needs review"
+  }
 }
