@@ -22,7 +22,7 @@ from oppradar_ai.schemas import Notification as AINotification
 from app.auth import CurrentUser
 from app.models import IngestionRun, OpportunityFilters, ScanResult
 from app.repositories import Repository
-from app.services import ai, notifications, profiles
+from app.services import ai, email_alerts, notifications, profiles
 from app.sockets.events import push
 
 log = logging.getLogger(__name__)
@@ -222,6 +222,7 @@ def match_user(
         notifications.invalidate(user.id)
         if sent:
             push(user.id, "notification:new", {"kind": "match", "count": sent})
+        email_alerts.deliver(repo, user, me)
     return ScanResult(
         matches=len(results), notifications_sent=sent, scanned=len(rows), finished_at=_now()
     )

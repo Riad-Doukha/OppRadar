@@ -42,6 +42,13 @@ class Settings(BaseSettings):
     agent_scheduler: bool = False
     agent_interval_seconds: int = 3600
 
+    # Email (Resend). Without RESEND_API_KEY emails are only logged.
+    resend_api_key: str = ""
+    mail_from: str = "OppRadar <alerts@oppradar.app>"
+    email_secret: str = ""  # signs unsubscribe links (falls back to the JWT secret)
+    app_url: str = "http://localhost:3000"  # links in emails
+    api_public_url: str = "http://localhost:8000"  # unsubscribe link target
+
     # Demo account behind "Try the demo instead"
     demo_email: str = "demo@oppradar.app"
     demo_password: str = ""

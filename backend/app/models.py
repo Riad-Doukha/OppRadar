@@ -203,6 +203,7 @@ class SettingsPatch(_In):
 
     history_retention: HistoryRetention | None = None
     agent: AgentSettingsPatch | None = None
+    locale: Literal["en", "fr", "ar"] | None = None  # interface language (emails follow it)
 
 
 # --------------------------------------------------------------------------- #
@@ -300,6 +301,7 @@ class Me(_Out):
     email: str = ""
     is_demo: bool = False
     is_admin: bool = False
+    locale: Literal["en", "fr", "ar"] = "en"
     full_name: str = ""
     birth_year: int | None = None
     nationality: str | None = None

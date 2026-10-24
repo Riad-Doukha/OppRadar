@@ -5,8 +5,8 @@ import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
 
-import { setLocale } from "@/i18n/actions";
 import { LOCALES, LOCALE_NAMES, type Locale } from "@/i18n/config";
+import { changeLocale } from "@/lib/locale-sync";
 import { cn } from "@/lib/utils";
 
 /** Globe button + EN / FR / AR menu. The choice is a cookie; a refresh re-renders in the new language. */
@@ -34,7 +34,7 @@ export function LanguageMenu({ className }: { className?: string }) {
     setOpen(false);
     if (l === locale) return;
     start(async () => {
-      await setLocale(l);
+      await changeLocale(l);
       router.refresh();
     });
   }

@@ -16,6 +16,7 @@ from app.routers import (
     auth,
     chat,
     documents,
+    email,
     feed,
     health,
     matches,
@@ -124,6 +125,7 @@ app.include_router(premium.router, prefix="/me/premium", tags=["premium"])
 app.include_router(submissions.router, prefix="/me/submissions", tags=["submissions"])
 app.include_router(admin.router, prefix="/admin", tags=["admin"])
 app.include_router(documents.router, prefix="/documents", tags=["documents"])
+app.include_router(email.router, prefix="/email", tags=["email"])
 app.include_router(opportunities.router, prefix="/opportunities", tags=["opportunities"])
 app.include_router(matches.router, prefix="/matches", tags=["matches"])
 app.include_router(chat.router, prefix="/chat", tags=["chat"])

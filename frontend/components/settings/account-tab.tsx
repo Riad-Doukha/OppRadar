@@ -8,10 +8,10 @@ import { useEffect, useState, useTransition, type FormEvent } from "react";
 
 import { Button, Spinner } from "@/components/ui/button";
 import { Field, Input, PasswordInput } from "@/components/ui/field";
-import { setLocale } from "@/i18n/actions";
 import { LOCALES, LOCALE_NAMES, type Locale } from "@/i18n/config";
 import { api, type Me } from "@/lib/api/client";
 import { authError, passwordProblem } from "@/lib/auth";
+import { changeLocale } from "@/lib/locale-sync";
 import { createClient } from "@/lib/supabase/client";
 import { THEMES, useTheme } from "@/lib/theme";
 
@@ -39,7 +39,7 @@ function LanguageRow() {
   const [pending, start] = useTransition();
   const choose = (l: Locale) =>
     start(async () => {
-      await setLocale(l);
+      await changeLocale(l);
       router.refresh();
     });
   return (

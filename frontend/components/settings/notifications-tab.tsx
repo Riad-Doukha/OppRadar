@@ -4,10 +4,12 @@ import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
-import { Button } from "@/components/ui/button";
+import { useMutation } from "@tanstack/react-query";
+
+import { Button, Spinner } from "@/components/ui/button";
 import { Input } from "@/components/ui/field";
 import { Select } from "@/components/ui/inputs";
-import type { Me } from "@/lib/api/client";
+import { api, type Me } from "@/lib/api/client";
 import { useOptions } from "@/lib/onboarding/options";
 
 import { Badge, Choice, SettingRow, SettingsCard, Status, Toggle } from "./ui";
@@ -25,6 +27,7 @@ export function NotificationsTab({ me }: { me: Me }) {
   const n = me.notifications;
   const ro = me.is_demo;
   const save = useSave("/me/onboarding/alerts");
+  const test = useMutation({ mutationFn: () => api<{ sent: boolean }>("/me/notifications/test-email", { method: "POST" }) });
   const [channelError, setChannelError] = useState<string | null>(null);
 
   const set = (patch: Partial<N>) => save.mutate({ body: patch, optimistic: (m) => ({ ...m, notifications: { ...m.notifications, ...patch } }) });
@@ -88,10 +91,13 @@ export function NotificationsTab({ me }: { me: Me }) {
           <Toggle label={t("bundle")} checked={n.bundle_non_urgent} onChange={(v) => set({ bundle_non_urgent: v })} disabled={ro} />
         </SettingRow>
         <SettingRow title={t("test")} description={t("testHint")} last>
-          <Button variant="outline" className="h-10 text-sm" disabled title={t("testSoonTitle")}>
-            {t("testSoon")}
+          <Button variant="outline" className="h-10 text-sm" disabled={ro || !n.email_enabled || test.isPending} onClick={() => test.mutate()}>
+            {test.isPending && <Spinner />}
+            {t("testSend")}
           </Button>
         </SettingRow>
+        {test.isSuccess && <Status text={test.data.sent ? t("testSent", { email: me.email }) : t("testFailed")} error={!test.data.sent} />}
+        {test.isError && <Status text={t("testFailed")} error />}
         <p className="mt-2 flex items-center justify-center gap-1.5 rounded-field bg-page px-3 py-2 text-xs font-bold text-body">
           <Image src="/icons/lock-muted.svg" alt="" width={12} height={12} className="icon-adapt" />
           {t("noMarketing")}

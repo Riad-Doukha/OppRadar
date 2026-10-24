@@ -90,7 +90,7 @@
     },
     "withThreshold": "{hint} (≥ {n} %)",
     "matchThreshold": "Seuil de correspondance",
-    "rulesLater": "Les alertes apparaissent dans l'app dès maintenant ; l'envoi par e-mail et Telegram arrivera plus tard. Vos choix sont enregistrés.",
+    "rulesLater": "Les alertes apparaissent dans l'app et par e-mail (si activé). Telegram arrivera plus tard.",
     "quietCard": "Heures calmes et fréquence",
     "frequency": "Fréquence",
     "frequencyHint": "Fréquence d'envoi des alertes",
@@ -98,7 +98,7 @@
     "bundle": "Regrouper les alertes non urgentes",
     "bundleHint": "Combiner les alertes en 1–2 envois au lieu d'un message chacune",
     "test": "Alerte de test",
-    "testHint": "Envoyer un message d'exemple pour vérifier vos canaux",
+    "testHint": "Envoyer une alerte d'exemple à votre e-mail",
     "testSoonTitle": "Disponible au lancement des alertes",
     "testSoon": "Envoyer un test · bientôt",
     "noMarketing": "Les alertes concernent uniquement vos opportunités — jamais de publicité",
@@ -107,7 +107,10 @@
     "quietStart": "Début des heures calmes",
     "quietEnd": "Fin des heures calmes",
     "on": "Activé",
-    "off": "Désactivé"
+    "off": "Désactivé",
+    "testSend": "Envoyer un e-mail de test",
+    "testSent": "E-mail de test envoyé à {email}.",
+    "testFailed": "L'e-mail de test n'a pas pu être envoyé. Réessayez plus tard."
   },
   "privacy": {
     "data": "Vos données",

@@ -357,6 +357,12 @@ class SupabaseRepository:
         data = self.db.table("opportunities").delete().eq("id", opportunity_id).execute().data
         _first(data, f"opportunity {opportunity_id}")
 
+    def user_email(self, user_id: str) -> str | None:
+        try:
+            return self.db.auth.admin.get_user_by_id(user_id).user.email
+        except Exception:  # deleted user / auth unavailable
+            return None
+
     # -- AI pipeline -------------------------------------------------------------------- #
     def replace_matches(self, user_id: str, rows: list[Row]) -> None:
         self.db.table("matches").delete().eq("user_id", user_id).execute()

@@ -45,6 +45,7 @@ def profile_defaults(user_id: str, full_name: str = "") -> Row:
         "onboarding_completed_at": None,
         "agent_started_at": None,
         "is_demo": False,
+        "locale": "en",
         "history_retention": "12_months",
         "agent_settings": {},
         "summary": "",
@@ -120,6 +121,7 @@ class MemoryRepository:
         self.notifications: dict[str, Row] = {}
         self.applications: dict[tuple[str, str], Row] = {}
         self.matches: dict[str, list[Row]] = {}
+        self.emails: dict[str, str] = {}  # stands in for auth.users.email
         self.ingestion_runs: list[Row] = []
         self.chat: list[Row] = []
         self.reservations: dict[str, Row] = {}
@@ -437,6 +439,9 @@ class MemoryRepository:
                 uid: [m for m in rows if str(m["opportunity_id"]) != opportunity_id]
                 for uid, rows in self.matches.items()
             }
+
+    def user_email(self, user_id: str) -> str | None:
+        return self.emails.get(user_id)
 
     # -- AI pipeline -------------------------------------------------------------------- #
     def replace_matches(self, user_id: str, rows: list[Row]) -> None:

@@ -10,7 +10,7 @@ from fastapi import APIRouter, Depends, Query, Response, status
 from app.auth import User, Writer
 from app.models import NotificationList, NotificationTab, ReadRequest
 from app.repositories import Repository, get_repository
-from app.services import notifications
+from app.services import email_alerts, notifications, profiles
 
 router = APIRouter()
 Repo = Annotated[Repository, Depends(get_repository)]
@@ -25,6 +25,12 @@ def list_notifications(
 ) -> NotificationList:
     """Last 30 days, newest first, plus the unread count (the bell uses limit=5)."""
     return notifications.list_tab(repo, user, tab, limit)
+
+
+@router.post("/test-email", status_code=status.HTTP_202_ACCEPTED)
+def test_email(user: Writer, repo: Repo) -> dict[str, bool]:
+    """Settings → "Send test alert": a sample email to check the channel."""
+    return {"sent": email_alerts.send_test(repo, user, profiles.load_me(repo, user))}
 
 
 @router.post("/read", response_model=NotificationList)

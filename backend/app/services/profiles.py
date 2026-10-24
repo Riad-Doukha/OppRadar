@@ -66,6 +66,7 @@ def load_me(repo: Repository, user: CurrentUser) -> Me:
         email=user.email,
         is_demo=user.is_demo or bool(profile.get("is_demo")),
         is_admin=user.is_admin,
+        locale=profile.get("locale") or "en",
         **{k: profile.get(k) for k in PROFILE_FIELDS if profile.get(k) is not None},
         skills=r["skills"],
         languages=r["languages"],
@@ -222,6 +223,8 @@ def save_settings(repo: Repository, user: CurrentUser, body: SettingsPatch) -> M
     updates: Row = {}
     if body.history_retention:
         updates["history_retention"] = body.history_retention
+    if body.locale:
+        updates["locale"] = body.locale
     if body.agent:
         current = AgentSettings.model_validate(profile.get("agent_settings") or {}).model_dump()
         patch = body.agent.model_dump(exclude_none=True)

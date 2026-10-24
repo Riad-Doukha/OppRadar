@@ -90,7 +90,7 @@
     },
     "withThreshold": "{hint} (≥ {n}%)",
     "matchThreshold": "Match threshold",
-    "rulesLater": "Match alerts appear in the app now; email and Telegram delivery come later. Your choices are saved.",
+    "rulesLater": "Alerts appear in the app and by email (if on). Telegram comes later.",
     "quietCard": "Quiet hours & frequency",
     "frequency": "Frequency",
     "frequencyHint": "How often match alerts are sent",
@@ -98,7 +98,7 @@
     "bundle": "Bundle non-urgent alerts",
     "bundleHint": "Combine alerts into 1–2 batches instead of one message each",
     "test": "Test alert",
-    "testHint": "Send a sample message to check your channels",
+    "testHint": "Send a sample alert to your email",
     "testSoonTitle": "Available when alerts launch",
     "testSoon": "Send test · soon",
     "noMarketing": "Alerts are about your opportunities only — never marketing",
@@ -107,7 +107,10 @@
     "quietStart": "Quiet hours start",
     "quietEnd": "Quiet hours end",
     "on": "On",
-    "off": "Off"
+    "off": "Off",
+    "testSend": "Send a test email",
+    "testSent": "Test email sent to {email}.",
+    "testFailed": "The test email couldn't be sent. Try again later."
   },
   "privacy": {
     "data": "Your data",
