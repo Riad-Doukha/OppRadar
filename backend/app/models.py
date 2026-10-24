@@ -561,6 +561,14 @@ class ApplicationOut(_Out):
 # --------------------------------------------------------------------------- #
 class ChatRequest(_In):
     message: str = Field(min_length=1, max_length=1000)
+    opportunity_id: UUID | None = None  # "Ask the agent about this" from an opportunity page
+
+
+class Eligibility(_Out):
+    eligible: bool | None = None  # None = not enough information
+    met: list[str] = Field(default_factory=list)
+    gaps: list[str] = Field(default_factory=list)
+    next_steps: list[str] = Field(default_factory=list)
 
 
 class ChatMessageOut(_Out):
@@ -571,13 +579,15 @@ class ChatMessageOut(_Out):
     content: str
     citations: list[dict[str, Any]] = Field(default_factory=list)
     opportunities: list[OpportunityOut] = Field(default_factory=list)
+    in_source: bool = True  # False: the answer isn't stated in the source — show it as such
+    eligibility: Eligibility | None = None
     created_at: datetime
 
 
 class ChatHistory(_Out):
     messages: list[ChatMessageOut]
     saved: bool  # False = chat_history consent is off; nothing is stored
-    ai_available: bool = False  # flips when the AI chat phase is wired in
+    ai_available: bool = False  # True when the AI wrote this answer (else keyword search)
 
 
 # --------------------------------------------------------------------------- #
@@ -625,7 +635,7 @@ class OpportunityFilters(BaseModel):
     created_after: datetime | None = None  # "New" badge / new-today count
     match_any: bool = False  # q matches ANY word (chat keyword search) instead of all
     url_like: str | None = None  # chat: a pasted link, matched against opportunities.url
-    limit: int = Field(20, ge=1, le=100)
+    limit: int = Field(20, ge=1, le=1000)  # internal: routers cap user requests at 100
     offset: int = Field(0, ge=0)
 
 
@@ -635,13 +645,31 @@ class OpportunityFilters(BaseModel):
 FeedTab = Literal["for_you", "closing", "saved"]
 
 
+class Criterion(_Out):
+    """One requirement checked against the profile (AI matcher)."""
+
+    text: str
+    status: Literal["met", "unmet", "unknown"] = "unknown"
+    evidence: str = ""
+
+
+class MatchInfo(_Out):
+    score: float  # 0-100
+    top_reasons: list[str] = Field(default_factory=list)
+    unmet_requirements: list[str] = Field(default_factory=list)
+    criteria: list[Criterion] = Field(default_factory=list)
+    reasons_source: Literal["rules", "llm"] = "rules"
+
+
 class MyOpportunity(OpportunityOut):
-    """An opportunity plus this user's state. Match score / eligibility join
-    here when the AI matcher ships (see docs/ai-interface.md)."""
+    """An opportunity plus this user's state and, once their agent has scanned,
+    the AI match (score, reasons, eligibility checklist)."""
 
     saved: bool = False
     dismissed: bool = False
     is_new: bool = False
+    deadline_source: Literal["rule", "llm", "none"] | None = None
+    match: MatchInfo | None = None
 
 
 class MyOpportunityPage(_Out):
@@ -659,12 +687,40 @@ class DashboardStats(_Out):
     new_today: int
     applications: int = 0
     agent_started_at: datetime | None = None
-    matching_available: bool = False  # flips when the AI matcher is wired in
+    matching_available: bool = False  # the agent is on and matching this profile
+    matched: int = 0  # opportunities with a match score
+    last_scan_at: datetime | None = None
 
 
 class AgentStatus(_Out):
     status: Literal["waiting_for_matcher", "running"]
     agent_started_at: datetime
+
+
+class ScanResult(_Out):
+    """One matching pass for a user ("Run scan now", agent start)."""
+
+    scanned: int  # open opportunities checked
+    matches: int  # that passed the hard filters and got a score
+    notifications_sent: int
+    finished_at: datetime
+
+
+class IngestionRun(_Out):
+    """One ingestion run (admin "sync" screen); report = IngestionReport counters."""
+
+    model_config = _READ
+
+    id: UUID
+    trigger: Literal["manual", "scheduled"] = "manual"
+    started_at: datetime
+    finished_at: datetime
+    items_fetched: int = 0
+    items_new: int = 0
+    items_saved: int = 0
+    items_flagged: int = 0
+    report: dict[str, Any] = Field(default_factory=dict)
+    error: str | None = None
 
 
 class DemoSession(_Out):

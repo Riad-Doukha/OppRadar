@@ -1,7 +1,7 @@
 {
   "title": "Demander à l'agent",
   "subtitle": "Posez une question sur les opportunités ou collez un lien — l'agent cherche parmi ce qu'OppRadar a trouvé.",
-  "notice": "L'agent complet — verdicts d'éligibilité sourcés, documents requis, réponses en arabe, français ou anglais — arrive avec la phase IA. D'ici là, les réponses viennent de la recherche d'opportunités d'OppRadar.",
+  "notice": "Posez une question sur une opportunité précise (depuis sa page ou en collant son lien) pour une réponse fondée sur le texte officiel, avec votre éligibilité. Les questions générales cherchent dans ce qu'OppRadar a trouvé.",
   "suggestions": {
     "scholarships": "Bourses qui clôturent ce mois-ci",
     "internships": "Stages en data science",
@@ -28,5 +28,17 @@
   },
   "details": "Voir les détails",
   "assistant": "Assistant de candidature",
-  "official": "Page officielle"
+  "official": "Page officielle",
+  "notInSource": "Non indiqué dans la source — vérifiez la page officielle",
+  "sources": "Sources",
+  "eligibility": "Votre éligibilité",
+  "eligible": "Vous semblez éligible",
+  "notEligible": "Vous ne remplissez pas encore tout",
+  "unclear": "Pas assez d'informations pour le dire",
+  "met": "Rempli",
+  "gaps": "Manquant",
+  "next": "Prochaines étapes",
+  "about": "Question sur : {title}",
+  "clearAbout": "Question générale",
+  "aiBadge": "Réponse IA, fondée sur l'opportunité"
 }

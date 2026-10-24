@@ -11,8 +11,8 @@
     "system": "Système"
   },
   "empty": {
-    "all": "Rien pour l'instant. Vous recevrez ici les rappels d'échéance de vos opportunités enregistrées, puis les nouvelles correspondances.",
-    "matches": "Les alertes de correspondance arrivent avec la mise en correspondance.",
+    "all": "Rien pour l'instant. Les nouvelles correspondances au-dessus de votre seuil et les rappels d'échéance apparaissent ici.",
+    "matches": "Aucune correspondance au-dessus de votre seuil. Lancez une analyse depuis le tableau de bord ou baissez le seuil dans les Paramètres.",
     "deadlines": "Enregistrez une opportunité et vous serez prévenu(e) 3 jours avant la clôture.",
     "applications": "Les mises à jour de candidature arrivent avec l'assistant de candidature.",
     "system": "Résumés hebdomadaires, conseils de profil et messages du compte apparaissent ici."

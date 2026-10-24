@@ -7,7 +7,7 @@
   },
   "loadError": "We couldn't load your dashboard: {error}. Is the API running?",
   "scanning": "Your agent is scanning for you.",
-  "matchingSoon": "Matching launches soon — for now we show open opportunities of the types you chose.",
+  "matchingSoon": "Start your agent to get match scores — for now we show open opportunities of the types you chose.",
   "demo": "You're viewing the read-only demo. Saving is turned off.",
   "countsError": "We couldn't load your counts: {error}",
   "tabs": {
@@ -72,7 +72,13 @@
     "whenMatching": "Available when matching launches",
     "run": "Run scan now",
     "history": "History",
-    "loading": "Loading your agent…"
+    "loading": "Loading your agent…",
+    "matched": "{count} opportunities scored for you",
+    "lastScan": "last scan {time}",
+    "scanning": "Scanning…",
+    "scanDone": "Scan done: {matches} matches, {sent} new alerts",
+    "scanError": "Scan failed: {error}",
+    "liveScores": "match scores + eligibility checks are live"
   },
   "loading": "Loading your dashboard…",
   "scan": {
@@ -80,9 +86,9 @@
     "started": "Agent started",
     "fit": "{count} open opportunities fit the types you chose",
     "close": "{count} close in the next 7 days",
-    "deadlineSort": "Match scores arrive when matching launches — sorting by deadline for now",
+    "deadlineSort": "Match scores ready — best matches first",
     "title": "Your agent is starting its first scan",
-    "body": "Checking which open opportunities fit the types and preferences you chose. Match scores and alerts follow as soon as matching launches.",
+    "body": "Scoring every open opportunity against your profile and checking each requirement. Alerts follow your settings.",
     "working": "working…",
     "error": "We couldn't start your agent: {error}",
     "toDashboard": "Go to the dashboard",

@@ -14,7 +14,8 @@
     "queue": "Review queue",
     "flagged": "Flagged",
     "all": "All opportunities",
-    "new": "Add opportunity"
+    "new": "Add opportunity",
+    "ingest": "Ingestion"
   },
   "search": "Search title, organizer, description",
   "loading": "Loading…",
@@ -61,5 +62,19 @@
   "published": "Published. It's now visible to students.",
   "actionError": "That didn't work: {error}",
   "flags": "Scam signals: {flags}",
-  "viewIt": "View it"
+  "viewIt": "View it",
+  "ingest": {
+    "title": "Fetch new opportunities",
+    "body": "Runs the AI pipeline now: sources → extraction → dedupe → scam check, then re-matches every active agent. Remote calls only happen when RUN_LIVE_LLM=1 with a real provider; otherwise it uses local samples and rules.",
+    "run": "Run ingestion now",
+    "running": "Running… this can take a minute",
+    "runs": "Recent runs",
+    "none": "No runs yet.",
+    "manual": "manual",
+    "scheduled": "scheduled",
+    "counts": "{fetched} fetched · {new} new · {saved} saved · {flagged} flagged",
+    "budget": "Free-tier use: {searches} searches, {extractions} extractions",
+    "failures": "Failures: {list}",
+    "error": "Run failed: {error}"
+  }
 }

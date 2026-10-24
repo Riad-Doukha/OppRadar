@@ -90,7 +90,7 @@
     },
     "withThreshold": "{hint} (≥ {n}%)",
     "matchThreshold": "Match threshold",
-    "rulesLater": "Alerts start once matching launches; your choices are saved now.",
+    "rulesLater": "Match alerts appear in the app now; email and Telegram delivery come later. Your choices are saved.",
     "quietCard": "Quiet hours & frequency",
     "frequency": "Frequency",
     "frequencyHint": "How often match alerts are sent",
@@ -147,7 +147,7 @@
     "formsHint": "When the apply assistant launches, a form is filled only in your session. Organizers see their normal form and your answers."
   },
   "agent": {
-    "intro": "Scanning starts when the matching agent goes live. Your choices here are saved now and applied from the first scan.",
+    "intro": "Your agent scores every new opportunity against your profile. Scheduled source scans run on the server; these choices are saved and applied as the pipeline grows.",
     "scan": "Scan behavior",
     "auto": "Automatic scans",
     "autoHint": "Let the agent check sources on its own, several times a day",

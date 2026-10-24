@@ -7,7 +7,7 @@
   },
   "loadError": "Impossible de charger votre tableau de bord : {error}. L'API est-elle lancée ?",
   "scanning": "Votre agent cherche pour vous.",
-  "matchingSoon": "La mise en correspondance arrive bientôt — pour l'instant nous montrons les opportunités ouvertes des types choisis.",
+  "matchingSoon": "Lancez votre agent pour obtenir des scores — pour l'instant nous montrons les opportunités ouvertes des types choisis.",
   "demo": "Vous consultez la démo en lecture seule. L'enregistrement est désactivé.",
   "countsError": "Impossible de charger vos compteurs : {error}",
   "tabs": {
@@ -72,7 +72,13 @@
     "whenMatching": "Disponible au lancement des correspondances",
     "run": "Lancer une analyse",
     "history": "Historique",
-    "loading": "Chargement de votre agent…"
+    "loading": "Chargement de votre agent…",
+    "matched": "{count} opportunités notées pour vous",
+    "lastScan": "dernière analyse {time}",
+    "scanning": "Analyse…",
+    "scanDone": "Analyse terminée : {matches} correspondances, {sent} nouvelles alertes",
+    "scanError": "Échec de l'analyse : {error}",
+    "liveScores": "scores et vérification d'éligibilité actifs"
   },
   "loading": "Chargement de votre tableau de bord…",
   "scan": {
@@ -80,9 +86,9 @@
     "started": "Agent démarré",
     "fit": "{count} opportunités ouvertes correspondent aux types choisis",
     "close": "{count} clôturent dans les 7 prochains jours",
-    "deadlineSort": "Les scores arrivent avec la mise en correspondance — tri par date limite pour l'instant",
+    "deadlineSort": "Scores prêts — meilleures correspondances en premier",
     "title": "Votre agent lance sa première analyse",
-    "body": "Vérification des opportunités ouvertes qui correspondent à vos types et préférences. Scores et alertes suivront dès le lancement de la mise en correspondance.",
+    "body": "Notation de chaque opportunité ouverte selon votre profil et vérification de chaque condition. Les alertes suivent vos réglages.",
     "working": "en cours…",
     "error": "Impossible de démarrer votre agent : {error}",
     "toDashboard": "Aller au tableau de bord",

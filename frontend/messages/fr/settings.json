@@ -90,7 +90,7 @@
     },
     "withThreshold": "{hint} (≥ {n} %)",
     "matchThreshold": "Seuil de correspondance",
-    "rulesLater": "Les alertes démarrent avec la mise en correspondance ; vos choix sont déjà enregistrés.",
+    "rulesLater": "Les alertes apparaissent dans l'app dès maintenant ; l'envoi par e-mail et Telegram arrivera plus tard. Vos choix sont enregistrés.",
     "quietCard": "Heures calmes et fréquence",
     "frequency": "Fréquence",
     "frequencyHint": "Fréquence d'envoi des alertes",
@@ -147,7 +147,7 @@
     "formsHint": "Au lancement de l'assistant de candidature, un formulaire n'est rempli que dans votre session. Les organisateurs voient leur formulaire habituel et vos réponses."
   },
   "agent": {
-    "intro": "L'analyse démarre au lancement de l'agent de correspondance. Vos choix sont enregistrés dès maintenant et appliqués dès la première analyse.",
+    "intro": "Votre agent note chaque nouvelle opportunité selon votre profil. Les analyses planifiées tournent sur le serveur ; ces choix sont enregistrés et appliqués au fil des évolutions.",
     "scan": "Comportement de l'analyse",
     "auto": "Analyses automatiques",
     "autoHint": "Laisser l'agent vérifier les sources seul, plusieurs fois par jour",

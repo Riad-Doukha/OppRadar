@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useTranslations } from "next-intl";
 
 import { Button, ButtonLink } from "@/components/ui/button";
+import { MatchReasons, MatchScore } from "@/components/match/match";
 import { Pill } from "@/components/ui/inputs";
 import { useOpportunityAction } from "@/lib/hooks/use-opportunity-actions";
 import { metaLine, sourceHost, useOpportunityText, type MyOpportunity } from "@/lib/opportunities";
@@ -46,6 +47,7 @@ export function OpportunityCard({ item, readOnly }: { item: MyOpportunity; readO
             {item.trust_level === "scam" ? t("trust.likelyScam") : t("trust.check")}
           </span>
         )}
+        {item.match && <MatchScore match={item.match} className="ms-auto" />}
       </div>
 
       <h3 className="pt-2.5 text-lg leading-snug font-bold text-ink">
@@ -62,6 +64,7 @@ export function OpportunityCard({ item, readOnly }: { item: MyOpportunity; readO
           <span className="line-clamp-2">{item.summary}</span>
         </p>
       )}
+      {item.match && <MatchReasons match={item.match} limit={2} className="pt-2.5" />}
 
       <div className="flex flex-wrap items-center gap-2 pt-3.5">
         <span className={cn("flex items-center gap-1.5 text-[13px] font-bold", deadline.urgent ? "text-warning" : "text-ink")}>

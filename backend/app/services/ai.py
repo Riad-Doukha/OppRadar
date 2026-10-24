@@ -17,14 +17,20 @@ from typing import Any
 from oppradar_ai.llm import LLMError
 from oppradar_ai.schemas import (
     CertificateExtraction,
+    ChatAnswer,
+    ChatTurn,
     CVExtraction,
     DocumentContent,
+    IngestionReport,
+    MatchResult,
+    NotificationPrefs,
     Opportunity,
     OpportunityType,
     PortfolioExtraction,
     Preferences,
     Profile,
 )
+from oppradar_ai.schemas import Notification as AINotification
 from pydantic import BaseModel, ValidationError
 
 from app.models import (
@@ -45,7 +51,7 @@ from app.models import (
     SkillsStep,
 )
 
-__all__ = ["LLMError", "cv_prefill", "process_document", "to_ai_profile"]
+__all__ = ["LLMError", "cv_prefill", "process_document", "score", "run_ingestion", "to_ai_profile"]
 
 
 # --------------------------------------------------------------------------- #
@@ -262,16 +268,86 @@ def to_ai_profile(me: Me) -> Profile:
     )
 
 
+# Columns of public.opportunities the AI may fill (new AI fields must be added to
+# a migration before they are stored; anything else is dropped here).
+OPPORTUNITY_DB_COLUMNS = frozenset(
+    {
+        "title", "organizer", "type", "mode", "location", "country", "language",
+        "deadline", "deadline_source", "funding", "eligibility", "benefits", "summary",
+        "url", "source", "source_checked", "trust_level", "scam_flags", "added_via",
+        "field_confidences", "review_notes",
+    }
+)  # fmt: skip
+
+
 def opportunity_row(opp: Opportunity) -> dict[str, Any]:
     """AI Opportunity -> public.opportunities row (upserted on external_id)."""
     data = opp.model_dump(mode="json", exclude={"id"})
-    return {**data, "external_id": opp.id or None}
+    row = {k: v for k, v in data.items() if k in OPPORTUNITY_DB_COLUMNS}
+    return {**row, "external_id": opp.id or None}
+
+
+def opportunity_from_row(row: dict[str, Any]) -> Opportunity:
+    """public.opportunities row -> AI Opportunity. Its id is our row id, so the
+    MatchResults the matcher returns point straight back at our rows."""
+    fields = {k: row[k] for k in OPPORTUNITY_DB_COLUMNS if row.get(k) is not None}
+    return Opportunity.model_validate({**fields, "id": str(row["id"])})
 
 
 # --------------------------------------------------------------------------- #
-# Coming with later AI phases — wire here when they ship:
-#   ingestion  -> run_ingestion() -> IngestionReport          (POST /admin/ingest)
-#   matching   -> score_matches(profile, opportunities)        (POST /me/agent/start)
-#   chat       -> ask(question, history, profile) -> ChatAnswer (POST /chat)
-#   notify     -> plan_notifications(matches, settings)        (agent loop)
+# Pipeline (AI Phase 3-7). oppradar_ai.api imports the document stack, so it is
+# loaded lazily like `read` above. All calls are pure: we persist the results.
 # --------------------------------------------------------------------------- #
+def _api() -> Any:
+    from oppradar_ai import api
+
+    return api
+
+
+def api_error_type() -> type[Exception]:
+    return _api().ApiError
+
+
+def run_ingestion() -> IngestionReport:
+    """Fetch + extract + dedupe + scam-check the configured sources. Remote calls
+    only happen when the AI gate is open (RUN_LIVE_LLM=1 + a real provider)."""
+    return _api().run_ingestion()
+
+
+def score(profile: Profile, opportunities: list[Opportunity]) -> list[MatchResult]:
+    """Hard filters (expired, application fee) + 0-100 score with reasons, best first."""
+    return _api().score_user(profile, opportunities)
+
+
+def decide_notifications(
+    matches: list[MatchResult], prefs: NotificationPrefs, history: list[AINotification]
+) -> list[AINotification]:
+    return _api().decide_notifications(matches, prefs, history)
+
+
+def notification_prefs(user_id: str, settings: dict[str, Any]) -> NotificationPrefs:
+    """The user's alert settings (Settings → Notifications) as the AI's prefs."""
+
+    def hour(value: Any, default: int) -> int:
+        return int(str(value)[:2]) if value else default
+
+    quiet = bool(settings.get("quiet_start") and settings.get("quiet_end"))
+    return NotificationPrefs(
+        profile_id=user_id,
+        mode="instant" if settings.get("frequency", "instant") == "instant" else "digest",
+        daily_cap=5,
+        quiet_hours_start=hour(settings.get("quiet_start"), 22) if quiet else 0,
+        quiet_hours_end=hour(settings.get("quiet_end"), 7) if quiet else 0,
+        threshold=float(settings.get("threshold", 70)),
+    )
+
+
+def answer(
+    profile: Profile, opportunity: Opportunity | None, history: list[ChatTurn], message: str
+) -> ChatAnswer:
+    """Grounded chat answer; raises the API error `chat-unavailable` if absent."""
+    return _api().answer(profile, opportunity, history, message)
+
+
+def extract_opportunity(url: str | None = None, text: str | None = None) -> Opportunity:
+    return _api().extract_opportunity(url=url, text=text, source_name="user")

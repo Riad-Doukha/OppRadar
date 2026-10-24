@@ -1,16 +1,17 @@
 "use client";
 
-import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Image from "next/image";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
 
 import { initialsOf } from "@/components/app/app-shell";
 import { Alert } from "@/components/ui/alert";
-import { Button, ButtonLink } from "@/components/ui/button";
+import { Button, ButtonLink, Spinner } from "@/components/ui/button";
 import { Pill } from "@/components/ui/inputs";
 import { Loading, OpportunityCardSkeleton, Skeleton } from "@/components/ui/skeleton";
+import { intlLocale, type Locale } from "@/i18n/config";
 import { api, type Me, type Schemas } from "@/lib/api/client";
 import { labelOf, useOptions } from "@/lib/onboarding/options";
 import { isComplete } from "@/lib/onboarding/status";
@@ -281,8 +282,19 @@ function nextTip(me: Me) {
 
 function RadarCard({ stats }: { stats?: Stats }) {
   const t = useTranslations("dashboard.radar");
+  const locale = intlLocale(useLocale() as Locale);
+  const qc = useQueryClient();
+  const scan = useMutation({
+    mutationFn: () => api<Schemas["ScanResult"]>("/me/agent/scan", { method: "POST" }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["dashboard"] });
+      qc.invalidateQueries({ queryKey: ["feed"] });
+      qc.invalidateQueries({ queryKey: ["notifications"] });
+    },
+  });
   if (!stats) return <RadarCardSkeleton />;
   const live = stats.matching_available;
+  const last = stats.last_scan_at && new Date(stats.last_scan_at).toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" });
   return (
     <section className="rounded-card border border-line bg-[linear-gradient(153deg,var(--color-surface)_60%,var(--color-page)_100%)] px-[22px] py-5 shadow-[0_1px_1.5px_rgb(30_17_62/0.05)]" aria-label={t("label")}>
       <div className="flex items-center justify-between gap-3">
@@ -290,29 +302,39 @@ function RadarCard({ stats }: { stats?: Stats }) {
           <span className={cn("size-2.5 rounded-full", live ? "bg-success shadow-[0_0_0_4px_var(--color-success-tint)]" : "bg-warning shadow-[0_0_0_4px_var(--color-warning-tint)]")} />
           {live ? t("active") : stats.agent_started_at ? t("ready") : t("notStarted")}
         </p>
-        <span className="font-mono text-xs text-muted">{live ? t("scanningShort") : t("soonShort")}</span>
+        <span className="font-mono text-xs text-muted">{last ? t("lastScan", { time: last }) : live ? t("scanningShort") : ""}</span>
       </div>
       <div className="mt-3 rounded-field bg-night px-[18px] py-4 font-mono text-[11px] leading-[20.9px] text-on-night-strong">
+        {live && (
+          <p>
+            <span className="text-[#8b7fb0]">{t("now")}</span> {t("matched", { count: stats.matched })}
+          </p>
+        )}
         <p>
           <span className="text-[#8b7fb0]">{t("now")}</span> {t("fit", { count: stats.for_you })}
         </p>
         <p>
           <span className="text-[#8b7fb0]">{t("now")}</span> {t("close", { count: stats.closing_this_week })}
         </p>
-        {!live && (
+        {live && (
           <p>
-            <span className="text-[#8b7fb0]">{t("soon")}</span> {t("scores")}
+            <span className="text-[#8b7fb0]">{t("now")}</span> {t("liveScores")}
           </p>
         )}
       </div>
       <div className="flex gap-2.5 pt-3.5">
-        <Button className="h-10 flex-1 text-sm" disabled title={t("whenMatching")}>
-          {t("run")}
+        <Button className="h-10 flex-1 text-sm" disabled={scan.isPending} onClick={() => scan.mutate()}>
+          {scan.isPending && <Spinner />}
+          {scan.isPending ? t("scanning") : t("run")}
         </Button>
-        <Button variant="ghost" className="h-10 text-sm" disabled title={t("whenMatching")}>
+        <ButtonLink href="/notifications?tab=matches" variant="ghost" className="h-10 text-sm">
           {t("history")}
-        </Button>
+        </ButtonLink>
       </div>
+      <p className="pt-2 text-xs text-muted" aria-live="polite">
+        {scan.isSuccess && t("scanDone", { matches: scan.data.matches, sent: scan.data.notifications_sent })}
+        {scan.isError && <span className="text-danger">{t("scanError", { error: scan.error.message })}</span>}
+      </p>
     </section>
   );
 }

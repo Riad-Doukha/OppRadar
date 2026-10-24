@@ -37,6 +37,11 @@ class Settings(BaseSettings):
     # Uploads (Figma step 1: "PDF max 5 MB")
     upload_max_mb: int = 5
 
+    # The agent cycle (ingest, then re-match every active agent) on a timer.
+    # Off by default: enable it on the one process that should own it.
+    agent_scheduler: bool = False
+    agent_interval_seconds: int = 3600
+
     # Demo account behind "Try the demo instead"
     demo_email: str = "demo@oppradar.app"
     demo_password: str = ""

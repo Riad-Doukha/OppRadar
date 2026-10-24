@@ -356,6 +356,48 @@ class SupabaseRepository:
         data = self.db.table("opportunities").delete().eq("id", opportunity_id).execute().data
         _first(data, f"opportunity {opportunity_id}")
 
+    # -- AI pipeline -------------------------------------------------------------------- #
+    def replace_matches(self, user_id: str, rows: list[Row]) -> None:
+        self.db.table("matches").delete().eq("user_id", user_id).execute()
+        if rows:
+            payload = [_json({**r, "user_id": user_id}) for r in rows]
+            self.db.table("matches").insert(payload).execute()
+
+    def get_matches(self, user_id: str) -> list[Row]:
+        return (
+            self.db.table("matches")
+            .select("*")
+            .eq("user_id", user_id)
+            .order("score", desc=True)
+            .execute()
+            .data
+        )
+
+    def agent_user_ids(self) -> list[str]:
+        rows = (
+            self.db.table("profiles")
+            .select("user_id")
+            .not_.is_("agent_started_at", "null")
+            .execute()
+            .data
+        )
+        return [str(r["user_id"]) for r in rows]
+
+    def add_ingestion_run(self, row: Row) -> Row:
+        return _first(
+            self.db.table("ingestion_runs").insert(_json(row)).execute().data, "ingestion run"
+        )
+
+    def list_ingestion_runs(self, limit: int) -> list[Row]:
+        return (
+            self.db.table("ingestion_runs")
+            .select("*")
+            .order("started_at", desc=True)
+            .limit(limit)
+            .execute()
+            .data
+        )
+
     # -- applications ---------------------------------------------------------------- #
     def list_applications(self, user_id: str) -> list[Row]:
         return (

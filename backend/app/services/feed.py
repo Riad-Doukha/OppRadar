@@ -21,14 +21,16 @@ from app.models import (
     MyOpportunityPage,
     OpportunityFilters,
     OpportunityTypeName,
+    ScanResult,
 )
 from app.repositories import NotFoundError, Repository
 from app.repositories.base import Row
-from app.services import notifications
+from app.services import agent, notifications
 from app.services.parallel import gather
 
 CLOSING_SOON_DAYS = 7
 NEW_FOR = timedelta(days=3)  # "New" badge on cards
+MAX_MATCHED = 500  # "For you" = the matched set, sorted by score
 
 
 def _now() -> datetime:
@@ -72,16 +74,30 @@ def _filters(
     return OpportunityFilters(q=q, types=chosen, exclude_ids=dismissed, limit=limit, offset=offset)
 
 
-def _context(repo: Repository, user: CurrentUser) -> tuple[dict[str, Row], Row]:
-    """This user's saved/dismissed state and profile, fetched concurrently."""
+def _matches(repo: Repository, user_id: str) -> dict[str, Row]:
+    return {str(m["opportunity_id"]): m for m in repo.get_matches(user_id)}
+
+
+def _context(repo: Repository, user: CurrentUser) -> tuple[dict[str, Row], Row, dict[str, Row]]:
+    """This user's saved/dismissed state, profile and AI matches, fetched concurrently."""
     r = gather(
         states=lambda: _states(repo, user.id),
         profile=lambda: repo.get_profile(user.id) or {},
+        matches=lambda: _matches(repo, user.id),
     )
-    return r["states"], r["profile"]
+    return r["states"], r["profile"], r["matches"]
 
 
-def _decorate(row: Row, states: dict[str, Row]) -> MyOpportunity:
+def _match_info(m: Row | None) -> dict[str, Any] | None:
+    if not m:
+        return None
+    keys = ("score", "top_reasons", "unmet_requirements", "criteria", "reasons_source")
+    return {k: m[k] for k in keys if m.get(k) is not None}
+
+
+def _decorate(
+    row: Row, states: dict[str, Row], matches: dict[str, Row] | None = None
+) -> MyOpportunity:
     state = states.get(str(row["id"]), {})
     created = row.get("created_at")
     if isinstance(created, str):
@@ -92,6 +108,7 @@ def _decorate(row: Row, states: dict[str, Row]) -> MyOpportunity:
             "saved": bool(state.get("saved_at")),
             "dismissed": bool(state.get("dismissed_at")),
             "is_new": bool(created and _now() - created < NEW_FOR),
+            "match": _match_info((matches or {}).get(str(row["id"]))),
         }
     )
 
@@ -106,12 +123,22 @@ def list_feed(
     limit: int = 20,
     offset: int = 0,
 ) -> MyOpportunityPage:
-    states, profile = _context(repo, user)
-    filters = _filters(tab, states, profile, types=types, q=q, limit=limit, offset=offset)
-    rows, total = repo.list_opportunities(filters)
+    states, profile, matches = _context(repo, user)
+    if tab == "for_you" and matches:
+        # Once the agent has scanned: the matched opportunities, best score first.
+        filters = OpportunityFilters(
+            q=q, types=types or [], ids=list(matches), exclude_ids=_ids(states, "dismissed_at"),
+            limit=MAX_MATCHED,
+        )  # fmt: skip
+        rows, _ = repo.list_opportunities(filters)
+        rows.sort(key=lambda r: -float(matches[str(r["id"])]["score"]))
+        total, rows = len(rows), rows[offset : offset + limit]
+    else:
+        filters = _filters(tab, states, profile, types=types, q=q, limit=limit, offset=offset)
+        rows, total = repo.list_opportunities(filters)
     return MyOpportunityPage(
         tab=tab,
-        items=[_decorate(r, states) for r in rows],
+        items=[_decorate(r, states, matches) for r in rows],
         total=total,
         limit=limit,
         offset=offset,
@@ -120,11 +147,13 @@ def list_feed(
 
 def get_one(repo: Repository, user: CurrentUser, opportunity_id: str) -> MyOpportunity:
     r = gather(
-        row=lambda: repo.get_opportunity(opportunity_id), states=lambda: _states(repo, user.id)
+        row=lambda: repo.get_opportunity(opportunity_id),
+        states=lambda: _states(repo, user.id),
+        matches=lambda: _matches(repo, user.id),
     )
     if r["row"] is None:
         raise NotFoundError(f"opportunity {opportunity_id}")
-    return _decorate(r["row"], r["states"])
+    return _decorate(r["row"], r["states"], r["matches"])
 
 
 def set_flag(
@@ -139,10 +168,15 @@ def set_flag(
 
 
 def dashboard(repo: Repository, user: CurrentUser) -> DashboardStats:
-    states, profile = _context(repo, user)
+    states, profile, matches = _context(repo, user)
 
     def count(tab: FeedTab, **extra: Any) -> int:
         filters = _filters(tab, states, profile, limit=1).model_copy(update=extra)
+        if tab == "for_you" and matches:
+            dismissed = _ids(states, "dismissed_at")
+            filters = filters.model_copy(
+                update={"types": [], "ids": list(matches), "exclude_ids": dismissed}
+            )
         return repo.list_opportunities(filters)[1]
 
     counts = gather(
@@ -152,15 +186,28 @@ def dashboard(repo: Repository, user: CurrentUser) -> DashboardStats:
         new_today=lambda: count("for_you", created_after=_now() - timedelta(days=1)),
         applications=lambda: len(repo.list_applications(user.id)),
     )
-    return DashboardStats(**counts, agent_started_at=profile.get("agent_started_at"))
+    return DashboardStats(
+        **counts,
+        agent_started_at=profile.get("agent_started_at"),
+        matching_available=bool(profile.get("agent_started_at")),
+        matched=len(matches),
+        last_scan_at=max((m["created_at"] for m in matches.values()), default=None),
+    )
 
 
 def start_agent(repo: Repository, user: CurrentUser) -> AgentStatus:
-    """Record that the user started their agent. The scan itself needs the AI
-    ingestion + matching phases; until then the status says so."""
+    """Turn the user's agent on and run the first scan right away; after that the
+    scheduled cycle re-matches them whenever new opportunities arrive."""
     profile = repo.ensure_profile(user.id, user.full_name)
     started = profile.get("agent_started_at")
     if not started:
         started = repo.update_profile(user.id, {"agent_started_at": _now()})["agent_started_at"]
+    scan(repo, user)
+    return AgentStatus(status="running", agent_started_at=started)
+
+
+def scan(repo: Repository, user: CurrentUser) -> ScanResult:
+    """ "Run scan now": match this profile against every open opportunity."""
+    result = agent.match_user(repo, user)
     notifications.invalidate(user.id)
-    return AgentStatus(status="waiting_for_matcher", agent_started_at=started)
+    return result

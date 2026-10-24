@@ -76,9 +76,21 @@
     "save": "Enregistrer",
     "soonTitle": "Arrive avec l'agent IA",
     "remind": "Me le rappeler 3 jours avant · bientôt",
-    "askAgent": "Demander à l'agent · bientôt",
+    "askAgent": "Demander à l'agent",
     "showAgain": "La réafficher dans mon fil",
     "notInterested": "Pas intéressé(e)",
     "loading": "Chargement de l'opportunité…"
-  }
+  },
+  "match": {
+    "score": "{score} % de correspondance",
+    "why": "Pourquoi vous la voyez",
+    "missing": "Il vous manque",
+    "byAi": "Raisons formulées par l'IA",
+    "checklist": "Vérification d'éligibilité",
+    "met": "rempli",
+    "unmet": "non rempli",
+    "unknown": "à vérifier",
+    "noMatch": "Pas encore de score — lancez une analyse depuis votre tableau de bord."
+  },
+  "noDeadline": "En continu — aucune date limite indiquée"
 }

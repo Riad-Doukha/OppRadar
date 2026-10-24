@@ -11,8 +11,8 @@
     "system": "System"
   },
   "empty": {
-    "all": "Nothing yet. You'll get deadline reminders for saved opportunities here, and new matches once matching launches.",
-    "matches": "Match alerts arrive once matching launches.",
+    "all": "Nothing yet. New matches above your threshold and deadline reminders for saved opportunities show up here.",
+    "matches": "No match above your threshold yet. Run a scan from the dashboard, or lower the threshold in Settings.",
     "deadlines": "Save an opportunity and you'll be reminded 3 days before it closes.",
     "applications": "Application updates arrive with the apply assistant.",
     "system": "Weekly summaries, profile tips and account messages show up here."

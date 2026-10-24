@@ -3,7 +3,7 @@
  "info": {
   "title": "OppRadar API",
   "description": "Backend for OppRadar \u2014 opportunities in, matches out.",
-  "version": "0.2.0"
+  "version": "0.3.0"
  },
  "paths": {
   "/health": {
@@ -723,7 +723,7 @@
      "dashboard"
     ],
     "summary": "Start Agent",
-    "description": "'Start my agent': recorded now; scanning starts once the AI matcher ships.",
+    "description": "'Start my agent': turn matching on and run the first scan now.",
     "operationId": "start_agent_me_agent_start_post",
     "responses": {
      "202": {
@@ -732,6 +732,33 @@
        "application/json": {
         "schema": {
          "$ref": "#/components/schemas/AgentStatus"
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ]
+   }
+  },
+  "/me/agent/scan": {
+   "post": {
+    "tags": [
+     "dashboard"
+    ],
+    "summary": "Scan",
+    "description": "'Run scan now': re-match this profile against every open opportunity.",
+    "operationId": "scan_me_agent_scan_post",
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ScanResult"
         }
        }
       }
@@ -1585,6 +1612,87 @@
       "HTTPBearer": []
      }
     ]
+   }
+  },
+  "/admin/ingest": {
+   "post": {
+    "tags": [
+     "admin"
+    ],
+    "summary": "Ingest",
+    "description": "Run the AI ingestion now (sources -> extraction -> dedupe -> scam check),\nthen re-match every active agent. Remote calls need the AI gate open.",
+    "operationId": "ingest_admin_ingest_post",
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/IngestionRun"
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ]
+   }
+  },
+  "/admin/ingest/runs": {
+   "get": {
+    "tags": [
+     "admin"
+    ],
+    "summary": "Ingestion Runs",
+    "operationId": "ingestion_runs_admin_ingest_runs_get",
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ],
+    "parameters": [
+     {
+      "name": "limit",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer",
+       "maximum": 50,
+       "minimum": 1,
+       "default": 10,
+       "title": "Limit"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "array",
+         "items": {
+          "$ref": "#/components/schemas/IngestionRun"
+         },
+         "title": "Response Ingestion Runs Admin Ingest Runs Get"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
    }
   },
   "/admin/opportunities": {
@@ -3686,6 +3794,21 @@
       "type": "array",
       "title": "Opportunities"
      },
+     "in_source": {
+      "type": "boolean",
+      "title": "In Source",
+      "default": true
+     },
+     "eligibility": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/Eligibility"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
      "created_at": {
       "type": "string",
       "format": "date-time",
@@ -3699,6 +3822,8 @@
      "content",
      "citations",
      "opportunities",
+     "in_source",
+     "eligibility",
      "created_at"
     ],
     "title": "ChatMessageOut"
@@ -3710,6 +3835,18 @@
       "maxLength": 1000,
       "minLength": 1,
       "title": "Message"
+     },
+     "opportunity_id": {
+      "anyOf": [
+       {
+        "type": "string",
+        "format": "uuid"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Opportunity Id"
      }
     },
     "additionalProperties": false,
@@ -3718,6 +3855,37 @@
      "message"
     ],
     "title": "ChatRequest"
+   },
+   "Criterion": {
+    "properties": {
+     "text": {
+      "type": "string",
+      "title": "Text"
+     },
+     "status": {
+      "type": "string",
+      "enum": [
+       "met",
+       "unmet",
+       "unknown"
+      ],
+      "title": "Status",
+      "default": "unknown"
+     },
+     "evidence": {
+      "type": "string",
+      "title": "Evidence",
+      "default": ""
+     }
+    },
+    "type": "object",
+    "required": [
+     "text",
+     "status",
+     "evidence"
+    ],
+    "title": "Criterion",
+    "description": "One requirement checked against the profile (AI matcher)."
    },
    "DashboardStats": {
     "properties": {
@@ -3758,6 +3926,23 @@
       "type": "boolean",
       "title": "Matching Available",
       "default": false
+     },
+     "matched": {
+      "type": "integer",
+      "title": "Matched",
+      "default": 0
+     },
+     "last_scan_at": {
+      "anyOf": [
+       {
+        "type": "string",
+        "format": "date-time"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Last Scan At"
      }
     },
     "type": "object",
@@ -3768,7 +3953,9 @@
      "new_today",
      "applications",
      "agent_started_at",
-     "matching_available"
+     "matching_available",
+     "matched",
+     "last_scan_at"
     ],
     "title": "DashboardStats"
    },
@@ -4223,6 +4410,50 @@
     "title": "EducationStep",
     "description": "Step 2 \u00b7 Education & experience (experiences/certificates have their own CRUD)."
    },
+   "Eligibility": {
+    "properties": {
+     "eligible": {
+      "anyOf": [
+       {
+        "type": "boolean"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Eligible"
+     },
+     "met": {
+      "items": {
+       "type": "string"
+      },
+      "type": "array",
+      "title": "Met"
+     },
+     "gaps": {
+      "items": {
+       "type": "string"
+      },
+      "type": "array",
+      "title": "Gaps"
+     },
+     "next_steps": {
+      "items": {
+       "type": "string"
+      },
+      "type": "array",
+      "title": "Next Steps"
+     }
+    },
+    "type": "object",
+    "required": [
+     "eligible",
+     "met",
+     "gaps",
+     "next_steps"
+    ],
+    "title": "Eligibility"
+   },
    "Experience": {
     "properties": {
      "kind": {
@@ -4595,6 +4826,85 @@
     "type": "object",
     "title": "HTTPValidationError"
    },
+   "IngestionRun": {
+    "properties": {
+     "id": {
+      "type": "string",
+      "format": "uuid",
+      "title": "Id"
+     },
+     "trigger": {
+      "type": "string",
+      "enum": [
+       "manual",
+       "scheduled"
+      ],
+      "title": "Trigger",
+      "default": "manual"
+     },
+     "started_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Started At"
+     },
+     "finished_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Finished At"
+     },
+     "items_fetched": {
+      "type": "integer",
+      "title": "Items Fetched",
+      "default": 0
+     },
+     "items_new": {
+      "type": "integer",
+      "title": "Items New",
+      "default": 0
+     },
+     "items_saved": {
+      "type": "integer",
+      "title": "Items Saved",
+      "default": 0
+     },
+     "items_flagged": {
+      "type": "integer",
+      "title": "Items Flagged",
+      "default": 0
+     },
+     "report": {
+      "additionalProperties": true,
+      "type": "object",
+      "title": "Report"
+     },
+     "error": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Error"
+     }
+    },
+    "type": "object",
+    "required": [
+     "id",
+     "trigger",
+     "started_at",
+     "finished_at",
+     "items_fetched",
+     "items_new",
+     "items_saved",
+     "items_flagged",
+     "report",
+     "error"
+    ],
+    "title": "IngestionRun",
+    "description": "One ingestion run (admin \"sync\" screen); report = IngestionReport counters."
+   },
    "Language": {
     "properties": {
      "language": {
@@ -4752,6 +5062,53 @@
      "url"
     ],
     "title": "LinkIn"
+   },
+   "MatchInfo": {
+    "properties": {
+     "score": {
+      "type": "number",
+      "title": "Score"
+     },
+     "top_reasons": {
+      "items": {
+       "type": "string"
+      },
+      "type": "array",
+      "title": "Top Reasons"
+     },
+     "unmet_requirements": {
+      "items": {
+       "type": "string"
+      },
+      "type": "array",
+      "title": "Unmet Requirements"
+     },
+     "criteria": {
+      "items": {
+       "$ref": "#/components/schemas/Criterion"
+      },
+      "type": "array",
+      "title": "Criteria"
+     },
+     "reasons_source": {
+      "type": "string",
+      "enum": [
+       "rules",
+       "llm"
+      ],
+      "title": "Reasons Source",
+      "default": "rules"
+     }
+    },
+    "type": "object",
+    "required": [
+     "score",
+     "top_reasons",
+     "unmet_requirements",
+     "criteria",
+     "reasons_source"
+    ],
+    "title": "MatchInfo"
    },
    "Me": {
     "properties": {
@@ -5282,6 +5639,32 @@
       "type": "boolean",
       "title": "Is New",
       "default": false
+     },
+     "deadline_source": {
+      "anyOf": [
+       {
+        "type": "string",
+        "enum": [
+         "rule",
+         "llm",
+         "none"
+        ]
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Deadline Source"
+     },
+     "match": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/MatchInfo"
+       },
+       {
+        "type": "null"
+       }
+      ]
      }
     },
     "type": "object",
@@ -5308,10 +5691,12 @@
      "created_at",
      "saved",
      "dismissed",
-     "is_new"
+     "is_new",
+     "deadline_source",
+     "match"
     ],
     "title": "MyOpportunity",
-    "description": "An opportunity plus this user's state. Match score / eligibility join\nhere when the AI matcher ships (see docs/ai-interface.md)."
+    "description": "An opportunity plus this user's state and, once their agent has scanned,\nthe AI match (score, reasons, eligibility checklist)."
    },
    "MyOpportunityPage": {
     "properties": {
@@ -6573,6 +6958,36 @@
      "offset"
     ],
     "title": "ReviewedOpportunityPage"
+   },
+   "ScanResult": {
+    "properties": {
+     "scanned": {
+      "type": "integer",
+      "title": "Scanned"
+     },
+     "matches": {
+      "type": "integer",
+      "title": "Matches"
+     },
+     "notifications_sent": {
+      "type": "integer",
+      "title": "Notifications Sent"
+     },
+     "finished_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Finished At"
+     }
+    },
+    "type": "object",
+    "required": [
+     "scanned",
+     "matches",
+     "notifications_sent",
+     "finished_at"
+    ],
+    "title": "ScanResult",
+    "description": "One matching pass for a user (\"Run scan now\", agent start)."
    },
    "SettingsPatch": {
     "properties": {

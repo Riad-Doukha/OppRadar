@@ -6,12 +6,13 @@ from __future__ import annotations
 from typing import Annotated, Literal
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 
 from app.auth import Admin
 from app.models import (
     AdminOpportunityIn,
     AdminStats,
+    IngestionRun,
     OpportunityPatch,
     ReviewedOpportunity,
     ReviewedOpportunityPage,
@@ -19,7 +20,7 @@ from app.models import (
     TrustLevelName,
 )
 from app.repositories import Repository, get_repository
-from app.services import review
+from app.services import agent, review
 
 router = APIRouter()
 Repo = Annotated[Repository, Depends(get_repository)]
@@ -28,6 +29,25 @@ Repo = Annotated[Repository, Depends(get_repository)]
 @router.get("/stats", response_model=AdminStats)
 def stats(_: Admin, repo: Repo) -> AdminStats:
     return review.stats(repo)
+
+
+@router.post("/ingest", response_model=IngestionRun)
+def ingest(admin: Admin, repo: Repo) -> IngestionRun:
+    """Run the AI ingestion now (sources -> extraction -> dedupe -> scam check),
+    then re-match every active agent. Remote calls need the AI gate open."""
+    try:
+        run = agent.ingest(repo, trigger="manual", admin_id=admin.id)
+    except RuntimeError as exc:
+        raise HTTPException(status.HTTP_409_CONFLICT, str(exc)) from exc
+    agent.match_everyone(repo)
+    return run
+
+
+@router.get("/ingest/runs", response_model=list[IngestionRun])
+def ingestion_runs(
+    _: Admin, repo: Repo, limit: Annotated[int, Query(ge=1, le=50)] = 10
+) -> list[IngestionRun]:
+    return agent.runs(repo, limit)
 
 
 @router.get("/opportunities", response_model=ReviewedOpportunityPage)

@@ -23,7 +23,9 @@ import {
   useAdminStats,
   useCreateOpportunity,
   useDeleteOpportunity,
+  useIngestionRuns,
   useReview,
+  useRunIngestion,
   useUpdateOpportunity,
   type AdminOpportunityIn,
   type AdminView,
@@ -32,7 +34,7 @@ import {
 } from "@/lib/review";
 import { cn } from "@/lib/utils";
 
-const TABS = ["queue", "flagged", "all", "new"] as const;
+const TABS = ["queue", "flagged", "all", "new", "ingest"] as const;
 type Tab = (typeof TABS)[number];
 
 /** Admin area: review queue, flagged sources, every opportunity, and "add". */
@@ -94,7 +96,7 @@ function Admin() {
         ))}
       </div>
 
-      <div className="pt-4">{tab === "new" ? <NewOpportunity /> : <List key={tab} view={tab} />}</div>
+      <div className="pt-4">{tab === "new" ? <NewOpportunity /> : tab === "ingest" ? <Ingestion /> : <List key={tab} view={tab} />}</div>
     </div>
   );
 }
@@ -287,5 +289,52 @@ function NewOpportunity() {
         onSubmit={(values) => create.mutate(values as AdminOpportunityIn, { onSuccess: () => setFormKey((k) => k + 1) })}
       />
     </section>
+  );
+}
+
+function Ingestion() {
+  const t = useTranslations("admin.ingest");
+  const locale = intlLocale(useLocale() as Locale);
+  const runs = useIngestionRuns();
+  const run = useRunIngestion();
+  const when = (iso: string) => new Date(iso).toLocaleString(locale, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+
+  return (
+    <div className="flex flex-col gap-4">
+      <section className="rounded-card border border-line bg-surface p-5 sm:p-6">
+        <h2 className="text-lg font-bold text-ink">{t("title")}</h2>
+        <p className="max-w-3xl pt-1 text-sm text-body">{t("body")}</p>
+        <Button size="md" className="mt-4" disabled={run.isPending} onClick={() => run.mutate()}>
+          {run.isPending && <Spinner />}
+          {run.isPending ? t("running") : t("run")}
+        </Button>
+        {run.isError && <Alert className="mt-3">{t("error", { error: run.error.message })}</Alert>}
+      </section>
+
+      <section className="rounded-card border border-line bg-surface p-5 sm:p-6">
+        <h2 className="text-base font-bold text-ink">{t("runs")}</h2>
+        {runs.isPending && <Skeleton className="mt-3 h-16 w-full rounded-field" />}
+        {runs.data?.length === 0 && <p className="pt-2 text-sm text-muted">{t("none")}</p>}
+        <ul className="mt-2 divide-y divide-line">
+          {runs.data?.map((r) => {
+            const rep = r.report as { searches?: { made?: number }; extractions?: { made?: number }; failures?: string[] };
+            return (
+              <li key={r.id} className="py-3 text-sm">
+                <p className="flex flex-wrap items-center gap-2">
+                  <span className="font-bold text-ink">{when(r.started_at)}</span>
+                  <span className="rounded-full bg-page px-2.5 py-0.5 text-xs font-bold text-muted">{t(r.trigger)}</span>
+                  {r.error && <span className="rounded-full bg-danger-soft px-2.5 py-0.5 text-xs font-bold text-danger">{t("error", { error: r.error })}</span>}
+                </p>
+                <p className="pt-1 font-mono text-xs text-body">
+                  {t("counts", { fetched: r.items_fetched, new: r.items_new, saved: r.items_saved, flagged: r.items_flagged })}
+                </p>
+                <p className="text-xs text-muted">{t("budget", { searches: rep.searches?.made ?? 0, extractions: rep.extractions?.made ?? 0 })}</p>
+                {rep.failures && rep.failures.length > 0 && <p className="pt-1 text-xs text-warning">{t("failures", { list: rep.failures.slice(0, 3).join(" · ") })}</p>}
+              </li>
+            );
+          })}
+        </ul>
+      </section>
+    </div>
   );
 }

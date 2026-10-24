@@ -14,6 +14,8 @@ os.environ["SUPABASE_SERVICE_ROLE_KEY"] = ""
 os.environ["SUPABASE_ANON_KEY"] = ""
 os.environ["DEMO_PASSWORD"] = ""
 os.environ["LLM_PROVIDER"] = "fake"
+os.environ["EMBEDDING_PROVIDER"] = "fake"  # no model download
+os.environ["RUN_LIVE_LLM"] = "0"  # the AI gate stays closed: no network
 os.environ["DATA_DIR"] = tempfile.mkdtemp(prefix="oppradar-backend-test-")
 
 from pathlib import Path  # noqa: E402

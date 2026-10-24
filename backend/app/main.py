@@ -1,6 +1,7 @@
 """OppRadar FastAPI application."""
 
 import logging
+from contextlib import asynccontextmanager
 
 import socketio
 from fastapi import FastAPI, Request, status
@@ -30,10 +31,36 @@ from app.sockets import sio_app
 settings = get_settings()
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)-7s %(name)s: %(message)s")
 
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):  # type: ignore[no-untyped-def]
+    """Start the agent's timer (AGENT_SCHEDULER=1) for the life of the app."""
+    scheduler = None
+    if settings.agent_scheduler:
+        from apscheduler.schedulers.background import BackgroundScheduler
+
+        from app.repositories import get_repository
+        from app.services import agent
+
+        scheduler = BackgroundScheduler(daemon=True)
+        scheduler.add_job(
+            lambda: agent.run_cycle(get_repository()),
+            "interval",
+            seconds=settings.agent_interval_seconds,
+            max_instances=1,
+            coalesce=True,
+        )
+        scheduler.start()
+    yield
+    if scheduler:
+        scheduler.shutdown(wait=False)
+
+
 app = FastAPI(
     title="OppRadar API",
-    version="0.2.0",
+    version="0.3.0",
     description="Backend for OppRadar — opportunities in, matches out.",
+    lifespan=lifespan,
 )
 
 

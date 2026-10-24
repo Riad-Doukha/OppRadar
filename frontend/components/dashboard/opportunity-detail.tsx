@@ -7,7 +7,8 @@ import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 
 import { Alert } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
+import { Button, ButtonLink } from "@/components/ui/button";
+import { Criteria, MatchReasons, MatchScore } from "@/components/match/match";
 import { Pill, SectionLabel } from "@/components/ui/inputs";
 import { Loading, Skeleton } from "@/components/ui/skeleton";
 import { ApiError, api, type Me } from "@/lib/api/client";
@@ -81,9 +82,15 @@ export function OpportunityDetail({ id }: { id: string }) {
         </div>
         <p className={cn("flex shrink-0 items-center gap-2 text-base font-bold md:pt-2", deadline.urgent ? "text-warning" : "text-ink")}>
           <Image src={deadline.urgent ? "/icons/clock-orange.svg" : "/icons/clock-dark.svg"} alt="" width={16} height={16} className={deadline.urgent ? undefined : "icon-adapt"} />
-          {deadline.text}
+          {o.deadline_source === "none" && !o.deadline ? t("noDeadline") : deadline.text}
         </p>
       </div>
+      {o.match && (
+        <div className="mt-4 flex flex-col gap-3 rounded-card border border-brand-soft bg-surface p-4 sm:flex-row sm:items-start">
+          <MatchScore match={o.match} className="h-8 self-start px-4 text-sm" />
+          <MatchReasons match={o.match} className="text-sm" />
+        </div>
+      )}
 
       <div className="grid gap-5 pt-6 lg:grid-cols-[1fr_334px]">
         <div className="flex min-w-0 flex-col gap-5">
@@ -91,8 +98,10 @@ export function OpportunityDetail({ id }: { id: string }) {
             <h2 className="text-xl font-bold text-ink">{t("detail.about")}</h2>
             <p className="pt-2 text-[15px] leading-relaxed text-body">{o.summary || t("detail.noDescription")}</p>
 
-            <SectionLabel className="pt-6">{t("detail.requirements")}</SectionLabel>
-            {o.eligibility.length ? (
+            <SectionLabel className="pt-6">{o.match?.criteria.length ? t("match.checklist") : t("detail.requirements")}</SectionLabel>
+            {o.match?.criteria.length ? (
+              <Criteria match={o.match} />
+            ) : o.eligibility.length ? (
               <ul className="mt-2 divide-y divide-line border-y border-line">
                 {o.eligibility.map((req) => (
                   <li key={req} className="flex items-center justify-between gap-3 py-3 text-[15px] text-ink">
@@ -104,9 +113,7 @@ export function OpportunityDetail({ id }: { id: string }) {
             ) : (
               <p className="pt-2 text-sm text-muted">{t("detail.noRequirements")}</p>
             )}
-            <p className="pt-3 text-xs text-muted">
-              {t("detail.compareYourself")}
-            </p>
+            {!o.match && <p className="pt-3 text-xs text-muted">{t("match.noMatch")}</p>}
 
             {o.benefits.length > 0 && (
               <>
@@ -212,9 +219,9 @@ function NextSteps({ o, readOnly }: { o: MyOpportunity; readOnly: boolean }) {
       <Button variant="ghost" size="md" disabled title={soon}>
         {t("remind")}
       </Button>
-      <Button variant="ghost" size="md" disabled title={soon}>
+      <ButtonLink href={`/agent?opportunity=${o.id}`} variant="ghost" size="md">
         {t("askAgent")}
-      </Button>
+      </ButtonLink>
       {!readOnly && (
         <Button
           variant="ghost"

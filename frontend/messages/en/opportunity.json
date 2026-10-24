@@ -76,9 +76,21 @@
     "save": "Save",
     "soonTitle": "Coming with the AI agent",
     "remind": "Remind me 3 days before · soon",
-    "askAgent": "Ask the agent about this · soon",
+    "askAgent": "Ask the agent about this",
     "showAgain": "Show it again in my feed",
     "notInterested": "Not interested",
     "loading": "Loading the opportunity…"
-  }
+  },
+  "match": {
+    "score": "{score}% match",
+    "why": "Why you're seeing this",
+    "missing": "Still missing",
+    "byAi": "Reasons phrased by AI",
+    "checklist": "Eligibility checklist",
+    "met": "met",
+    "unmet": "not met",
+    "unknown": "to check",
+    "noMatch": "No match score yet — run a scan from your dashboard."
+  },
+  "noDeadline": "Rolling — no deadline stated"
 }

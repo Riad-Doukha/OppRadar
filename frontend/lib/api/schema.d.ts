@@ -309,9 +309,29 @@ export interface paths {
         put?: never;
         /**
          * Start Agent
-         * @description 'Start my agent': recorded now; scanning starts once the AI matcher ships.
+         * @description 'Start my agent': turn matching on and run the first scan now.
          */
         post: operations["start_agent_me_agent_start_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/agent/scan": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Scan
+         * @description 'Run scan now': re-match this profile against every open opportunity.
+         */
+        post: operations["scan_me_agent_scan_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -563,6 +583,44 @@ export interface paths {
         };
         /** Stats */
         get: operations["stats_admin_stats_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/ingest": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Ingest
+         * @description Run the AI ingestion now (sources -> extraction -> dedupe -> scam check),
+         *     then re-match every active agent. Remote calls need the AI gate open.
+         */
+        post: operations["ingest_admin_ingest_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/ingest/runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Ingestion Runs */
+        get: operations["ingestion_runs_admin_ingest_runs_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1142,6 +1200,12 @@ export interface components {
             /** Opportunities */
             opportunities: components["schemas"]["OpportunityOut"][];
             /**
+             * In Source
+             * @default true
+             */
+            in_source: boolean;
+            eligibility: components["schemas"]["Eligibility"] | null;
+            /**
              * Created At
              * Format: date-time
              */
@@ -1151,6 +1215,27 @@ export interface components {
         ChatRequest: {
             /** Message */
             message: string;
+            /** Opportunity Id */
+            opportunity_id?: string | null;
+        };
+        /**
+         * Criterion
+         * @description One requirement checked against the profile (AI matcher).
+         */
+        Criterion: {
+            /** Text */
+            text: string;
+            /**
+             * Status
+             * @default unknown
+             * @enum {string}
+             */
+            status: "met" | "unmet" | "unknown";
+            /**
+             * Evidence
+             * @default
+             */
+            evidence: string;
         };
         /** DashboardStats */
         DashboardStats: {
@@ -1174,6 +1259,13 @@ export interface components {
              * @default false
              */
             matching_available: boolean;
+            /**
+             * Matched
+             * @default 0
+             */
+            matched: number;
+            /** Last Scan At */
+            last_scan_at: string | null;
         };
         /** DemoSession */
         DemoSession: {
@@ -1304,6 +1396,17 @@ export interface components {
             /** Gpa Scale */
             gpa_scale: (4 | 20) | null;
         };
+        /** Eligibility */
+        Eligibility: {
+            /** Eligible */
+            eligible: boolean | null;
+            /** Met */
+            met: string[];
+            /** Gaps */
+            gaps: string[];
+            /** Next Steps */
+            next_steps: string[];
+        };
         /** Experience */
         Experience: {
             /**
@@ -1433,6 +1536,59 @@ export interface components {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
         };
+        /**
+         * IngestionRun
+         * @description One ingestion run (admin "sync" screen); report = IngestionReport counters.
+         */
+        IngestionRun: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Trigger
+             * @default manual
+             * @enum {string}
+             */
+            trigger: "manual" | "scheduled";
+            /**
+             * Started At
+             * Format: date-time
+             */
+            started_at: string;
+            /**
+             * Finished At
+             * Format: date-time
+             */
+            finished_at: string;
+            /**
+             * Items Fetched
+             * @default 0
+             */
+            items_fetched: number;
+            /**
+             * Items New
+             * @default 0
+             */
+            items_new: number;
+            /**
+             * Items Saved
+             * @default 0
+             */
+            items_saved: number;
+            /**
+             * Items Flagged
+             * @default 0
+             */
+            items_flagged: number;
+            /** Report */
+            report: {
+                [key: string]: unknown;
+            };
+            /** Error */
+            error: string | null;
+        };
         /** Language */
         Language: {
             /** Language */
@@ -1489,6 +1645,23 @@ export interface components {
             kind: "linkedin" | "github" | "portfolio" | "other";
             /** Url */
             url: string;
+        };
+        /** MatchInfo */
+        MatchInfo: {
+            /** Score */
+            score: number;
+            /** Top Reasons */
+            top_reasons: string[];
+            /** Unmet Requirements */
+            unmet_requirements: string[];
+            /** Criteria */
+            criteria: components["schemas"]["Criterion"][];
+            /**
+             * Reasons Source
+             * @default rules
+             * @enum {string}
+             */
+            reasons_source: "rules" | "llm";
         };
         /**
          * Me
@@ -1583,8 +1756,8 @@ export interface components {
         };
         /**
          * MyOpportunity
-         * @description An opportunity plus this user's state. Match score / eligibility join
-         *     here when the AI matcher ships (see docs/ai-interface.md).
+         * @description An opportunity plus this user's state and, once their agent has scanned,
+         *     the AI match (score, reasons, eligibility checklist).
          */
         MyOpportunity: {
             /**
@@ -1675,6 +1848,9 @@ export interface components {
              * @default false
              */
             is_new: boolean;
+            /** Deadline Source */
+            deadline_source: ("rule" | "llm" | "none") | null;
+            match: components["schemas"]["MatchInfo"] | null;
         };
         /** MyOpportunityPage */
         MyOpportunityPage: {
@@ -2120,6 +2296,23 @@ export interface components {
             limit: number;
             /** Offset */
             offset: number;
+        };
+        /**
+         * ScanResult
+         * @description One matching pass for a user ("Run scan now", agent start).
+         */
+        ScanResult: {
+            /** Scanned */
+            scanned: number;
+            /** Matches */
+            matches: number;
+            /** Notifications Sent */
+            notifications_sent: number;
+            /**
+             * Finished At
+             * Format: date-time
+             */
+            finished_at: string;
         };
         /**
          * SettingsPatch
@@ -2790,6 +2983,26 @@ export interface operations {
             };
         };
     };
+    scan_me_agent_scan_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScanResult"];
+                };
+            };
+        };
+    };
     list_my_opportunities_me_opportunities_get: {
         parameters: {
             query?: {
@@ -3300,6 +3513,57 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AdminStats"];
+                };
+            };
+        };
+    };
+    ingest_admin_ingest_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IngestionRun"];
+                };
+            };
+        };
+    };
+    ingestion_runs_admin_ingest_runs_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IngestionRun"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

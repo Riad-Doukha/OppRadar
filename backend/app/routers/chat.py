@@ -26,7 +26,9 @@ def get_history(user: User, repo: Repo) -> ChatHistory:
 def ask(user: User, repo: Repo, body: ChatRequest) -> ChatHistory:
     """One question -> the new user + assistant turns. Read-only for the demo:
     it answers but stores nothing."""
-    return chat.ask(repo, user, body.message)
+    return chat.ask(
+        repo, user, body.message, str(body.opportunity_id) if body.opportunity_id else None
+    )
 
 
 @router.delete("/history", status_code=status.HTTP_204_NO_CONTENT)

@@ -14,7 +14,8 @@
     "queue": "File de vérification",
     "flagged": "Signalées",
     "all": "Toutes les opportunités",
-    "new": "Ajouter une opportunité"
+    "new": "Ajouter une opportunité",
+    "ingest": "Collecte"
   },
   "search": "Rechercher titre, organisateur, description",
   "loading": "Chargement…",
@@ -61,5 +62,19 @@
   "published": "Publiée. Elle est maintenant visible par les étudiants.",
   "actionError": "Échec : {error}",
   "flags": "Signaux d'arnaque : {flags}",
-  "viewIt": "La voir"
+  "viewIt": "La voir",
+  "ingest": {
+    "title": "Collecter de nouvelles opportunités",
+    "body": "Lance le pipeline IA : sources → extraction → dédoublonnage → détection d'arnaques, puis recalcule les correspondances. Les appels distants n'ont lieu qu'avec RUN_LIVE_LLM=1 et un vrai fournisseur ; sinon, échantillons et règles locales.",
+    "run": "Lancer la collecte",
+    "running": "En cours… cela peut prendre une minute",
+    "runs": "Exécutions récentes",
+    "none": "Aucune exécution pour l'instant.",
+    "manual": "manuelle",
+    "scheduled": "planifiée",
+    "counts": "{fetched} récupérées · {new} nouvelles · {saved} enregistrées · {flagged} signalées",
+    "budget": "Quota gratuit : {searches} recherches, {extractions} extractions",
+    "failures": "Échecs : {list}",
+    "error": "Échec : {error}"
+  }
 }

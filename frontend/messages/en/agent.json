@@ -1,7 +1,7 @@
 {
   "title": "Ask the agent",
   "subtitle": "Ask about opportunities or paste a link — the agent searches what OppRadar has found so far.",
-  "notice": "The full agent — eligibility verdicts with sources, required documents, answers in Arabic, French or English — arrives with the AI phase. Until then, answers come from OppRadar's opportunity search.",
+  "notice": "Ask about a specific opportunity (from its page, or paste its link) for an answer grounded in the official text, with your eligibility. Open questions search what OppRadar has found.",
   "suggestions": {
     "scholarships": "Show scholarships closing this month",
     "internships": "Internships in data science",
@@ -28,5 +28,17 @@
   },
   "details": "View details",
   "assistant": "Apply assistant",
-  "official": "Official page"
+  "official": "Official page",
+  "notInSource": "Not stated in the source — check the official page",
+  "sources": "Sources",
+  "eligibility": "Your eligibility",
+  "eligible": "You look eligible",
+  "notEligible": "You don't meet everything yet",
+  "unclear": "Not enough information to tell",
+  "met": "Met",
+  "gaps": "Missing",
+  "next": "Next steps",
+  "about": "Asking about: {title}",
+  "clearAbout": "Ask about anything",
+  "aiBadge": "AI answer, grounded in the opportunity"
 }

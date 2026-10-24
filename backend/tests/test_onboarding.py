@@ -239,9 +239,9 @@ def test_users_do_not_see_each_other(client, auth):
     assert other["skills"] == []
 
 
-def test_agent_start_is_recorded_until_matching_ships(client, auth):
+def test_agent_start_turns_matching_on(client, auth):
     first = client.post("/me/agent/start", headers=auth)
     assert first.status_code == 202
-    assert first.json()["status"] == "waiting_for_matcher"
+    assert first.json()["status"] == "running"
     again = client.post("/me/agent/start", headers=auth).json()
     assert again["agent_started_at"] == first.json()["agent_started_at"]  # idempotent

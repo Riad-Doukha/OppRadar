@@ -119,6 +119,8 @@ class MemoryRepository:
         self.opportunity_states: dict[tuple[str, str], Row] = {}
         self.notifications: dict[str, Row] = {}
         self.applications: dict[tuple[str, str], Row] = {}
+        self.matches: dict[str, list[Row]] = {}
+        self.ingestion_runs: list[Row] = []
         self.chat: list[Row] = []
         self.reservations: dict[str, Row] = {}
 
@@ -155,6 +157,7 @@ class MemoryRepository:
             self.applications = {k: v for k, v in self.applications.items() if k[0] != user_id}
             self.chat = [m for m in self.chat if m["user_id"] != user_id]
             self.reservations.pop(user_id, None)
+            self.matches.pop(user_id, None)
             self.notifications = {
                 k: v for k, v in self.notifications.items() if v["user_id"] != user_id
             }
@@ -430,6 +433,43 @@ class MemoryRepository:
             self.opportunity_states = {
                 k: v for k, v in self.opportunity_states.items() if k[1] != opportunity_id
             }
+            self.matches = {
+                uid: [m for m in rows if str(m["opportunity_id"]) != opportunity_id]
+                for uid, rows in self.matches.items()
+            }
+
+    # -- AI pipeline -------------------------------------------------------------------- #
+    def replace_matches(self, user_id: str, rows: list[Row]) -> None:
+        with self._lock:
+            self.matches[user_id] = [
+                {
+                    "id": str(uuid.uuid4()),
+                    "user_id": user_id,
+                    "created_at": _now(),
+                    **copy.deepcopy(r),
+                }
+                for r in rows
+            ]
+
+    def get_matches(self, user_id: str) -> list[Row]:
+        with self._lock:
+            rows = [copy.deepcopy(r) for r in self.matches.get(user_id, [])]
+        return sorted(rows, key=lambda r: -float(r["score"]))
+
+    def agent_user_ids(self) -> list[str]:
+        with self._lock:
+            return [uid for uid, p in self.profiles.items() if p.get("agent_started_at")]
+
+    def add_ingestion_run(self, row: Row) -> Row:
+        with self._lock:
+            saved = {"id": str(uuid.uuid4()), **copy.deepcopy(row)}
+            self.ingestion_runs.append(saved)
+            return copy.deepcopy(saved)
+
+    def list_ingestion_runs(self, limit: int) -> list[Row]:
+        with self._lock:
+            rows = sorted(self.ingestion_runs, key=lambda r: r["started_at"], reverse=True)
+            return copy.deepcopy(rows[:limit])
 
     # -- applications ---------------------------------------------------------------- #
     def list_applications(self, user_id: str) -> list[Row]:

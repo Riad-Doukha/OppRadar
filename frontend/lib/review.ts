@@ -96,3 +96,12 @@ export const useCreateOpportunity = () =>
   useAdminWrite((body: AdminOpportunityIn) => api<Reviewed>("/admin/opportunities", { method: "POST", body: JSON.stringify(body) }));
 
 export const useDeleteOpportunity = () => useAdminWrite((id: string) => api(`/admin/opportunities/${id}`, { method: "DELETE" }));
+
+// -- ingestion (AI pipeline) --------------------------------------------------------------- //
+export type IngestionRun = Schemas["IngestionRun"];
+
+export function useIngestionRuns() {
+  return useQuery({ queryKey: ["admin", "runs"], queryFn: () => api<IngestionRun[]>("/admin/ingest/runs?limit=10") });
+}
+
+export const useRunIngestion = () => useAdminWrite<void>(() => api<IngestionRun>("/admin/ingest", { method: "POST" }));

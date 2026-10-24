@@ -32,9 +32,17 @@ export function AgentPage() {
   const [input, setInput] = useState("");
   const end = useRef<HTMLDivElement>(null);
   const asked = useRef(false);
+  // "Ask the agent about this" (opportunity page) opens /agent?opportunity=<id>.
+  const [about, setAbout] = useState<string | null>(params.get("opportunity"));
+  const subject = useQuery({
+    queryKey: ["opportunity", about],
+    queryFn: () => api<Schemas["MyOpportunity"]>(`/me/opportunities/${about}`),
+    enabled: Boolean(about),
+  });
 
   const send = useMutation({
-    mutationFn: (message: string) => api<History>("/chat", { method: "POST", body: JSON.stringify({ message }) }),
+    mutationFn: (message: string) =>
+      api<History>("/chat", { method: "POST", body: JSON.stringify({ message, ...(about && { opportunity_id: about }) }) }),
     onSuccess: (reply) => {
       if (reply.saved) qc.setQueryData<History>(["chat"], (h) => (h ? { ...h, messages: [...h.messages, ...reply.messages] } : reply));
       else setLocal((l) => [...l, ...reply.messages]);
@@ -95,6 +103,15 @@ export function AgentPage() {
             </button>
           ))}
         </div>
+
+        {about && subject.data && (
+          <p className="mt-4 flex flex-wrap items-center gap-2 rounded-field bg-brand-soft px-3.5 py-2 text-sm text-brand-strong">
+            <span className="min-w-0 font-bold">{t("about", { title: subject.data.title })}</span>
+            <button type="button" onClick={() => setAbout(null)} className="ms-auto text-xs font-bold underline">
+              {t("clearAbout")}
+            </button>
+          </p>
+        )}
 
         <div className="flex flex-col gap-4 pt-5" aria-live="polite">
           {history.isPending && (
@@ -188,9 +205,50 @@ function UserBubble({ m }: { m: Msg }) {
 function AgentCard({ m }: { m: Msg }) {
   const t = useTranslations("agent");
   const { typeLabel, deadlineText } = useOpportunityText();
+  const e = m.eligibility;
+  // Sources worth showing: quoted ones, or ones not already shown as cards below.
+  const cards = new Set(m.opportunities.map((o) => o.url));
+  const sources = (m.citations as { url?: string; title?: string; quote?: string }[]).filter((c) => c.url && (c.quote || !cards.has(c.url)));
   return (
     <div className="max-w-full rounded-card rounded-es-md border border-line bg-surface p-4 sm:max-w-[90%]">
-      <p className="text-sm text-ink">{m.content}</p>
+      {!m.in_source && <p className="mb-2 w-fit rounded-full bg-warning-tint px-3 py-1 text-xs font-bold text-warning">{t("notInSource")}</p>}
+      {/* AI text is untrusted: rendered as plain text, never as HTML. */}
+      <p className="text-sm whitespace-pre-wrap text-ink">{m.content}</p>
+      {e && (
+        <div className="mt-3 rounded-field border border-line bg-page/60 p-3.5 text-[13px]">
+          <p className={cn("font-bold", e.eligible ? "text-success" : e.eligible === false ? "text-warning" : "text-muted")}>
+            {e.eligible ? t("eligible") : e.eligible === false ? t("notEligible") : t("unclear")}
+          </p>
+          {([["met", e.met, "text-success", "✓"], ["gaps", e.gaps, "text-warning", "!"], ["next", e.next_steps, "text-brand", "→"]] as const).map(
+            ([key, list, tone, mark]) =>
+              list.length > 0 && (
+                <div key={key} className="pt-2">
+                  <p className="text-xs font-bold text-muted uppercase">{t(key)}</p>
+                  {list.map((x) => (
+                    <p key={x} className="flex gap-1.5 text-body">
+                      <span className={tone} aria-hidden>
+                        {mark}
+                      </span>
+                      {x}
+                    </p>
+                  ))}
+                </div>
+              ),
+          )}
+        </div>
+      )}
+      {sources.length > 0 && (
+        <div className="flex flex-wrap items-center gap-1.5 pt-3 text-xs">
+          <span className="font-bold text-muted">{t("sources")}:</span>
+          {sources.map((cite, i) => {
+            return cite.url ? (
+              <a key={i} href={cite.url} target="_blank" rel="noopener noreferrer" title={cite.quote || undefined} className="rounded-full border border-line px-2.5 py-0.5 font-bold text-body hover:text-ink">
+                {cite.title || new URL(cite.url).hostname}
+              </a>
+            ) : null;
+          })}
+        </div>
+      )}
       {m.opportunities.length > 0 && (
         <ul className="flex flex-col gap-2.5 pt-3">
           {m.opportunities.map((o) => {

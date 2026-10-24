@@ -1,0 +1,169 @@
+"""The agent: runs the AI pipeline (oppradar_ai, via services.ai) and stores
+what it finds in Postgres — our database stays the source of truth.
+
+- ingest():      sources -> opportunities (dedupe + scam check), logged as a run
+- match_user():  one profile x open opportunities -> matches + match alerts
+- run_cycle():   ingest, then re-match everyone whose agent is on (scheduler)
+
+Remote model / web calls happen only when the AI gate is open (RUN_LIVE_LLM=1
+with a real provider); otherwise the AI runs on its local rules and samples.
+"""
+
+from __future__ import annotations
+
+import logging
+import threading
+from datetime import datetime, timezone
+from typing import Any
+
+from oppradar_ai.schemas import Notification as AINotification
+
+from app.auth import CurrentUser
+from app.models import IngestionRun, OpportunityFilters, ScanResult
+from app.repositories import Repository
+from app.services import ai, notifications, profiles
+
+log = logging.getLogger(__name__)
+MAX_OPPORTUNITIES = 500  # matched per user per scan
+_cycle_lock = threading.Lock()  # one ingestion at a time (free-tier budget)
+
+
+def _now() -> datetime:
+    return datetime.now(timezone.utc)
+
+
+# -- ingestion -------------------------------------------------------------------------- #
+def ingest(
+    repo: Repository, *, trigger: str = "manual", admin_id: str | None = None
+) -> IngestionRun:
+    if not _cycle_lock.acquire(blocking=False):
+        raise RuntimeError("An ingestion run is already in progress.")
+    started = _now()
+    try:
+        report = ai.run_ingestion()
+        rows = [ai.opportunity_row(o) for o in report.opportunities]
+        saved = repo.upsert_opportunities(rows)
+        summary = report.model_dump(mode="json", exclude={"opportunities"})
+        row = {
+            "trigger": trigger,
+            "triggered_by": admin_id,
+            "started_at": report.started_at,
+            "finished_at": report.finished_at,
+            "items_fetched": report.items_fetched,
+            "items_new": report.items_new,
+            "items_saved": saved,
+            "items_flagged": report.items_flagged,
+            "report": summary,
+        }
+    except Exception as exc:  # a broken run is logged, never a crash
+        log.exception("ingestion failed")
+        row = {"trigger": trigger, "triggered_by": admin_id, "started_at": started,
+               "finished_at": _now(), "error": str(exc)[:500]}  # fmt: skip
+    finally:
+        _cycle_lock.release()
+    return IngestionRun.model_validate(repo.add_ingestion_run(row))
+
+
+def runs(repo: Repository, limit: int = 10) -> list[IngestionRun]:
+    return [IngestionRun.model_validate(r) for r in repo.list_ingestion_runs(limit)]
+
+
+# -- matching ----------------------------------------------------------------------------- #
+def _open_opportunities(repo: Repository) -> list[dict[str, Any]]:
+    rows, _ = repo.list_opportunities(OpportunityFilters(limit=MAX_OPPORTUNITIES))
+    return rows
+
+
+def _history(repo: Repository, user_id: str) -> list[AINotification]:
+    """Match alerts already sent — the AI uses them for dedupe and the daily cap."""
+    since = datetime(2000, 1, 1, tzinfo=timezone.utc)
+    rows = repo.list_notifications(user_id, ["match"], since, 500)
+    return [
+        AINotification(
+            profile_id=user_id,
+            opportunity_id=str(r["opportunity_id"]),
+            title=r["title"],
+            score=float(r.get("score") or 0),
+            status="sent",
+            created_at=r["created_at"],
+        )
+        for r in rows
+        if r.get("opportunity_id")
+    ]
+
+
+def match_user(
+    repo: Repository, user: CurrentUser, rows: list[dict[str, Any]] | None = None
+) -> ScanResult:
+    """Score this user's profile against every open opportunity, store the
+    matches and send the alerts their settings allow."""
+    me = profiles.load_me(repo, user)
+    rows = _open_opportunities(repo) if rows is None else rows
+    by_id = {str(r["id"]): r for r in rows}
+    results = ai.score(ai.to_ai_profile(me), [ai.opportunity_from_row(r) for r in rows])
+    repo.replace_matches(
+        user.id,
+        [
+            {
+                "opportunity_id": m.opportunity.id,
+                "score": round(m.score, 2),
+                "semantic_similarity": round(m.semantic_similarity, 3),
+                "bonus": round(m.bonus, 3),
+                "criteria": [c.model_dump(mode="json") for c in m.criteria],
+                "top_reasons": m.top_reasons,
+                "unmet_requirements": m.unmet_requirements,
+                "reasons_source": m.reasons_source,
+            }
+            for m in results
+            if m.opportunity.id in by_id
+        ],
+    )
+
+    sent = 0
+    if not me.is_demo and me.notifications.rule_new_match:
+        prefs = ai.notification_prefs(user.id, me.notifications.model_dump())
+        for note in ai.decide_notifications(results, prefs, _history(repo, user.id)):
+            if note.status != "sent" or note.opportunity_id not in by_id:
+                continue  # pending = quiet hours / cap (re-decided next scan); suppressed = dedupe
+            added = repo.add_notification(
+                {
+                    "user_id": user.id,
+                    "kind": "match",
+                    "title": f"{round(note.score)}% match — {note.title}",
+                    "body": note.reason,
+                    "reason": note.reason,
+                    "score": note.score,
+                    "deadline": note.deadline,
+                    "url": note.url,
+                    "mode": note.mode.value if hasattr(note.mode, "value") else note.mode,
+                    "status": "sent",
+                    "opportunity_id": note.opportunity_id,
+                    "action_url": f"/opportunities/{note.opportunity_id}",
+                    "dedupe_key": f"match:{note.opportunity_id}",
+                }
+            )
+            sent += added is not None
+        notifications.invalidate(user.id)
+    return ScanResult(
+        matches=len(results), notifications_sent=sent, scanned=len(rows), finished_at=_now()
+    )
+
+
+def match_everyone(repo: Repository) -> int:
+    rows = _open_opportunities(repo)
+    done = 0
+    for user_id in repo.agent_user_ids():
+        try:
+            match_user(repo, CurrentUser(id=user_id), rows)
+            done += 1
+        except Exception:  # one profile must not stop the others
+            log.exception("matching failed for %s", user_id)
+    return done
+
+
+def run_cycle(repo: Repository) -> IngestionRun:
+    """Scheduled job: fetch new opportunities, then re-match every active agent."""
+    run = ingest(repo, trigger="scheduled")
+    matched = match_everyone(repo)
+    log.info("agent cycle: %s new opportunities, %s profiles matched", run.items_new, matched)
+    return run

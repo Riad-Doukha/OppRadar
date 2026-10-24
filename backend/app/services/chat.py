@@ -12,14 +12,19 @@ History is stored only with the `chat_history` consent (Settings → Privacy & A
 
 from __future__ import annotations
 
+import logging
 import re
 from datetime import datetime, timezone
+from typing import Any
 from urllib.parse import urlparse
+
+from oppradar_ai.schemas import ChatTurn
 
 from app.auth import CurrentUser
 from app.models import ChatHistory, ChatMessageOut, OpportunityFilters, OpportunityOut
 from app.repositories import Repository
 from app.repositories.base import Row
+from app.services import ai, profiles
 
 HISTORY_LIMIT = 100
 MAX_CARDS = 3
@@ -49,6 +54,9 @@ TYPE_WORDS: dict[str, str] = {
     **dict.fromkeys(["research"], "research"),
 }
 NOT_YET = "Conversational answers and eligibility checks arrive with the AI agent."
+
+
+log = logging.getLogger(__name__)
 
 
 def _now() -> datetime:
@@ -139,24 +147,52 @@ def _citations(rows: list[Row]) -> list[dict]:
     return [{"url": r.get("url") or "", "title": r["title"], "quote": ""} for r in rows]
 
 
-def ask(repo: Repository, user: CurrentUser, message: str) -> ChatHistory:
+def _ai_reply(
+    repo: Repository, user: CurrentUser, message: str, opportunity_id: str | None, ids: list[str]
+) -> dict[str, Any] | None:
+    """Grounded AI answer, or None when the AI chat is unavailable (keyword reply stays)."""
+    if opportunity_id is None and URL_RE.search(message) and ids:
+        opportunity_id = ids[0]  # a pasted link resolved to an opportunity we know
+    row = repo.get_opportunity(opportunity_id) if opportunity_id else None
+    if row is None:
+        # The AI answers about one opportunity; open questions stay a search.
+        return None
+    try:
+        me = profiles.load_me(repo, user)
+        past = repo.list_chat(user.id, 10) if _keeps_history(repo, user) else []
+        turns = [ChatTurn(role=t["role"], content=t["content"]) for t in past]
+        reply = ai.answer(ai.to_ai_profile(me), ai.opportunity_from_row(row), turns, message)
+    except Exception as exc:  # ApiError (chat-unavailable, offline…) / LLMError
+        log.info("AI chat unavailable, keyword answer used: %s", exc)
+        return None
+    return {
+        "content": reply.answer,
+        "citations": [c.model_dump(mode="json") for c in reply.citations],
+        "in_source": reply.in_source,
+        "eligibility": reply.eligibility.model_dump(mode="json") if reply.eligibility else None,
+        "opportunity_ids": [str(row["id"])],
+    }
+
+
+def ask(
+    repo: Repository, user: CurrentUser, message: str, opportunity_id: str | None = None
+) -> ChatHistory:
     """Answer one message; returns just the new turn (user + assistant)."""
     saved = _keeps_history(repo, user)
     text, ids, citations = answer(repo, message.strip())
+    reply = _ai_reply(repo, user, message.strip(), opportunity_id, ids)
     turns: list[ChatMessageOut] = []
     for row in (
         {"user_id": user.id, "role": "user", "content": message.strip()},
         {
             "user_id": user.id,
             "role": "assistant",
-            "content": text,
-            "citations": citations,
-            "opportunity_ids": ids,
+            **(reply or {"content": text, "citations": citations, "opportunity_ids": ids}),
         },
     ):
         stored = repo.add_chat(row) if saved else {**row, "id": None, "created_at": _now()}
         turns.append(_out(repo, stored))
-    return ChatHistory(messages=turns, saved=saved)
+    return ChatHistory(messages=turns, saved=saved, ai_available=reply is not None)
 
 
 def clear(repo: Repository, user: CurrentUser) -> None:

@@ -25,7 +25,7 @@
     "new": "{count} nouvelles",
     "markAll": "Tout marquer comme lu",
     "preferences": "Préférences",
-    "empty": "Vous êtes à jour. Les rappels d'échéance de vos opportunités enregistrées et, bientôt, les nouvelles correspondances apparaîtront ici.",
+    "empty": "Vous êtes à jour. Les nouvelles correspondances et les rappels d'échéance apparaissent ici.",
     "openAll": "Voir toutes les notifications",
     "delivery": "Envoi : {channels} · selon vos règles",
     "email": "E-mail",

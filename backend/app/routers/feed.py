@@ -15,6 +15,7 @@ from app.models import (
     MyOpportunity,
     MyOpportunityPage,
     OpportunityTypeName,
+    ScanResult,
 )
 from app.repositories import Repository, get_repository
 from app.services import feed
@@ -31,8 +32,14 @@ def get_dashboard(user: User, repo: Repo) -> DashboardStats:
 
 @router.post("/agent/start", response_model=AgentStatus, status_code=status.HTTP_202_ACCEPTED)
 def start_agent(user: Writer, repo: Repo) -> AgentStatus:
-    """'Start my agent': recorded now; scanning starts once the AI matcher ships."""
+    """'Start my agent': turn matching on and run the first scan now."""
     return feed.start_agent(repo, user)
+
+
+@router.post("/agent/scan", response_model=ScanResult)
+def scan(user: User, repo: Repo) -> ScanResult:
+    """'Run scan now': re-match this profile against every open opportunity."""
+    return feed.scan(repo, user)
 
 
 @router.get("/opportunities", response_model=MyOpportunityPage)
