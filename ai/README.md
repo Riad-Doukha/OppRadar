@@ -4,9 +4,12 @@ The AI layer of OppRadar: document intake, opportunity ingestion, matching,
 notifications, background agent and a grounded chat assistant — all free-tier
 tools, all offline-testable with `LLM_PROVIDER=fake` (no network, no keys).
 
-**This file is the starting point for continuing the remaining work.**
-Deep detail for the chat phase lives in [`HANDOFF_CHAT.md`](HANDOFF_CHAT.md);
-the backend-facing contract lives in [`../docs/ai-interface.md`](../docs/ai-interface.md);
+**This file is the starting point for continuing the remaining work** — it is
+the single consolidated status/handoff document (the chat handoff file has been
+retired into §6.1). The backend-facing contract lives in
+[`../docs/ai-interface.md`](../docs/ai-interface.md); how the backend/frontend
+**fetch results** (agent, store, schemas, endpoints, rendering) in
+[`../docs/ai-pipeline-integration.md`](../docs/ai-pipeline-integration.md);
 design rationale in [`../docs/ai-design.md`](../docs/ai-design.md).
 
 ---
@@ -22,12 +25,24 @@ design rationale in [`../docs/ai-design.md`](../docs/ai-design.md).
 | 5 | background agent: APScheduler, drop folder, toasts, notebook 08 | done | `14f4881` `e6f0fcf` |
 | 6 | chat: `chat.py`, `chat_ui.py`, `06_chat.ipynb`, `test_chat.py` | done — reviewed & merged from `feature/chat` | `1e272fa` + merge `c0aac5e` |
 | 7 | `api.py` interface, feed-entry batching, evaluation notebook 09, e2e test | done | `8c1ed2d` |
+| — | post-merge review of `feature/chat` + 4 follow-up fixes (below) | done | `3c46082` |
+| — | backend/frontend results guide + chat contract refresh | done | `172e713` |
+| — | local test rig `test_platform/` (dashboard + 15-check smoke test) | done — **local-only, git-ignored like `.env`** | never committed |
 | — | security notebook 07 | unclaimed | — |
 
 - **Notebooks:** 00–06, 08, 09 run top-to-bottom offline and are executed by
   the test suite. **07 = security (unclaimed) is the only notebook left.**
-- **Tests:** 335 green on Python 3.13 *and* 3.10; `ruff` clean on both;
+- **Tests:** 387 green on Python 3.13 *and* 3.10; `ruff` clean on both;
   every notebook runs headless offline with dummy keys.
+- **Chat was delivered by a teammate** on `feature/chat`, reviewed in depth,
+  merged into `feature/ai-pipeline` (`c0aac5e`), then hardened in `3c46082`:
+  outputs stripped (nbstripout), notebook-06 marker prints made single-write,
+  the fixtures expiry test made stamp-based (date-drift fix), and the refusal
+  answer now keeps the question's language (regression test added).
+- **Test rig:** `../test_platform/` (git-ignored, stdlib-only browser dashboard)
+  drives the whole pipeline end to end — profile → ingestion → background agent
+  → matches → notifications → chat — headless verified by
+  `python ../test_platform/smoke_test.py` (15 checks, always offline).
 - Branch: **`feature/ai-pipeline`** — all AI-layer work lands here (feature
   branches like `feature/chat` are merged only after review).
   **Never commit to or push `develop`** — merge only after the user verifies.
@@ -41,7 +56,7 @@ cd ai
 python -m venv .venv; .venv\Scripts\Activate.ps1        # or use the conda env
 pip install -e ".[dev]"
 Copy-Item .env.example .env                             # LLM_PROVIDER=fake -> offline
-python -m pytest                                        # full suite (~3.5 min, runs notebooks too)
+python -m pytest                                        # full suite (~4 min, runs notebooks too)
 python -m ruff check .
 jupyter lab notebooks/00_setup.ipynb
 ```
@@ -49,9 +64,9 @@ jupyter lab notebooks/00_setup.ipynb
 Two interpreters must both pass before every commit:
 
 ```powershell
-python -m pytest                # system Python 3.13   (~3.5 min)
+python -m pytest                # system Python 3.13   (~4 min)
 python -m ruff check .
-E:\anaconda\envs\DM_ENV_310\python.exe -m pytest       # Python 3.10 (~3 min)
+E:\anaconda\envs\DM_ENV_310\python.exe -m pytest       # Python 3.10 (~4.5 min)
 E:\anaconda\envs\DM_ENV_310\python.exe -m ruff check .
 ```
 
@@ -98,7 +113,7 @@ oppradar_ai/
                    budget, pipeline (run_ingestion, never raises)
   matching/        filters, criteria (MET/MISSED/UNKNOWN), score, reasons, notifications
   prompts/         one .md per LLM task (extract_cv, extract_opportunity, extract_batch, ...)
-notebooks/         00-05, 08, 09 done; 06 chat (remaining); 07 security (unclaimed)
+notebooks/         00-06, 08, 09 done; 07 security (unclaimed)
 data/samples/      SYNTHETIC docs + ground_truth/*.json + feed/page fixtures
 data/fixtures/     32 opportunities (opp-01..32) + 5 profiles (u-amine, ...)
 data/eval/         live_snapshot.json (20 frozen real entries), scam_labels.json,
@@ -146,10 +161,11 @@ answer(profile, opportunity, history, message, *, settings) -> ChatAnswer   # <-
   (`empty, unreadable, arguments, offline, fetch, rejected, pending, unusable,
   chat-unavailable`). Full contract, error table, batching math and examples:
   **`../docs/ai-interface.md`**.
-- **`answer()` is a lazy proxy**: until `oppradar_ai.chat` exists it raises
-  `ApiError(code="chat-unavailable")`. The contract test and the end-to-end
-  test adapt automatically once `chat.py` lands — no changes needed on the
-  API side, **as long as your `answer()` keeps the frozen signature**.
+- **`answer()`** wraps the grounded chat assistant that has landed (Phase 6,
+  §6.1). It still degrades gracefully: only if the `oppradar_ai.chat` module
+  were missing would calls raise `ApiError(code="chat-unavailable")` (or return
+  the "not wired yet" answer) — today that code survives purely as a defensive
+  path. Grounding, citation and refusal behaviour: §6.1.
 - **Batching (the 20-per-day fix):** RSS entries are extracted
   `extraction_batch_size` (default 5) per Gemini call → 20 budgeted calls
   cover 100 entries/run; short or failed replies become `pending`, never
@@ -311,8 +327,10 @@ send in one batch → mark `sent`), or surface them in the chat panel
 - Notebooks: independent demos (no cross-notebook dependencies), restart +
   Run All semantics (no `%autoreload`), headless-offline markers registered in
   `tests/test_notebooks.py`, **strip outputs before commit**.
-- **Git:** work on `feature/chat` (branched from `feature/ai-pipeline` for the
-  chat phase); **never push `develop`**; merge only after the user verifies.
+- **Git:** all AI work lands on **`feature/ai-pipeline`** (feature branches
+  like `feature/chat` are merged only after review); **never push `develop`**;
+  merge only after the user verifies. `test_platform/` is git-ignored —
+  local-only; never commit or push it.
 - **Phase rhythm:** work in slices; after each slice report in ONE short
   message — **(a)** what was built **(b)** exact test commands **(c)** expected
   output **(d)** limitations — then **STOP** and wait for "continue".
@@ -326,7 +344,7 @@ python -m pytest                                    # incl. every notebook headl
 E:\anaconda\envs\DM_ENV_310\python.exe -m pytest
 E:\anaconda\envs\DM_ENV_310\python.exe -m ruff check .
 python -m nbstripout (Get-ChildItem notebooks\*.ipynb).FullName
-git push origin feature/chat                        # NEVER develop
+git push origin feature/ai-pipeline                   # NEVER develop
 ```
 
 - [ ] Offline: suite green on 3.13 and 3.10; no network strings in offline output.
