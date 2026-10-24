@@ -610,11 +610,16 @@ _CANNED: dict[str, dict[str, Any]] = {
         "summary": "Synthetic profile produced by the fake LLM provider.",
         "preferences": {},
     },
+    # chat (Phase 6) — generic fallback for any prompt that is not a chat prompt;
+    # real chat prompts are answered from their own record (see _canned_chat_answer).
+    # eligibility / extracted_opportunity stay null: chat.py computes them locally.
     "ChatAnswer": {
-        "answer": "[fake] I can only answer from the sources you provide; this is canned text.",
+        "answer": "[fake] That is not in the source I was given; this is canned text.",
         "language": "en",
         "citations": [],
         "in_source": False,
+        "eligibility": None,
+        "extracted_opportunity": None,
     },
     "EligibilityAssessment": {
         "eligible": None,
@@ -793,6 +798,8 @@ def _canned(schema: type[BaseModel], prompt: str) -> dict[str, Any]:
         data["not_opportunity_reason"] = "listicle (fake-provider rule)"
     if schema.__name__ == "OpportunityBatchExtraction":
         data["items"] = _canned_batch_items(prompt)
+    if schema.__name__ == "ChatAnswer":
+        data.update(_canned_chat_answer(prompt))
     for name, field in schema.model_fields.items():
         if name not in data:
             data[name] = _default_for(field.annotation, name, depth=0)
@@ -802,6 +809,95 @@ def _canned(schema: type[BaseModel], prompt: str) -> dict[str, Any]:
         hashlib.sha1(prompt.encode()).hexdigest()[:8],
     )
     return data
+
+
+# Chat: the fake model "reads" the labelled prompt chat.py builds and answers from the
+# record lines, so offline tests and notebook 06 show real grounding and real refusals.
+# Keep the section labels in sync with chat._prompt() / chat._record_text().
+_CHAT_HINT_RE = re.compile(r"^Reply language hint:\s*([A-Za-z-]+)", re.MULTILINE)
+_CHAT_QUESTION_RE = re.compile(r"^Question:\s*(.*)$", re.MULTILINE)
+_CHAT_TOPICS: tuple[tuple[str, tuple[str, ...]], ...] = (
+    ("Deadline", ("deadline", "due", "date limite", "délai", "موعد")),
+    ("Eligibility requirements", ("eligib", "require", "qualif", "admissible", "شروط")),
+    ("Funding", ("funding", "funded", "salary", "stipend", "paid", "financ", "bourse", "تمويل")),
+    ("Location", ("where", "location", "located", "lieu", "où", "مكان")),
+    ("Benefits", ("benefit", "perk", "avantage")),
+)
+
+
+def _canned_chat_answer(prompt: str) -> dict[str, Any]:
+    """Deterministic grounded answer (or refusal) for a chat prompt; {} for any other.
+
+    The topic comes from keywords of the question line (deadline, requirements,
+    funding, location, benefits); the value is copied from the matching record line.
+    A topic the record does not state — or no known topic — is refused.
+
+    Example:
+        >>> _canned_chat_answer("not a chat prompt")
+        {}
+    """
+    if "Opportunity record:" not in prompt:
+        return {}
+    hint = _first_group(_CHAT_HINT_RE, prompt) or "en"
+    question = _first_group(_CHAT_QUESTION_RE, prompt).casefold()
+    record, _, verdicts = prompt.split("Opportunity record:", 1)[1].partition("Requirement check")
+    label = next((n for n, words in _CHAT_TOPICS if any(w in question for w in words)), "")
+    values = _record_values(record, label) if label else []
+    if not values:
+        return _chat_reply(hint, "That is not in the source I was given.", None, record)
+    text = f"{label}: {'; '.join(values)}"
+    if label == "Eligibility requirements":
+        text += f". Check: {_verdict_counts(verdicts)}"
+    return _chat_reply(hint, text, values[0], record)
+
+
+def _chat_reply(hint: str, text: str, quote: str | None, record: str) -> dict[str, Any]:
+    """One canned ChatAnswer dict; a `quote` means the answer was found in the record."""
+    citations: list[dict[str, str]] = []
+    if quote is not None:
+        url = (_record_values(record, "URL") or [""])[0]
+        title = (_record_values(record, "Title") or [""])[0]
+        citations = [{"url": url, "title": title, "quote": quote}]
+    return {
+        "answer": f"[fake:{hint}] {text}",
+        "language": hint,
+        "citations": citations,
+        "in_source": quote is not None,
+        "eligibility": None,
+        "extracted_opportunity": None,
+    }
+
+
+def _record_values(record: str, label: str) -> list[str]:
+    """Values of one labelled record line: [] if absent or `none stated`, list items for a list."""
+    lines = record.splitlines()
+    for index, line in enumerate(lines):
+        if not line.startswith(f"{label}:"):
+            continue
+        inline = line.split(":", 1)[1].strip()
+        if inline:
+            return [] if inline == "none stated" else [inline]
+        items: list[str] = []
+        for following in lines[index + 1 :]:
+            if not following.startswith("- "):
+                break
+            items.append(following[2:].strip())
+        return items
+    return []
+
+
+def _verdict_counts(verdicts: str) -> str:
+    """'1 met, 0 not met, 1 unknown' from the prompt's requirement-check lines."""
+    lines = [line.strip() for line in verdicts.splitlines()]
+    met, missed, unknown = (
+        sum(line.startswith(f"- {tag}:") for line in lines) for tag in ("MET", "NOT MET", "UNKNOWN")
+    )
+    return f"{met} met, {missed} not met, {unknown} unknown"
+
+
+def _first_group(pattern: re.Pattern[str], text: str) -> str:
+    match = pattern.search(text)
+    return match.group(1).strip() if match else ""
 
 
 def _canned_batch_items(prompt: str) -> list[dict[str, Any]]:

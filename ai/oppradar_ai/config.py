@@ -120,6 +120,11 @@ class Settings(BaseSettings):
     # best matches get their rule-generated reasons rephrased by the LLM.
     max_phrases_per_run: int = 5
 
+    # --- Chat ------------------------------------------------------------------
+    # Only the most recent turns of a conversation reach the model (a long
+    # history would eat the input budget and add nothing to a grounded answer).
+    chat_history_turns: int = 10
+
     # --- Logging ---------------------------------------------------------------
     log_level: str = "INFO"
 
