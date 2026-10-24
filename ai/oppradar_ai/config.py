@@ -5,11 +5,13 @@
 from __future__ import annotations
 
 import os
+from collections.abc import Iterator
+from contextlib import contextmanager
 from functools import lru_cache
 from pathlib import Path
 from typing import Literal
 
-from pydantic import SecretStr, model_validator
+from pydantic import SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # We only ever use PyTorch. When tensorflow is installed (for other projects),
@@ -35,14 +37,48 @@ class Settings(BaseSettings):
     llm_provider: Literal["gemini", "ollama", "fake"] = "fake"
     gemini_api_key: SecretStr = SecretStr("")
     gemini_model: str = "gemini-3.8-flash"
+    # Tried ONCE when the primary model keeps failing on transient errors
+    # (5xx / timeouts) after its retries. Empty string disables the fallback.
+    gemini_fallback_model: str = "gemini-3.5-flash"
+    # Latency controls: no thinking (0 = cheapest/fastest; -1 = never send the
+    # config at all), and a hard cap on the answer size in tokens.
+    gemini_thinking_budget: int = 0
+    gemini_max_output_tokens: int = 2048
     ollama_base_url: str = "http://localhost:11434"
     ollama_model: str = "llama3.2"
+    # Live opt-in (RUN_LIVE_LLM=1 in the shell): False keeps every run offline —
+    # no live LLM call, no detail-page fetch. Read by the notebooks' cost gate
+    # and by ingestion's detail fetch.
+    run_live_llm: bool = False
 
     # --- Web discovery ------------------------------------------------------
     tavily_api_key: SecretStr = SecretStr("")
     tavily_max_results: int = 5
+    # Hard per-run caps on REMOTE calls (free-tier protection; disk-cache
+    # hits are always allowed and never counted against these limits).
+    tavily_max_searches_per_run: int = 5
+    max_extractions_per_run: int = 20
+    # Feed entries are extracted in batches of this many per single LLM call
+    # (free-tier batching: one run's `max_extractions_per_run` calls then cover
+    # `max_extractions_per_run * extraction_batch_size` entries). 1 disables
+    # batching (one call per entry). Keep it small: the reply of one call must
+    # fit `gemini_max_output_tokens`.
+    extraction_batch_size: int = 5
+    # Accepted RSS entry with no deadline -> fetch its detail page and
+    # re-extract once, at most this many times per run (free-tier protection).
+    max_detail_fetches_per_run: int = 5
+    # Feed bodies are cut to this many chars before the LLM (summaries are long).
+    feed_text_max_chars: int = 6000
+    # Polite crawling: one clear identity + a pause between HTTP requests.
+    user_agent: str = "OppRadarBot/0.1 (student project; https://github.com/Riad-Doukha/OppRadar)"
+    fetch_delay_seconds: float = 1.5
+    fetch_timeout_seconds: float = 15.0
+    respect_robots: bool = True
 
     # --- Embeddings ---------------------------------------------------------
+    # `fake` = deterministic local hashing encoder (tests/offline, no model
+    # download); `sentence_transformers` = the real local model below.
+    embedding_provider: Literal["sentence_transformers", "fake"] = "sentence_transformers"
     embedding_model: str = "BAAI/bge-m3"
     embedding_fallback_model: str = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
     embedding_batch_size: int = 32
@@ -57,6 +93,12 @@ class Settings(BaseSettings):
     semantic_weight: float = 0.5
     criteria_weight: float = 0.35
     bonus_weight: float = 0.15
+    # rapidfuzz score (0-100) a profile word needs to count as satisfying a
+    # requirement of an opportunity (matching/criteria.py).
+    criteria_fuzzy_threshold: float = 85.0
+    # Minimum cosine similarity before "your background matches this offer" is
+    # worth saying as a reason (below it, only skill overlap is mentioned).
+    reason_min_similarity: float = 0.3
     scanned_text_min_chars: int = 200
 
     # --- Notifications ------------------------------------------------------
@@ -74,6 +116,14 @@ class Settings(BaseSettings):
     llm_max_retries: int = 4
     llm_retry_base_wait: float = 2.0
     llm_max_input_chars: int = 8000
+    # One call per match >= NOTIFY_THRESHOLD would burn the free tier: only the
+    # best matches get their rule-generated reasons rephrased by the LLM.
+    max_phrases_per_run: int = 5
+
+    # --- Chat ------------------------------------------------------------------
+    # Only the most recent turns of a conversation reach the model (a long
+    # history would eat the input budget and add nothing to a grounded answer).
+    chat_history_turns: int = 10
 
     # --- Logging ---------------------------------------------------------------
     log_level: str = "INFO"
@@ -93,6 +143,11 @@ class Settings(BaseSettings):
     @property
     def fixtures_dir(self) -> Path:
         return self.data_dir / "fixtures"
+
+    @property
+    def sources_path(self) -> Path:
+        """Curated real-world sources (sources.yaml, committed)."""
+        return self.data_dir / "sources.yaml"
 
     @property
     def live_feed_dir(self) -> Path:
@@ -119,6 +174,19 @@ class Settings(BaseSettings):
     def tavily_key_value(self) -> str:
         return self.tavily_api_key.get_secret_value()
 
+    @field_validator("run_live_llm", mode="before")
+    @classmethod
+    def _empty_is_off(cls, value: object) -> object:
+        """`RUN_LIVE_LLM=` (empty) in a shell means "off", not a config error.
+
+        Example:
+            >>> Settings._empty_is_off("")
+            False
+            >>> Settings._empty_is_off("1")
+            '1'
+        """
+        return False if value in ("", None) else value
+
     @model_validator(mode="after")
     def _check_weights(self) -> Settings:
         total = self.semantic_weight + self.criteria_weight + self.bonus_weight
@@ -139,6 +207,31 @@ class Settings(BaseSettings):
 def get_settings() -> Settings:
     """Return the process-wide settings (cached; call .model_copy() to mutate)."""
     return Settings()
+
+
+@contextmanager
+def forced_provider(name: str) -> Iterator[None]:
+    """Temporarily force LLM_PROVIDER for this process, then restore it.
+
+    Used where a document must NEVER reach a remote model (a user's own CV):
+    reading and extraction inside this block run with `name` whatever .env says.
+
+    Example:
+        >>> with forced_provider("fake"):   # doctest: +SKIP
+        ...     get_settings().llm_provider
+        'fake'
+    """
+    previous = os.environ.get("LLM_PROVIDER")
+    os.environ["LLM_PROVIDER"] = name
+    get_settings.cache_clear()
+    try:
+        yield
+    finally:
+        if previous is None:
+            os.environ.pop("LLM_PROVIDER", None)
+        else:
+            os.environ["LLM_PROVIDER"] = previous
+        get_settings.cache_clear()
 
 
 def setup_logging(level: str | None = None, rapidocr_level: str = "WARNING") -> None:

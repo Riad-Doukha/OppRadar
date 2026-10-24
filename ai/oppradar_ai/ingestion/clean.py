@@ -1,0 +1,115 @@
+# HTML -> readable text via trafilatura: page title, main body text and
+# outbound links. Best effort: unreadable/garbage HTML yields an empty
+# result, never a crash. Called by: ingestion/pipeline.py, notebook 04.
+
+from __future__ import annotations
+
+import logging
+import re
+
+import trafilatura
+from pydantic import BaseModel, Field
+
+logger = logging.getLogger(__name__)
+
+_TITLE_RE = re.compile(r"<title[^>]*>(.*?)</title>", re.IGNORECASE | re.DOTALL)
+_CANONICAL_RE = re.compile(
+    r'<link[^>]+rel=["\']canonical["\'][^>]*href=["\']([^"\']+)', re.IGNORECASE
+)
+_CANONICAL_HREF_FIRST_RE = re.compile(
+    r'<link[^>]+href=["\']([^"\']+)["\'][^>]*rel=["\']canonical["\']', re.IGNORECASE
+)
+_OG_URL_RE = re.compile(
+    r'<meta[^>]+property=["\']og:url["\'][^>]+content=["\']([^"\']+)', re.IGNORECASE
+)
+
+
+class CleanedPage(BaseModel):
+    """Readable content of one HTML document."""
+
+    url: str = ""
+    canonical: str = ""  # permalink declared by the page (else "")
+    title: str = ""
+    text: str = ""
+    links: list[str] = Field(default_factory=list)
+
+
+def clean_html(html: str, url: str = "") -> CleanedPage:
+    """Extract canonical URL, title, main text and links from raw HTML.
+
+    Example:
+        >>> page = clean_html("<title>T</title><article><p>Body</p></article>")
+        >>> page.title, page.text
+        ('T', 'Body')
+    """
+    text = ""
+    try:
+        text = trafilatura.extract(
+            html, url=url, include_comments=False, include_tables=False
+        )
+    except Exception as exc:  # malformed markup must not crash a run
+        logger.warning("cleaning failed for %s: %s", url or "<html>", exc)
+    return CleanedPage(
+        url=url,
+        canonical=_canonical(html),
+        title=_title(html),
+        text=(text or "").strip(),
+        links=_links(html),
+    )
+
+
+def looks_like_list_page(page: CleanedPage) -> bool:
+    """Best-effort heuristic: many links + teaser-shaped text = an index page.
+
+    Tuned on the real enabled sources (Phase 3b): it flags the EURAXESS jobs
+    listing (117 links, 82% short lines) and leaves a genuine single-program
+    page alone even when its navigation is huge (CampusFrance Eiffel: 131
+    links but only 58% short lines). A wrong guess only marks the record
+    "list page - needs detail" (low confidence + a review note); it never
+    drops data or crashes a run.
+
+    Example:
+        >>> links = [f"https://example.org/{i}" for i in range(30)]
+        >>> teasers = "\\n".join("Short teaser line here" for _ in range(20))
+        >>> looks_like_list_page(CleanedPage(text=teasers, links=links))
+        True
+        >>> prose = "\\n".join(" ".join("word" for _ in range(20)) for _ in range(20))
+        >>> looks_like_list_page(CleanedPage(text=prose, links=links))
+        False
+    """
+    if len(page.links) < 30:  # an article/detail page never carries that many links
+        return False
+    lines = [ln for ln in page.text.splitlines() if ln.strip()]
+    if not lines:  # links but no readable prose at all: an index
+        return True
+    short = sum(1 for ln in lines if len(ln.split()) <= 12)
+    return short / len(lines) >= 0.6  # many short lines = a list of teasers
+
+
+def _canonical(html: str) -> str:
+    for pattern in (_CANONICAL_RE, _OG_URL_RE, _CANONICAL_HREF_FIRST_RE):
+        match = pattern.search(html)
+        if match:
+            return match.group(1).strip()
+    return ""
+
+
+def _title(html: str) -> str:
+    try:
+        meta = trafilatura.extract_metadata(html)
+        if meta is not None and getattr(meta, "title", None):
+            return str(meta.title).strip()
+    except Exception:
+        pass
+    match = _TITLE_RE.search(html)
+    return match.group(1).strip() if match else ""
+
+
+def _links(html: str) -> list[str]:
+    try:
+        from lxml import html as lxml_html
+
+        hrefs = lxml_html.fromstring(html).xpath("//a/@href")
+    except Exception:
+        return []
+    return list(dict.fromkeys(h for h in (str(h).strip() for h in hrefs) if h.startswith("http")))

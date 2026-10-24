@@ -1,10 +1,14 @@
 # Test bootstrap: force the offline fake provider and a throwaway data dir
 # BEFORE any test imports oppradar_ai, so no .env key or real cache is touched.
+# EMBEDDING_PROVIDER=fake keeps the matching tests offline and fast: no model
+# download and no dependency on a local HuggingFace cache (notebook 05 still
+# exercises the real sentence-transformers embedder, offline, in its own kernel).
 
 import os
 import tempfile
 
 os.environ["LLM_PROVIDER"] = "fake"
+os.environ["EMBEDDING_PROVIDER"] = "fake"
 os.environ["DATA_DIR"] = tempfile.mkdtemp(prefix="oppradar-test-")
 
 import pytest  # noqa: E402

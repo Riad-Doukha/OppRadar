@@ -30,11 +30,22 @@ def test_find_phones_detects_number() -> None:
     assert phones and phones[0].startswith("+213")
 
 
-def test_extract_cv_schema_and_rules_backfill() -> None:
+def test_find_phones_ignores_year_ranges() -> None:
+    # a CV education line must not be read as a phone number
+    assert find_phones("BSc Web Development, ENSMAD Oran, 2021 - 2024") == []
+
+
+def test_extract_cv_schema_and_rules_backfill(caplog) -> None:
     doc = read_document(SAMPLES / "cv_amine.pdf")
-    cv = extract_cv(doc.text, doc.file_name)
+    with caplog.at_level("INFO", logger="oppradar_ai.documents.extractors"):
+        cv = extract_cv(doc.text, doc.file_name)
     assert isinstance(cv, CVExtraction)
     assert cv.email == "amine.kaddour@example.org"  # regex, even with the fake LLM
+    # the backfill announces itself so notebooks/UIs can show what the rules did
+    assert any(
+        r.message.startswith("regex backfill filled") and r.message.endswith("cv_amine.pdf")
+        for r in caplog.records
+    )
     assert cv.source_file == "cv_amine.pdf"
     assert cv.skills  # canned fake data
     assert any("example-user" in url for url in cv.links)
