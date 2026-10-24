@@ -3,6 +3,9 @@
 .env.*
 !.env.example
 
+# --- Local-only test rig (never push; private like .env) ---
+test_platform/
+
 # --- CVs & private user data (never commit) ---
 *.pdf
 !docs/*.pdf
