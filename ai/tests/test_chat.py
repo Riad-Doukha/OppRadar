@@ -232,6 +232,13 @@ def test_no_opportunity_at_all_is_a_refusal_not_an_invention():
     assert reply.in_source is False and reply.eligibility is None
 
 
+def test_a_refusal_without_any_record_still_uses_the_question_language():
+    reply = answer(_profile(), None, [], "ما هي رسوم التسجيل؟", settings=_settings())
+
+    _assert_valid(reply)
+    assert reply.in_source is False and reply.language == "ar"
+
+
 def test_empty_message_asks_for_a_question_without_calling_the_model(monkeypatch):
     spy = _spy(monkeypatch)
     reply = answer(_profile(), _opp(), [], "   \n ", settings=_settings())

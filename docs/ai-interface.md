@@ -153,12 +153,16 @@ reply: ChatAnswer = api.answer(
 ) -> ChatAnswer
 ```
 
-The chat module is being built on the `feature/chat` branch. Until it lands,
-this raises `ApiError(code="chat-unavailable")` — the wrapper never pretends to
-answer. Frozen behaviour once available: the model never sees the CV (only
+Landed on `feature/chat` (Phase 6, merged): `oppradar_ai.chat.answer` is a
+thin, pure orchestrator — local evidence (public record + requirement-level
+verdicts) → prompt (`prompts/answer_question.md`) → one structured call behind
+the cost gate → contract enforcement. If the chat module is missing or its
+signature drifts, the wrapper raises `ApiError(code="chat-unavailable")` — it
+never pretends to answer. Frozen behaviour: the model never sees the CV (only
 public opportunity text, the message, history and locally computed
 eligibility verdicts), and answers it cannot ground say the exact phrase
-**"not in the source"** (`in_source=False`).
+**"not in the source"** (`in_source=False`). A 429 or any model failure
+degrades to a rules-only answer without retrying.
 
 ---
 
@@ -174,7 +178,7 @@ eligibility verdicts), and answers it cannot ground say the exact phrase
 | `rejected` | `extract_opportunity` | the text is not an opportunity |
 | `pending` | `extract_opportunity` | no LLM answer (budget/quota/provider) |
 | `unusable` | `extract_opportunity` | extraction had no usable title/organizer |
-| `chat-unavailable` | `answer` | chat module not landed / signature drift |
+| `chat-unavailable` | `answer` | chat module missing or signature drift (defensive) |
 
 - All expected failures are `oppradar_ai.api.ApiError` with a machine-readable
   `code` (HTTP mapping is the backend's choice, e.g. `rejected` → 422).
@@ -213,7 +217,7 @@ notes = api.decide_notifications(matches, prefs, history=stored_rows)
 try:
     reply = api.answer(profile, report.opportunities[0], stored_turns, "What is the deadline?")
 except ApiError as exc:
-    ...  # exc.code: "chat-unavailable" until feature/chat lands
+    ...  # exc.code: "chat-unavailable" only if the chat module is missing
 ```
 
 Evaluation numbers (extraction accuracy, deadline rules, batching call-math,

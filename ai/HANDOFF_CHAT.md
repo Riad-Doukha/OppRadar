@@ -1,5 +1,9 @@
 # OppRadar AI — Handoff: the Chat phase (notebook 06)
 
+> **Status: DELIVERED & MERGED** — `feature/chat` (`1e272fa`) was reviewed and
+> merged into `feature/ai-pipeline` (`c0aac5e`); this document is kept as the
+> plan-of-record. See [`README.md`](README.md) §6.1 for the current state.
+
 **For:** the colleague building the conversational Q&A layer.
 **Baseline:** branch `feature/ai-pipeline` @ `8c1ed2d` (Phase 7 landed) — 335 tests green on Python 3.13 *and* 3.10, `ruff` clean on both. Start here; for the overall picture, limitations and small fixes see [`README.md`](README.md).
 **Notebook numbering:** 00–05 done (setup, documents, profile, discovery, extraction, matching), **06 = chat (yours)**, 07 = security (someone else), 08 = background agent (done).

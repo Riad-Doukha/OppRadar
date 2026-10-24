@@ -20,16 +20,16 @@ design rationale in [`../docs/ai-design.md`](../docs/ai-design.md).
 | 3a–3e | discovery, fetching, extraction, gate/deadlines, Gemini reliability | done | `da0dacb` |
 | 4 | matching: hard filters, criteria rules, 0–100 score, reasons, notifications | done | `fc62f80` `c598d07` `230fb2f` |
 | 5 | background agent: APScheduler, drop folder, toasts, notebook 08 | done | `14f4881` `e6f0fcf` |
-| 6 | **chat (notebook 06) — `chat.py`, `chat_ui.py`, `06_chat.ipynb`** | **NOT STARTED — this is the main remaining work** | handoff: `df5d136` |
+| 6 | chat: `chat.py`, `chat_ui.py`, `06_chat.ipynb`, `test_chat.py` | done — reviewed & merged from `feature/chat` | `1e272fa` + merge `c0aac5e` |
 | 7 | `api.py` interface, feed-entry batching, evaluation notebook 09, e2e test | done | `8c1ed2d` |
 | — | security notebook 07 | unclaimed | — |
 
-- **Notebooks:** 00–05, 08, 09 run top-to-bottom offline and are executed by
-  the test suite. **06 = chat (yours), 07 = security (someone else).**
+- **Notebooks:** 00–06, 08, 09 run top-to-bottom offline and are executed by
+  the test suite. **07 = security (unclaimed) is the only notebook left.**
 - **Tests:** 335 green on Python 3.13 *and* 3.10; `ruff` clean on both;
   every notebook runs headless offline with dummy keys.
-- Branch: **`feature/ai-pipeline`** (base work). Chat work goes on
-  **`feature/chat`** (branched off `feature/ai-pipeline`).
+- Branch: **`feature/ai-pipeline`** — all AI-layer work lands here (feature
+  branches like `feature/chat` are merged only after review).
   **Never commit to or push `develop`** — merge only after the user verifies.
 
 ---
@@ -159,40 +159,22 @@ answer(profile, opportunity, history, message, *, settings) -> ChatAnswer   # <-
 
 ## 6. Remaining work (in order)
 
-### 6.1 Chat — Phase 6, notebook 06 (the main job)
+### 6.1 Chat — Phase 6, notebook 06 — DONE (merged from `feature/chat`)
 
-Full step-by-step plan, frozen contract, module map, test list and DoD:
-**[`HANDOFF_CHAT.md`](HANDOFF_CHAT.md)**. Condensed checklist:
+Delivered and reviewed (`1e272fa`, merged `c0aac5e`): `oppradar_ai/chat.py`
+(pure, grounded `answer()` — local evidence → `prompts/answer_question.md` →
+one structured call behind the cost gate → contract enforcement), `chat_ui.py`
+(`ChatPanel` + HTML-escaped renderers, ipywidgets imported inside `__init__`),
+`notebooks/06_chat.ipynb` (own throwaway store, 12 offline markers) and
+`tests/test_chat.py` (50 tests: refusal phrase, privacy spy, quota fallback,
+history trimming, cache, extraction round-trip, XSS escaping). The refusal
+contract, no-profile-text rule, gate and purity requirements all hold;
+`api.answer()` now proxies the real module (`chat-unavailable` survives only
+as a defensive error for a missing module / signature drift).
 
-1. `oppradar_ai/chat.py` — `answer(profile, opportunity, history, message, *,
-   settings=None) -> ChatAnswer` (frozen). Thin orchestrator:
-   `_evidence()` (public fields + local `check_criteria` verdicts, no model) →
-   `_prompt()` (`prompts/answer_question.md`, plain `.format()`) → ONE
-   `llm.structured(prompt, ChatAnswer)` behind the cost gate → `_postprocess()`
-   (enforce grounding, attach locally computed eligibility) →
-   `_rules_only_answer()` (failure path).
-2. **Standing rules:** cost gate (reuse `phrasing_allowed(settings)`), privacy
-   (no CV/profile text in the prompt — enforce with a privacy-spy test),
-   refusal phrase exact **"not in the source"** + `in_source=False`,
-   on `QuotaExhausted`/`LLMError` return a rules-only answer without retry,
-   history trimmed to last N, keep `answer()` pure (UI persists via
-   `store.append_chat`).
-3. `oppradar_ai/chat_ui.py` — ipywidgets panel following the `toasts.py`
-   pattern: pure render functions + widget class, ipywidgets imported inside
-   `__init__`, every callback wrapped in try/except, no business logic.
-4. `notebooks/06_chat.ipynb` — independent demo (own throwaway store), runs
-   top-to-bottom offline: Q&A → refusal demo → eligibility → history
-   round-trip → URL/pasted text → live cell behind the gate → widget.
-   Register offline markers in `tests/test_notebooks.py`.
-5. `tests/test_chat.py` — refusal, **privacy spy**, quota fallback, history
-   trimming, cache, `extracted_opportunity`, store round-trip, schema
-   validation of every branch.
-6. Fake provider: `_CANNED["ChatAnswer"]` / `["EligibilityAssessment"]`
-   **already exist** in `llm.py` — keep them in sync with your prompt/schema.
-
-Done when: `python -m pytest` green on 3.13 + 3.10, ruff clean, notebook 06
-runs offline AND with real `ai/.env`, nbstripout before commit, report
-(a)–(d) then STOP.
+Review follow-ups applied on merge: notebook outputs stripped (nbstripout),
+marker prints hardened to single-write f-strings, and the fixtures test made
+stamp-based (a `days=2` deadline had drifted past today).
 
 ### 6.2 Security notebook 07 (unclaimed)
 
@@ -261,14 +243,19 @@ send in one batch → mark `sent`), or surface them in the chat panel
 7. **FakeLLM canned data is keyed by schema class name** — rename a schema and
    its canned entry silently degrades to generic defaults. The batch canned
    rule is additionally coupled to the `=== ITEM n ===` markers in
-   `prompts/extract_batch.md` (rename the markers → offline batch tests break).
+   `prompts/extract_batch.md`, and the chat canned rule to `chat._prompt()`'s
+   section labels (`Opportunity record:`, `Question:`, `Reply language hint:`)
+   — rename either set and the offline answers degrade silently.
 8. **JSON store is single-process only** (RLock + atomic writes, fine for the
    notebook product; a real DB would replace `store.py` alone).
 9. **Page re-fetch duplication**: LLM answers are cached, HTML fetches are not.
 
 ### C. Missing product behavior
 
-10. **Chat not built** → `api.answer()` raises `chat-unavailable` (§6.1).
+10. **Language detection is a cheap ar/fr/en heuristic** (`chat.detect_language`)
+    — every other language falls back to the `en` hint. The hint only steers
+    the offline fake and short real-model prompts; a real model mostly decides
+    for itself.
 11. **No scam detector** → scam rows only drop when flags are set manually (§6.3).
 12. **PENDING notifications have no delivery path** (§6.5).
 13. **No read/marked-as-seen state** — chatting about an opportunity does not

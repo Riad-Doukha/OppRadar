@@ -127,7 +127,7 @@ def answer(
     source = extracted or opportunity
     hint = detect_language(question)
     if source is None:
-        return _no_source(notes)
+        return _no_source(notes, hint)
     evidence = _build_evidence(profile, source)
     reply, why = _model_reply(evidence, history, question, hint, settings)
     if reply is None:
@@ -457,15 +457,15 @@ def _language(value: str, hint: str) -> str:
     return code if _LANGUAGE_RE.match(code) else hint
 
 
-def _no_source(notes: list[str]) -> ChatAnswer:
-    """No opportunity at all: nothing to ground an answer in."""
+def _no_source(notes: list[str], hint: str = "en") -> ChatAnswer:
+    """No opportunity at all: nothing to ground an answer in (in the asked language)."""
     text = (
         f"I have no opportunity record to answer from, so that is {REFUSAL_PHRASE}. "
         "Select an opportunity, or paste its announcement or a link."
     )
     if notes:
         text = "\n".join([text, *(f"Note: {note}" for note in notes)])
-    return ChatAnswer(answer=text, in_source=False)
+    return ChatAnswer(answer=text, in_source=False, language=hint)
 
 
 # --------------------------------------------------------------------------- #
