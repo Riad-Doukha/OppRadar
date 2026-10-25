@@ -148,7 +148,7 @@ Browser (Next.js on Vercel) ──JWT──▶ API (FastAPI on Render, service-r
 **F3 — Spoofable rate-limit IP (Medium, fixed).**
 - **What happened:** to read the real client IP behind Render's proxy, Phase D started uvicorn with `--forwarded-allow-ips "*"`. With `*`, uvicorn trusts the **leftmost** `X-Forwarded-For` entry, which the client controls. Anyone could send a new fake IP with each request and never hit a limit.
 - **Fix:** `ratelimit.client_ip()` reads the IP from one configured source, `CLIENT_IP_HEADER`. With `x-forwarded-for` it takes the **last** entry, the one the platform's proxy appended. Otherwise it uses a single-value header set by the proxy, or the TCP peer. The uvicorn flag is removed.
-- **Action at deploy:** check which header Render provides and set `CLIENT_IP_HEADER` to match. To check, sign in as an admin and open `GET /admin/client-ip` from two different networks (e.g. Wi-Fi and mobile data): `used` must differ between them and match each network's real IP.
+- **Action at deploy:** check which header Render provides and set `CLIENT_IP_HEADER` to match. To check, sign in as an admin, go to **Admin → Ingest → Client IP check** and press **Check** from two different networks (e.g. Wi-Fi and mobile data): `used` must differ between them and match each network's real IP.
 
 **F4 — PDF page bomb (Medium, fixed).** Text extraction falls back to OCR at 220 dpi per page, and the upload limit was in bytes only. A small PDF with thousands of blank pages would have tied up the single API instance.
 - **Fix:** uploads with more than 10 pages are refused with a 413 (`UPLOAD_MAX_PAGES`).

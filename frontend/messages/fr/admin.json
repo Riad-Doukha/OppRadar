@@ -77,6 +77,9 @@
     "failures": "Échecs : {list}",
     "error": "Échec : {error}",
     "rejected": "Pas des opportunités ({count})",
-    "pendingLlm": "En attente du modèle ({count})"
+    "pendingLlm": "En attente du modèle ({count})",
+    "ipTitle": "Vérification de l'IP client",
+    "ipBody": "L'IP que les limites de requêtes comptent pour vous. Ouvrez ceci depuis deux réseaux (Wi-Fi et données mobiles) : elle doit changer et correspondre à votre vraie IP. Sinon, réglez CLIENT_IP_HEADER sur l'en-tête qui la contient.",
+    "ipCheck": "Vérifier"
   }
 }

@@ -77,6 +77,9 @@
     "failures": "Failures: {list}",
     "error": "Run failed: {error}",
     "rejected": "Not opportunities ({count})",
-    "pendingLlm": "Waiting for the model ({count})"
+    "pendingLlm": "Waiting for the model ({count})",
+    "ipTitle": "Client IP check",
+    "ipBody": "The IP the rate limits count for you. Open this from two networks (Wi-Fi and mobile data): it must differ and match your real IP. Otherwise set CLIENT_IP_HEADER to the header that carries it.",
+    "ipCheck": "Check"
   }
 }

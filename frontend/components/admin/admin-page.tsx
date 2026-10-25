@@ -320,6 +320,8 @@ function Ingestion() {
         {run.isError && <Alert className="mt-3">{t("error", { error: run.error.message })}</Alert>}
       </section>
 
+      <IpCheck />
+
       <section className="rounded-card border border-line bg-surface p-5 sm:p-6">
         <h2 className="text-base font-bold text-ink">{t("runs")}</h2>
         {runs.isPending && <Skeleton className="mt-3 h-16 w-full rounded-field" />}
@@ -376,5 +378,22 @@ function Ingestion() {
         </ul>
       </section>
     </div>
+  );
+}
+
+/** Deploy check for CLIENT_IP_HEADER (see docs/security/stride.md, F3). */
+function IpCheck() {
+  const t = useTranslations("admin.ingest");
+  const check = useQuery({ queryKey: ["admin", "client-ip"], queryFn: () => api<Record<string, unknown>>("/admin/client-ip"), enabled: false });
+  return (
+    <section className="rounded-card border border-line bg-surface p-5 sm:p-6">
+      <h2 className="text-base font-bold text-ink">{t("ipTitle")}</h2>
+      <p className="max-w-3xl pt-1 text-sm text-body">{t("ipBody")}</p>
+      <Button size="sm" variant="outline" className="mt-3" disabled={check.isFetching} onClick={() => check.refetch()}>
+        {check.isFetching && <Spinner />} {t("ipCheck")}
+      </Button>
+      {check.isError && <Alert className="mt-3">{t("error", { error: check.error.message })}</Alert>}
+      {check.data && <pre className="mt-3 overflow-x-auto rounded-field bg-page p-3 font-mono text-xs text-ink">{JSON.stringify(check.data, null, 2)}</pre>}
+    </section>
   );
 }
