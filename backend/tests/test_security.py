@@ -79,3 +79,12 @@ def test_retention_purge(repo):
                          ("u2", "o"): {"user_id": "u2", "updated_at": old}}  # fmt: skip
     assert agent.purge(repo) == (1, 1)
     assert [m["id"] for m in repo.chat] == ["b"] and list(repo.applications) == [("u2", "o")]
+
+
+def test_client_ip_check_is_admin_only(client, auth):
+    from test_agent_pipeline import ADMIN
+
+    assert client.get("/admin/client-ip", headers=auth).status_code == 403
+    r = client.get("/admin/client-ip", headers=ADMIN | {"X-Forwarded-For": "1.2.3.4"})
+    assert r.status_code == 200 and r.json()["headers"] == {"x-forwarded-for": "1.2.3.4"}
+    assert r.json()["used"] == r.json()["peer"]  # header ignored until configured

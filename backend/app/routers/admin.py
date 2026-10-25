@@ -3,12 +3,13 @@ Admins are users whose app_metadata.role is "admin" (scripts/make_admin.py)."""
 
 from __future__ import annotations
 
-from typing import Annotated, Literal
+from typing import Annotated, Any, Literal
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
 
 from app.auth import Admin
+from app.config import get_settings
 from app.models import (
     AdminOpportunityIn,
     AdminStats,
@@ -19,11 +20,28 @@ from app.models import (
     ReviewIn,
     TrustLevelName,
 )
+from app.ratelimit import client_ip
 from app.repositories import Repository, get_repository
 from app.services import agent, review
 
 router = APIRouter()
 Repo = Annotated[Repository, Depends(get_repository)]
+
+
+# Headers a hosting proxy may use to pass on the visitor's address.
+IP_HEADERS = ("x-forwarded-for", "true-client-ip", "cf-connecting-ip", "x-real-ip", "forwarded")
+
+
+@router.get("/client-ip")
+def client_ip_check(_: Admin, request: Request) -> dict[str, Any]:
+    """Deploy check for CLIENT_IP_HEADER: open it from two networks; `used` (the IP
+    the rate limits count) must differ between them and match your real IP."""
+    return {
+        "used": client_ip(request),
+        "client_ip_header": get_settings().client_ip_header or None,
+        "peer": request.client.host if request.client else None,
+        "headers": {h: request.headers.get(h) for h in IP_HEADERS if h in request.headers},
+    }
 
 
 @router.get("/stats", response_model=AdminStats)
