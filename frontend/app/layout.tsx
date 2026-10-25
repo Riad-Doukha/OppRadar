@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { DM_Sans, IBM_Plex_Mono, IBM_Plex_Sans_Arabic, Nunito } from "next/font/google";
+import localFont from "next/font/local";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getTranslations } from "next-intl/server";
 
@@ -10,31 +10,39 @@ import { THEME_SCRIPT } from "@/lib/theme-script";
 import { Providers } from "./providers";
 import "./globals.css";
 
-const dmSans = DM_Sans({
-  subsets: ["latin"],
+// Fonts are committed under app/fonts (SIL OFL 1.1, from Fontsource), so builds
+// never download them: Google Fonts fetches at build time failed in CI.
+const dmSans = localFont({
+  src: "./fonts/dm-sans-latin-opsz-normal.woff2", // variable: weight + optical size
+  weight: "100 1000",
   variable: "--font-dm-sans",
-  axes: ["opsz"],
 });
 
-const plexMono = IBM_Plex_Mono({
-  subsets: ["latin"],
-  weight: ["500", "600"],
+const plexMono = localFont({
+  src: [
+    { path: "./fonts/ibm-plex-mono-latin-500-normal.woff2", weight: "500" },
+    { path: "./fonts/ibm-plex-mono-latin-600-normal.woff2", weight: "600" },
+  ],
   variable: "--font-plex-mono",
 });
 
 // The design uses LT Saeada (commercial). Nunito is the stand-in until the
-// licensed files are added under app/fonts and loaded with next/font/local.
-const display = Nunito({
-  subsets: ["latin"],
-  weight: ["600", "700", "800"],
+// licensed files are added under app/fonts.
+const display = localFont({
+  src: "./fonts/nunito-latin-wght-normal.woff2", // variable weight
+  weight: "200 1000",
   variable: "--font-display-face",
 });
 
 // Arabic glyphs: DM Sans / Nunito / Plex Mono have none, so the font stacks in
 // globals.css fall through to this face for Arabic text only.
-const arabic = IBM_Plex_Sans_Arabic({
-  subsets: ["arabic"],
-  weight: ["400", "500", "600", "700"],
+const arabic = localFont({
+  src: [
+    { path: "./fonts/ibm-plex-sans-arabic-arabic-400-normal.woff2", weight: "400" },
+    { path: "./fonts/ibm-plex-sans-arabic-arabic-500-normal.woff2", weight: "500" },
+    { path: "./fonts/ibm-plex-sans-arabic-arabic-600-normal.woff2", weight: "600" },
+    { path: "./fonts/ibm-plex-sans-arabic-arabic-700-normal.woff2", weight: "700" },
+  ],
   variable: "--font-arabic",
   preload: false,
 });
