@@ -3,10 +3,12 @@
 import logging
 from contextlib import asynccontextmanager
 
+import httpx
 import socketio
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from pydantic import ValidationError
 
 from app.config import get_settings
 from app.repositories import NotFoundError
@@ -70,6 +72,19 @@ app = FastAPI(
 )
 
 
+def _database_unavailable(exc: BaseException) -> bool:
+    """Supabase did not answer: a network failure or timeout, or an HTML gateway
+    page (e.g. Cloudflare 522) that supabase-py fails to parse as an error."""
+    seen: BaseException | None = exc
+    while seen is not None:
+        if isinstance(seen, httpx.TransportError):
+            return True
+        if isinstance(seen, ValidationError) and seen.title == "APIErrorFromJSON":
+            return True
+        seen = seen.__cause__ or seen.__context__
+    return False
+
+
 @app.middleware("http")
 async def unexpected_errors(request: Request, call_next):  # type: ignore[no-untyped-def]
     """Turn crashes into a JSON 500 *inside* the CORS middleware (registered
@@ -77,7 +92,16 @@ async def unexpected_errors(request: Request, call_next):  # type: ignore[no-unt
     layer without CORS headers and the browser only reports "Failed to fetch"."""
     try:
         return await call_next(request)
-    except Exception:
+    except Exception as exc:
+        if _database_unavailable(exc):
+            logging.getLogger("app").warning(
+                "database unavailable on %s %s: %s", request.method, request.url.path, exc
+            )
+            return JSONResponse(
+                {"detail": "We couldn't reach our database just now. Please try again."},
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                headers={"Retry-After": "5"},
+            )
         logging.getLogger("app").exception(
             "unhandled error on %s %s", request.method, request.url.path
         )

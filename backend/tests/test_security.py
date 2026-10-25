@@ -88,3 +88,35 @@ def test_client_ip_check_is_admin_only(client, auth):
     r = client.get("/admin/client-ip", headers=ADMIN | {"X-Forwarded-For": "1.2.3.4"})
     assert r.status_code == 200 and r.json()["headers"] == {"x-forwarded-for": "1.2.3.4"}
     assert r.json()["used"] == r.json()["peer"]  # header ignored until configured
+
+
+def _gateway_page_error():
+    """What supabase-py raises when Supabase answers with an HTML error page."""
+    from pydantic import BaseModel, ValidationError
+
+    class APIErrorFromJSON(BaseModel):
+        message: str
+
+    try:
+        APIErrorFromJSON.model_validate_json(b"<!DOCTYPE html><html>522</html>")
+    except ValidationError as exc:
+        return exc
+
+
+@pytest.mark.parametrize(
+    "error",
+    [lambda: __import__("httpx").ConnectTimeout("timed out"), _gateway_page_error],
+)
+def test_database_outage_is_a_503(client, auth, repo, monkeypatch, error):
+    def down(*a, **k):
+        raise error()
+
+    monkeypatch.setattr(repo, "ensure_profile", down)
+    r = client.get("/me", headers=auth)
+    assert r.status_code == 503 and r.headers["Retry-After"] == "5"
+    assert "try again" in r.json()["detail"]
+
+
+def test_other_crashes_stay_a_500(client, auth, repo, monkeypatch):
+    monkeypatch.setattr(repo, "ensure_profile", lambda *a, **k: 1 / 0)
+    assert client.get("/me", headers=auth).status_code == 500
