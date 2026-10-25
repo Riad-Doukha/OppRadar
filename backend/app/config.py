@@ -20,6 +20,11 @@ class Settings(BaseSettings):
     # Server
     backend_port: int = 8000
     cors_origins: str = "http://localhost:3000"
+    # Where the client IP comes from (rate limits). "" = the TCP peer (local);
+    # "x-forwarded-for" = its last entry (the one our host's proxy appended);
+    # any other name = that single-value header, set by the proxy (never trust
+    # a header the proxy does not overwrite: clients can send it themselves).
+    client_ip_header: str = ""
 
     # Persistence: "supabase" in every real deployment; "memory" for tests and
     # for poking at the API without a database (data is lost on restart).
@@ -36,6 +41,7 @@ class Settings(BaseSettings):
 
     # Uploads (Figma step 1: "PDF max 5 MB")
     upload_max_mb: int = 5
+    upload_max_pages: int = 10  # every page may be OCR'd: bounds the CPU per upload
 
     # The agent cycle (ingest, then re-match every active agent) on a timer.
     # Off by default: enable it on the one process that should own it.

@@ -151,8 +151,9 @@ def test_ai_chat_has_a_daily_limit(client, auth, monkeypatch):
 def test_unknown_announcement_is_read_for_review(client, auth, monkeypatch):
     from oppradar_ai.schemas import Opportunity
 
-    from app.services import ai
+    from app.services import ai, chat
 
+    monkeypatch.setattr(chat, "is_public_url", lambda url: True)  # no DNS in tests
     seen = {}
 
     def fake_extract(url=None, text=None):

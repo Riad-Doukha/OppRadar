@@ -405,6 +405,35 @@ class SupabaseRepository:
             .data
         )
 
+    def purge_expired(
+        self, chat_before: datetime, applications_before: datetime
+    ) -> tuple[int, int]:
+        chat = (
+            self.db.table("chat_messages")
+            .delete()
+            .lt("created_at", chat_before.isoformat())
+            .execute()
+        )
+        users = [
+            r["user_id"]
+            for r in self.db.table("profiles")
+            .select("user_id")
+            .eq("history_retention", "12_months")
+            .execute()
+            .data
+        ]
+        applications = 0
+        for i in range(0, len(users), 200):
+            done = (
+                self.db.table("applications")
+                .delete()
+                .in_("user_id", users[i : i + 200])
+                .lt("updated_at", applications_before.isoformat())
+                .execute()
+            )
+            applications += len(done.data)
+        return len(chat.data), applications
+
     # -- applications ---------------------------------------------------------------- #
     def list_applications(self, user_id: str) -> list[Row]:
         return (

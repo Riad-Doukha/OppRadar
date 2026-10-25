@@ -476,6 +476,23 @@ class MemoryRepository:
             rows = sorted(self.ingestion_runs, key=lambda r: r["started_at"], reverse=True)
             return copy.deepcopy(rows[:limit])
 
+    def purge_expired(
+        self, chat_before: datetime, applications_before: datetime
+    ) -> tuple[int, int]:
+        with self._lock:
+            keep = [m for m in self.chat if m["created_at"] >= chat_before]
+            chat, self.chat = len(self.chat) - len(keep), keep
+            expired = [
+                key
+                for key, a in self.applications.items()
+                if a["updated_at"] < applications_before
+                and self.profiles.get(a["user_id"], {}).get("history_retention", "12_months")
+                == "12_months"
+            ]
+            for key in expired:
+                del self.applications[key]
+            return chat, len(expired)
+
     # -- applications ---------------------------------------------------------------- #
     def list_applications(self, user_id: str) -> list[Row]:
         with self._lock:

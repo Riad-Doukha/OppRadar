@@ -245,4 +245,18 @@ def run_cycle(repo: Repository) -> IngestionRun:
     run = ingest(repo, trigger="scheduled")
     matched = match_everyone(repo)
     log.info("agent cycle: %s new opportunities, %s profiles matched", run.items_new, matched)
+    purge(repo)
     return run
+
+
+CHAT_KEEP = timedelta(days=90)  # promised on /privacy
+APPLICATIONS_KEEP = timedelta(days=365)  # the "12 months" history setting
+
+
+def purge(repo: Repository) -> tuple[int, int]:
+    """Delete chat and application history past its retention period."""
+    now = datetime.now(timezone.utc)
+    chat, applications = repo.purge_expired(now - CHAT_KEEP, now - APPLICATIONS_KEEP)
+    if chat or applications:
+        log.info("retention: deleted %s chat messages, %s applications", chat, applications)
+    return chat, applications

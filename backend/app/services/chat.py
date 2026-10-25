@@ -23,6 +23,7 @@ from oppradar_ai.schemas import ChatTurn
 
 from app.auth import CurrentUser
 from app.models import ChatHistory, ChatMessageOut, OpportunityFilters, OpportunityOut
+from app.netguard import is_public_url
 from app.repositories import Repository
 from app.repositories.base import Row
 from app.services import ai, profiles
@@ -210,7 +211,10 @@ def _extract(user: CurrentUser, message: str, ids: list[str]) -> dict[str, Any] 
     try:
         if link:
             url = link.group(0).rstrip(").,;")
-            opp = ai.extract_opportunity(url=url if "://" in url else f"https://{url}")
+            url = url if "://" in url else f"https://{url}"
+            if not is_public_url(url):
+                return None
+            opp = ai.extract_opportunity(url=url)
         else:
             opp = ai.extract_opportunity(text=message)
     except Exception as exc:  # gate closed (offline), unreadable page, not an opportunity…

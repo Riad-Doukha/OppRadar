@@ -90,6 +90,11 @@ class Repository(Protocol):
     def agent_user_ids(self) -> list[str]: ...  # profiles that started their agent
     def add_ingestion_run(self, row: Row) -> Row: ...
     def list_ingestion_runs(self, limit: int) -> list[Row]: ...  # newest first
+    # Retention: chat older than `chat_before`; applications untouched since
+    # `applications_before` for users on the 12-month setting. -> (chat, applications)
+    def purge_expired(
+        self, chat_before: datetime, applications_before: datetime
+    ) -> tuple[int, int]: ...
 
     # -- applications ------------------------------------------------------------ #
     def list_applications(self, user_id: str) -> list[Row]: ...

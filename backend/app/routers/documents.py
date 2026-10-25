@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import Annotated, Any
 from uuid import UUID
 
+import pymupdf
 from fastapi import (
     APIRouter,
     BackgroundTasks,
@@ -41,6 +42,15 @@ router = APIRouter()
 Repo = Annotated[Repository, Depends(get_repository)]
 
 PDF_MAGIC = b"%PDF-"
+
+
+def _page_count(data: bytes) -> int | None:
+    """Pages in the PDF, or None when it cannot be opened (processing then fails cleanly)."""
+    try:
+        with pymupdf.open(stream=data, filetype="pdf") as doc:
+            return doc.page_count
+    except Exception:
+        return None
 
 
 @router.post("", response_model=Document, status_code=status.HTTP_202_ACCEPTED)
@@ -71,6 +81,12 @@ async def upload_document(
         )
     if not data.startswith(PDF_MAGIC):
         raise HTTPException(status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, "Only PDF files are supported.")
+    pages = _page_count(data)
+    if pages and pages > get_settings().upload_max_pages:
+        raise HTTPException(
+            status.HTTP_413_CONTENT_TOO_LARGE,
+            f"That PDF has {pages} pages. Please upload at most {get_settings().upload_max_pages}.",
+        )
 
     repo.ensure_profile(user.id, user.full_name)
     repo.grant_consent(user.id, "ai_cv_processing")
