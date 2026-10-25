@@ -120,3 +120,34 @@ def test_database_outage_is_a_503(client, auth, repo, monkeypatch, error):
 def test_other_crashes_stay_a_500(client, auth, repo, monkeypatch):
     monkeypatch.setattr(repo, "ensure_profile", lambda *a, **k: 1 / 0)
     assert client.get("/me", headers=auth).status_code == 500
+
+
+def test_ai_missed_criterion_reads_as_unmet():
+    from app.models import Criterion
+
+    assert Criterion(text="Python", status="missed").status == "unmet"
+
+
+def test_concurrent_scans_of_one_user_run_one_at_a_time(repo, monkeypatch):
+    import threading
+    import time
+
+    from app.auth import CurrentUser
+    from app.services import agent
+
+    active, peak = [0], [0]
+
+    def slow(*a, **k):
+        active[0] += 1
+        peak[0] = max(peak[0], active[0])
+        time.sleep(0.05)
+        active[0] -= 1
+
+    monkeypatch.setattr(agent, "_match_user", slow)
+    user = CurrentUser(id="u1")
+    threads = [threading.Thread(target=agent.match_user, args=(repo, user)) for _ in range(3)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+    assert peak[0] == 1

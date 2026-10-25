@@ -37,6 +37,7 @@ export function FirstScan() {
       try {
         const me = await api<Me>("/me");
         await say(t("loaded", { name: me.full_name || me.email }));
+        if (cancelled) return; // a cancelled run (React dev double-mount) must not start a second scan
         if (!me.is_demo) await api("/me/agent/start", { method: "POST" });
         await say(t("started"));
         const stats = await api<Schemas["DashboardStats"]>("/me/dashboard");

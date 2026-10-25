@@ -660,6 +660,11 @@ class Criterion(_Out):
     status: Literal["met", "unmet", "unknown"] = "unknown"
     evidence: str = ""
 
+    @field_validator("status", mode="before")
+    @classmethod
+    def _from_ai(cls, v: object) -> object:
+        return "unmet" if v == "missed" else v  # the AI's CriteriaStatus.MISSED
+
 
 class MatchInfo(_Out):
     score: float  # 0-100

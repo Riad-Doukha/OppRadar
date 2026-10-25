@@ -9,7 +9,9 @@ extraction. Later phases are listed at the bottom.
 
 from __future__ import annotations
 
+import logging
 import re
+import threading
 from datetime import date, datetime
 from pathlib import Path
 from typing import Any
@@ -343,8 +345,35 @@ def run_ingestion() -> IngestionReport:
     return _call("run_ingestion")
 
 
+_model_lock = threading.Lock()
+_model_ready = False
+
+
+def warm_up() -> None:
+    """Load the embedding model once (it takes a minute on a small CPU). Called
+    in the background at start-up; scoring also waits here, so two scans
+    started together never load two copies (memory on a 1 GB instance)."""
+    global _model_ready
+    if _model_ready:
+        return
+    with _model_lock:
+        if _model_ready:
+            return
+        from oppradar_ai.embeddings import get_embedder
+
+        embedder = get_embedder()
+        if embedder.provider != "fake":
+            started = datetime.now()
+            embedder.encode_one("warm-up")
+            logging.getLogger(__name__).info(
+                "embedding model ready in %.0fs", (datetime.now() - started).total_seconds()
+            )
+        _model_ready = True
+
+
 def score(profile: Profile, opportunities: list[Opportunity]) -> list[MatchResult]:
     """Hard filters (expired, application fee) + 0-100 score with reasons, best first."""
+    warm_up()
     return _call("score_user", profile, opportunities)
 
 

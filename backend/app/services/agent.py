@@ -32,6 +32,14 @@ DAILY_CAP = 5  # instant match alerts per user per day
 DIGEST_EVERY = {"daily": timedelta(days=1), "weekly": timedelta(days=7)}
 LOCAL = ZoneInfo("Africa/Algiers")  # quiet hours are local time
 _cycle_lock = threading.Lock()  # one ingestion at a time (free-tier budget)
+_user_locks: dict[str, threading.Lock] = {}
+_user_locks_guard = threading.Lock()
+
+
+def _user_lock(user_id: str) -> threading.Lock:
+    """One scan per user at a time: two at once would both replace the matches."""
+    with _user_locks_guard:
+        return _user_locks.setdefault(user_id, threading.Lock())
 
 
 class CooldownError(RuntimeError):
@@ -168,6 +176,13 @@ def match_user(
 ) -> ScanResult:
     """Score this user's profile against every open opportunity, store the
     matches and send the alerts their settings allow."""
+    with _user_lock(user.id):
+        return _match_user(repo, user, rows)
+
+
+def _match_user(
+    repo: Repository, user: CurrentUser, rows: list[dict[str, Any]] | None
+) -> ScanResult:
     me = profiles.load_me(repo, user)
     rows = _open_opportunities(repo) if rows is None else rows
     by_id = {str(r["id"]): r for r in rows}

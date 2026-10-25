@@ -43,6 +43,10 @@ async def lifespan(_: FastAPI):  # type: ignore[no-untyped-def]
     from app.sockets.events import bind_loop
 
     bind_loop(asyncio.get_running_loop())
+    # Load the embedding model now, not on the first user's scan.
+    from app.services.ai import warm_up
+
+    asyncio.get_running_loop().run_in_executor(None, warm_up)
     scheduler = None
     if settings.agent_scheduler:
         from apscheduler.schedulers.background import BackgroundScheduler
