@@ -68,8 +68,20 @@ def main() -> None:
         "scope": SCOPE, "access_type": "offline", "prompt": "consent", "state": state,
         "code_challenge": challenge.decode(), "code_challenge_method": "S256",
     })  # fmt: skip
+
+    def pasted() -> None:
+        """Fallback when the browser can't reach the local page (firewall,
+        antivirus): the code is still in the address bar, so paste that."""
+        line = sys.stdin.readline().strip()
+        if line:
+            result.update({k: v[0] for k, v in parse_qs(urlsplit(line).query).items()})
+            done.set()
+
     threading.Thread(target=server.serve_forever, daemon=True).start()
+    threading.Thread(target=pasted, daemon=True).start()
     print("Opening Google sign-in. If no browser opens, visit:\n\n" + url + "\n")
+    print("If the browser then says it can't connect to 127.0.0.1, copy the whole")
+    print("address from its address bar, paste it here and press Enter.\n")
     webbrowser.open(url)
     done.wait()
     server.shutdown()
