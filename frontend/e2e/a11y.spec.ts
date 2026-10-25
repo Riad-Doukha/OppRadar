@@ -1,11 +1,11 @@
 import AxeBuilder from "@axe-core/playwright";
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Browser, type Cookie, type Page } from "@playwright/test";
 
 // Automated accessibility checks (axe-core, WCAG 2.2 A/AA rules) on every
 // screen, in light and dark. Public pages run in CI with the API mocked;
 // signed-in pages use the demo account and need the API on :8000.
 
-const PUBLIC = ["/", "/explore", "/login", "/signup", "/forgot-password"];
+const PUBLIC = ["/", "/explore", "/login", "/signup", "/forgot-password", "/terms", "/privacy"];
 const SIGNED_IN = [
   "/dashboard",
   "/agent",
@@ -24,6 +24,22 @@ const SIGNED_IN = [
   "/onboarding?step=5",
   "/onboarding?step=review",
 ];
+
+// One demo sign-in for the whole run (the API rate-limits /auth/demo); the
+// Supabase session lives in cookies, so later tests just reuse them.
+let demoCookies: Cookie[] | null = null;
+async function demoSession(browser: Browser): Promise<Cookie[]> {
+  if (demoCookies) return demoCookies;
+  const context = await browser.newContext();
+  await context.addCookies([{ name: "NEXT_LOCALE", value: "en", url: "http://localhost:3000" }]);
+  const page = await context.newPage();
+  await page.goto("/login");
+  await page.getByRole("button", { name: /Try the demo instead/ }).click();
+  await expect(page).toHaveURL(/\/dashboard/);
+  demoCookies = await context.cookies();
+  await context.close();
+  return demoCookies;
+}
 
 async function audit(page: Page, label: string) {
   // Let skeletons resolve so we check the real content.
@@ -72,13 +88,10 @@ for (const scheme of ["light", "dark"] as const) {
 
   test.describe(`signed-in pages (demo), ${scheme}`, () => {
     test.use({ colorScheme: scheme });
-    test.beforeEach(async ({ page, request, context }) => {
-      const demo = await request.post("http://localhost:8000/auth/demo").catch(() => null);
-      test.skip(!demo?.ok(), "needs the API on :8000 with the demo account");
-      await context.addCookies([{ name: "NEXT_LOCALE", value: "en", url: "http://localhost:3000" }]);
-      await page.goto("/login");
-      await page.getByRole("button", { name: /Try the demo instead/ }).click();
-      await expect(page).toHaveURL(/\/dashboard/);
+    test.beforeEach(async ({ browser, request, context }) => {
+      const api = await request.get("http://localhost:8000/health").catch(() => null);
+      test.skip(!api?.ok(), "needs the API on :8000 with the demo account");
+      await context.addCookies(await demoSession(browser));
     });
     for (const path of SIGNED_IN) test(`${path} @signed-in`, async ({ page }) => {
       await page.goto(path);

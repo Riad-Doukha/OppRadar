@@ -88,7 +88,7 @@ export function PremiumPage() {
         <section className="flex flex-col rounded-card border border-line bg-surface p-6">
           <div className="flex items-center justify-between">
             <SectionLabel>{t("plans.clubs")}</SectionLabel>
-            <span className="rounded-full bg-line px-2.5 py-0.5 text-xs font-bold text-muted">{t("comingSoonChip")}</span>
+            <span className="rounded-full bg-line px-2.5 py-0.5 text-xs font-bold text-body">{t("comingSoonChip")}</span>
           </div>
           <p className="pt-2 font-display text-4xl font-bold text-ink">{t.rich("perMonthPlanned", { amount: amount(PRICES.clubs.monthly), muted })}</p>
           <p className="pt-1 text-sm text-body">{t("clubsBody")}</p>
