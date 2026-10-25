@@ -10,4 +10,5 @@ known-first-party = ["app", "conftest"]
 [lint.per-file-ignores]
 # Email HTML templates and translated copy read better unwrapped.
 "app/services/mailer.py" = ["E501"]
+"app/services/auth_emails.py" = ["E501"]
 "app/routers/email.py" = ["E501"]

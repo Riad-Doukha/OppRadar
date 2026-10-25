@@ -225,6 +225,7 @@ def save_settings(repo: Repository, user: CurrentUser, body: SettingsPatch) -> M
         updates["history_retention"] = body.history_retention
     if body.locale:
         updates["locale"] = body.locale
+        repo.set_auth_locale(user.id, body.locale)
     if body.agent:
         current = AgentSettings.model_validate(profile.get("agent_settings") or {}).model_dump()
         patch = body.agent.model_dump(exclude_none=True)

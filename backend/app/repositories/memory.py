@@ -122,6 +122,7 @@ class MemoryRepository:
         self.applications: dict[tuple[str, str], Row] = {}
         self.matches: dict[str, list[Row]] = {}
         self.emails: dict[str, str] = {}  # stands in for auth.users.email
+        self.auth_locales: dict[str, str] = {}  # stands in for auth user_metadata.locale
         self.ingestion_runs: list[Row] = []
         self.chat: list[Row] = []
         self.reservations: dict[str, Row] = {}
@@ -442,6 +443,10 @@ class MemoryRepository:
 
     def user_email(self, user_id: str) -> str | None:
         return self.emails.get(user_id)
+
+    def set_auth_locale(self, user_id: str, locale: str) -> None:
+        with self._lock:
+            self.auth_locales[user_id] = locale
 
     # -- AI pipeline -------------------------------------------------------------------- #
     def replace_matches(self, user_id: str, rows: list[Row]) -> None:

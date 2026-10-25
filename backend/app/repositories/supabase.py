@@ -6,6 +6,7 @@ explicitly — never drop those .eq("user_id", ...) calls.
 
 from __future__ import annotations
 
+import logging
 import threading
 from collections.abc import Callable
 from datetime import date, datetime, time, timezone
@@ -16,6 +17,8 @@ from supabase import Client
 
 from app.models import OpportunityFilters
 from app.repositories.base import POSITIONED, ChildTable, NotFoundError, Row
+
+logger = logging.getLogger(__name__)
 
 OPPORTUNITY_COLUMNS = (
     "id,external_id,title,organizer,type,mode,location,country,language,deadline,funding,"
@@ -362,6 +365,14 @@ class SupabaseRepository:
             return self.db.auth.admin.get_user_by_id(user_id).user.email
         except Exception:  # deleted user / auth unavailable
             return None
+
+    def set_auth_locale(self, user_id: str, locale: str) -> None:
+        # Merged into user_metadata (other keys stay). Best effort: auth emails
+        # fall back to English if this fails.
+        try:
+            self.db.auth.admin.update_user_by_id(user_id, {"user_metadata": {"locale": locale}})
+        except Exception:
+            logger.warning("could not store the auth locale for %s", user_id)
 
     # -- AI pipeline -------------------------------------------------------------------- #
     def replace_matches(self, user_id: str, rows: list[Row]) -> None:

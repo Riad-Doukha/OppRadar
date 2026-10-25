@@ -24,7 +24,7 @@
     "s3t": "AI processing",
     "s3": "Matching and the agent use an AI model (Google Gemini API). Your profile fields are used to score opportunities only with your matching consent; your CV is read by the AI only with your CV-processing consent. You can withdraw each consent in Settings → Privacy & AI.",
     "s4t": "Where it is stored and for how long",
-    "s4": "Data is stored with our hosting providers (Supabase for the database and files, Render and Vercel for the app). CV files are in private storage only you can access. Chat history is kept 90 days; application records follow the retention you choose; everything is deleted when you delete your account.",
+    "s4": "Data is stored with our hosting providers (Supabase for the database and files, Render and Vercel for the app, Google's Gmail for the emails we send you). CV files are in private storage only you can access. Chat history is kept 90 days; application records follow the retention you choose; everything is deleted when you delete your account.",
     "s5t": "Your rights",
     "s5": "Under Algerian Law 18-07 on the protection of personal data you can access, correct, export and delete your data, and object to or withdraw consent for processing. Most of this is self-service in My profile and Settings; otherwise write to us.",
     "s6t": "Cookies",

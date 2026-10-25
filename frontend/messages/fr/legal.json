@@ -24,7 +24,7 @@
     "s3t": "Traitement par IA",
     "s3": "Les correspondances et l'agent utilisent un modèle d'IA (API Google Gemini). Les champs de votre profil servent à noter les opportunités seulement avec votre consentement ; votre CV n'est lu par l'IA qu'avec votre consentement au traitement du CV. Vous pouvez retirer chaque consentement dans Paramètres → Confidentialité et IA.",
     "s4t": "Où et combien de temps",
-    "s4": "Les données sont stockées chez nos hébergeurs (Supabase pour la base de données et les fichiers, Render et Vercel pour l'application). Les CV sont dans un espace privé accessible à vous seul. L'historique de discussion est conservé 90 jours ; les candidatures suivent la durée que vous choisissez ; tout est supprimé à la suppression du compte.",
+    "s4": "Les données sont stockées chez nos hébergeurs (Supabase pour la base de données et les fichiers, Render et Vercel pour l'application, Gmail de Google pour les e-mails que nous vous envoyons). Les CV sont dans un espace privé accessible à vous seul. L'historique de discussion est conservé 90 jours ; les candidatures suivent la durée que vous choisissez ; tout est supprimé à la suppression du compte.",
     "s5t": "Vos droits",
     "s5": "Conformément à la loi algérienne 18-07 relative à la protection des données personnelles, vous pouvez accéder à vos données, les rectifier, les exporter, les supprimer, et vous opposer au traitement ou retirer votre consentement. La plupart se fait depuis Mon profil et les Paramètres ; sinon, écrivez-nous.",
     "s6t": "Cookies",

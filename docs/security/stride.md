@@ -66,7 +66,7 @@ Browser (Next.js on Vercel) ──JWT──▶ API (FastAPI on Render, service-r
    └────────────────────────────────────┼─────────────────────────────────────────┘ (anon key + user JWT
                                         ├──▶ Gemini API (extraction, chat, matching reasons)   = direct REST access)
                                         ├──▶ Opportunity sources and pasted links (HTTP fetch)
-                                        └──▶ Resend (alert emails)
+                                        └──▶ Gmail API (all emails, incl. Supabase Auth's via the Send Email hook)
 ```
 
 **Assets:**
@@ -74,14 +74,15 @@ Browser (Next.js on Vercel) ──JWT──▶ API (FastAPI on Render, service-r
 - Their consents.
 - The integrity of published opportunities, because students act on them.
 - The admin role.
-- The Gemini and Resend budgets.
+- The Gemini budget and the Gmail sending account (and its daily sending limit).
 - The service-role key, which bypasses RLS.
 
 **Trust boundaries:**
 1. The browser and the API.
 2. The browser and Supabase directly (the anon key is public by design).
 3. The API and third-party content: source pages, pasted links and pasted text, all of which reach the LLM.
-4. The API and the services it calls: Gemini, Resend and Supabase.
+4. The API and the services it calls: Gemini, Gmail and Supabase.
+5. Supabase Auth and the API's Send Email hook (`POST /email/auth-hook`, signed by Supabase).
 
 ## 4. Findings by STRIDE category
 
@@ -96,8 +97,10 @@ Browser (Next.js on Vercel) ──JWT──▶ API (FastAPI on Render, service-r
 **F6 — Unsubscribe secret fallback (Low).** Without `EMAIL_SECRET`, the signing key falls back to the JWT secret, then the service-role key, then `"dev"`.
 - *Fix:* a dedicated random `EMAIL_SECRET` in production.
 
-**F7 — Email spoofing (Low).** Verifying our domain in Resend sets up SPF and DKIM.
-- *Fix:* add a DMARC record too (`p=none` first, then `quarantine`).
+**F7 — Email spoofing (Low).** We now send through the Gmail API, from a Gmail account.
+- With an `@gmail.com` address, Google publishes SPF, DKIM and DMARC for the domain: nothing to do.
+- With our own domain (Google Workspace), set up DKIM in the Workspace admin console and add a DMARC record (`p=none` first, then `quarantine`).
+- **The auth email hook** checks Supabase's Standard Webhooks signature and refuses calls older than 5 minutes, so nobody else can make the API send confirmation or reset emails (`backend/tests/test_gmail.py`).
 
 ### T — Tampering
 
@@ -207,10 +210,10 @@ These are not security findings, but the live journey against Supabase turned th
    - `AGENT_SCHEDULER=1` on the single instance.
    - `EMBEDDING_MODEL` (pending your answer on section 2, point 2).
 2. **Migration 0009 on the production Supabase project.** It is already applied on dev.
-3. **DNS:** the Resend SPF/DKIM records, plus DMARC.
+3. **Email:** set up the Gmail sender (`GMAIL_*`, `MAIL_FROM`, `SUPABASE_EMAIL_HOOK_SECRET`). DNS only if we send from our own domain (F7).
 4. **Supabase Auth:**
    - Turn on leaked-password protection.
-   - Turn on email confirmation with custom SMTP.
+   - Turn on email confirmation, and point the Send Email hook at `https://<api>/email/auth-hook`.
    - Keep only the production redirect URLs.
 5. **Your side:** section 2, points 1–3.
 6. **Legal review** of the terms and privacy drafts.

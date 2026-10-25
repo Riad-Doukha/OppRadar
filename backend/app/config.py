@@ -48,9 +48,15 @@ class Settings(BaseSettings):
     agent_scheduler: bool = False
     agent_interval_seconds: int = 3600
 
-    # Email (Resend). Without RESEND_API_KEY emails are only logged.
-    resend_api_key: str = ""
-    mail_from: str = "OppRadar <alerts@oppradar.app>"
+    # Email goes out through the Gmail API (scripts/gmail_auth.py makes the token);
+    # without these settings emails are only logged. MAIL_FROM must be that Gmail
+    # account (or one of its "Send mail as" aliases).
+    gmail_client_id: str = ""
+    gmail_client_secret: str = ""
+    gmail_refresh_token: str = ""
+    mail_from: str = ""  # e.g. "OppRadar <oppradar.team@gmail.com>"
+    # Supabase Auth "Send Email" hook secret (v1,whsec_...): auth emails via Gmail too.
+    supabase_email_hook_secret: str = ""
     email_secret: str = ""  # signs unsubscribe links (falls back to the JWT secret)
     app_url: str = "http://localhost:3000"  # links in emails
     api_public_url: str = "http://localhost:8000"  # unsubscribe link target

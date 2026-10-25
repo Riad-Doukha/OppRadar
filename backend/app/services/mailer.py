@@ -1,7 +1,7 @@
 """Outgoing email (match alerts, digests, deadline reminders, test alert).
 
-Sends through Resend's HTTP API when RESEND_API_KEY is set; otherwise it only
-logs, so dev and tests never send anything. Every alert email carries a
+Sends through the Gmail API (services/gmail.py) once GMAIL_* is set; otherwise
+it only logs, so dev and tests never send anything. Every alert email carries a
 one-click unsubscribe link (signed, no login needed) that turns email alerts off.
 """
 
@@ -17,9 +17,9 @@ from urllib.parse import urlencode
 import httpx
 
 from app.config import get_settings
+from app.services import gmail
 
 log = logging.getLogger(__name__)
-RESEND_URL = "https://api.resend.com/emails"
 
 # Short, translated copy (the app's own messages live in the frontend).
 TEXT = {
@@ -82,7 +82,7 @@ def unsubscribe_url(user_id: str) -> str:
     return f"{base}/email/unsubscribe?{urlencode({'u': user_id, 't': unsubscribe_token(user_id)})}"
 
 
-def _layout(locale: str, body_html: str, user_id: str | None) -> str:
+def layout(locale: str, body_html: str, user_id: str | None) -> str:
     t = TEXT.get(locale, TEXT["en"])
     direction = "rtl" if locale == "ar" else "ltr"
     footer = (
@@ -122,36 +122,28 @@ def alert_email(locale: str, user_id: str, items: list[dict[str, Any]]) -> tuple
             f'<p style="margin:4px 0;color:#4a4360">{escape(n.get("body") or "")}</p>'
             f'<a href="{escape(link)}" style="color:#6b21d6;font-weight:bold">{escape(t["open"])}</a></div>'
         )
-    return subject, _layout(locale, f"<p>{escape(t['intro'])}</p>{''.join(rows)}", user_id)
+    return subject, layout(locale, f"<p>{escape(t['intro'])}</p>{''.join(rows)}", user_id)
 
 
 def test_email(locale: str, user_id: str) -> tuple[str, str]:
     t = TEXT.get(locale, TEXT["en"])
-    return t["test_subject"], _layout(locale, f"<p>{escape(t['test_body'])}</p>", user_id)
+    return t["test_subject"], layout(locale, f"<p>{escape(t['test_body'])}</p>", user_id)
 
 
 def send(to: str, subject: str, html: str, user_id: str | None = None) -> bool:
     """True when the provider accepted it (or, without a provider, when it was logged)."""
-    settings = get_settings()
-    if not settings.resend_api_key:
-        log.info("email (not sent, no RESEND_API_KEY) to=%s subject=%r", to, subject)
+    if not gmail.configured():
+        log.info("email (not sent, Gmail not configured) to=%s subject=%r", to, subject)
         return True
-    headers = {"Authorization": f"Bearer {settings.resend_api_key}"}
-    payload: dict[str, Any] = {
-        "from": settings.mail_from,
-        "to": [to],
-        "subject": subject,
-        "html": html,
-    }
+    headers: dict[str, str] = {}
     if user_id:
         url = unsubscribe_url(user_id)
-        payload["headers"] = {
+        headers = {
             "List-Unsubscribe": f"<{url}>",
             "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
         }
     try:
-        r = httpx.post(RESEND_URL, json=payload, headers=headers, timeout=15)
-        r.raise_for_status()
+        gmail.send(get_settings().mail_from, to, subject, html, headers)
         return True
     except httpx.HTTPError as exc:
         log.warning("email to %s failed: %s", to, exc)

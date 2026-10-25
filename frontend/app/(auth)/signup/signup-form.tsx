@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 
@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils";
 
 export function SignupForm() {
   const t = useTranslations("auth");
+  const locale = useLocale(); // the confirmation email is written in it
   const router = useRouter();
   const [form, setForm] = useState({ fullName: "", email: "", password: "", confirm: "" });
   const [terms, setTerms] = useState(false);
@@ -52,7 +53,7 @@ export function SignupForm() {
       password: form.password,
       options: {
         emailRedirectTo: `${window.location.origin}/auth/callback?next=/onboarding`,
-        data: { full_name: form.fullName.trim(), terms_accepted: true },
+        data: { full_name: form.fullName.trim(), terms_accepted: true, locale },
       },
     });
     setLoading(null);
