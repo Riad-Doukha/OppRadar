@@ -21,7 +21,7 @@ RUN pip install torch --index-url https://download.pytorch.org/whl/cpu
 COPY ai/pyproject.toml ai/README.md ai/
 COPY ai/oppradar_ai ai/oppradar_ai
 COPY backend/requirements.txt backend/
-RUN pip install -r backend/requirements.txt
+RUN cd backend && pip install -r requirements.txt
 
 COPY ai/data ai/data
 COPY backend/app backend/app
