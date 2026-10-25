@@ -123,3 +123,11 @@ def test_actions_bypass_the_sync_throttle(client, auth, opportunities, monkeypat
     client.put(f"/me/opportunities/{opportunities['t0']}/saved", headers=auth)
     client.post("/me/agent/start", headers=auth)
     assert sorted(i["kind"] for i in listing(client, auth)["items"]) == ["deadline", "system"]
+
+
+def test_first_sync_is_not_throttled_right_after_boot(client, auth, opportunities, monkeypatch):
+    # CI machines (and new containers) can be up for less than the throttle window.
+    monkeypatch.setattr(notifications.time, "monotonic", lambda: 10.0)
+    monkeypatch.setattr(notifications, "SYNC_EVERY_S", 300)
+    client.put(f"/me/opportunities/{opportunities['t0']}/saved", headers=auth)
+    assert [i["kind"] for i in listing(client, auth)["items"]] == ["deadline"]

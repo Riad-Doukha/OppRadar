@@ -61,7 +61,10 @@ def sync(repo: Repository, user: CurrentUser, *, force: bool = False) -> None:
     if user.is_demo:
         return  # read-only account: nothing is written
     with _sync_lock:
-        if not force and time.monotonic() - _last_sync.get(user.id, 0) < SYNC_EVERY_S:
+        # A user never synced is always due: monotonic() counts from boot, so a
+        # default of 0 would throttle everyone on a machine up for < SYNC_EVERY_S.
+        last = _last_sync.get(user.id)
+        if not force and last is not None and time.monotonic() - last < SYNC_EVERY_S:
             return
         _last_sync[user.id] = time.monotonic()
 
