@@ -1,0 +1,16 @@
+# Build context for backend/Dockerfile (the repo root): only backend/ and ai/ are used.
+**/.git
+**/node_modules
+**/__pycache__
+**/.pytest_cache
+**/.ruff_cache
+**/.venv
+**/*.pyc
+.env
+.env.*
+frontend
+supabase
+docs
+ai/data/cache
+ai/data/store
+ai/notebooks

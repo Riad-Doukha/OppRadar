@@ -1,0 +1,103 @@
+{
+  "mode": {
+    "remote": "À distance",
+    "hybrid": "Hybride",
+    "onsite": "Sur place"
+  },
+  "language": {
+    "en": "Anglais",
+    "fr": "Français",
+    "ar": "Arabe"
+  },
+  "deadline": {
+    "rolling": "Candidatures en continu",
+    "closed": "Clôturé le {date}",
+    "closes": "Clôture le {date} · {left}",
+    "left": "{days, plural, =0 {clôture aujourd'hui} one {# jour restant} other {# jours restants}}"
+  },
+  "flags": {
+    "application_fee": "Demande des frais de candidature",
+    "bank_or_id_request": "Demande des coordonnées bancaires ou d'identité",
+    "free_email_organizer": "L'organisateur utilise une adresse e-mail gratuite",
+    "domain_mismatch": "Le domaine du lien ne correspond pas à l'organisateur",
+    "unverifiable_organizer": "L'organisateur n'a pas pu être vérifié",
+    "urgency_pressure": "Utilise des tactiques de pression ou d'urgence",
+    "too_good_to_be_true": "L'offre semble trop belle pour être vraie"
+  },
+  "trust": {
+    "verified": "Source vérifiée",
+    "likely_safe": "Semble légitime",
+    "unknown": "Source pas encore vérifiée",
+    "suspicious": "Suspect — vérifiez attentivement",
+    "scam": "Arnaque probable — ne partagez pas vos données",
+    "check": "Vérifiez cette source",
+    "likelyScam": "Arnaque probable"
+  },
+  "card": {
+    "new": "Nouveau",
+    "source": "source : {host}",
+    "save": "Enregistrer",
+    "saved": "Enregistré",
+    "details": "Voir les détails",
+    "updateFailed": "Mise à jour impossible. Réessayez."
+  },
+  "detail": {
+    "missing": "Cette opportunité n'existe pas ou a été retirée.",
+    "loadError": "Chargement impossible : {error}",
+    "back": "Retour au tableau de bord",
+    "breadcrumb": "Fil d'Ariane",
+    "dashboard": "Tableau de bord",
+    "organizedBy": "Organisé par {organizer}",
+    "official": "Page officielle",
+    "about": "À propos de cette opportunité",
+    "noDescription": "Pas encore de description — ouvrez la page officielle pour les détails.",
+    "requirements": "Conditions (d'après la page officielle)",
+    "checkSoon": "vérif. bientôt",
+    "noRequirements": "Aucune condition indiquée. Consultez la page officielle.",
+    "compareYourself": "L'agent vérifiera chaque condition par rapport à votre profil au lancement de la mise en correspondance. Pour l'instant, comparez vous-même.",
+    "benefits": "Ce que vous obtenez",
+    "facts": "Informations clés",
+    "deadline": "Date limite",
+    "rolling": "En continu",
+    "location": "Lieu",
+    "benefit": "Avantage",
+    "type": "Type",
+    "language": "Langue",
+    "safety": "Source et sécurité",
+    "neverPay": "OppRadar ne demande jamais de paiement ni de coordonnées bancaires. Vérifiez toujours les dates et conditions sur la page officielle avant de postuler.",
+    "verify": "Vérifiez toujours sur la page officielle.",
+    "nextSteps": "Vos prochaines étapes",
+    "applyOfficial": "Postuler sur le site officiel",
+    "noLink": "Pas encore de lien officiel.",
+    "viewApplication": "Voir ma candidature",
+    "assistant": "Assistant de candidature",
+    "nothingSent": "Rien n'est envoyé avant que vous appuyiez sur Envoyer",
+    "savedRemove": "Enregistré — retirer",
+    "save": "Enregistrer",
+    "soonTitle": "Arrive avec l'agent IA",
+    "remind": "Me le rappeler 3 jours avant · bientôt",
+    "askAgent": "Demander à l'agent",
+    "showAgain": "La réafficher dans mon fil",
+    "notInterested": "Pas intéressé(e)",
+    "loading": "Chargement de l'opportunité…"
+  },
+  "match": {
+    "score": "{score} % de correspondance",
+    "why": "Pourquoi vous la voyez",
+    "missing": "Il vous manque",
+    "byAi": "Raisons formulées par l'IA",
+    "checklist": "Vérification d'éligibilité",
+    "met": "rempli",
+    "unmet": "non rempli",
+    "unknown": "à vérifier",
+    "noMatch": "Pas encore de score — lancez une analyse depuis votre tableau de bord.",
+    "threshold": "Votre seuil d'alerte : {n} %",
+    "bar": "Score de correspondance {score} sur 100"
+  },
+  "noDeadline": "En continu — aucune date limite indiquée",
+  "chips": {
+    "fee": "Demande des frais",
+    "closed": "Clôturée",
+    "needsReview": "À vérifier"
+  }
+}

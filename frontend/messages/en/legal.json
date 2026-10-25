@@ -1,0 +1,33 @@
+{
+  "updated": "Last updated: {date}",
+  "draft": "Draft — to be reviewed before launch.",
+  "contact": "Questions: {email}",
+  "terms": {
+    "title": "Terms of use",
+    "s1t": "What OppRadar is",
+    "s1": "OppRadar collects public opportunities (scholarships, internships, hackathons, competitions…) from official sources, ranks them for your profile and helps you prepare your applications. It is free; Premium is a planned option that is not available or charged yet.",
+    "s2t": "Always verify on the official page",
+    "s2": "Listings, match scores, eligibility checks and agent answers are produced automatically and can be wrong or out of date. The organizer's official page is the only reference for dates, requirements and conditions. OppRadar never submits an application for you and never asks for payment.",
+    "s3t": "Your account",
+    "s3": "Give accurate information and keep your password private. You can export your data or delete your account at any time from Settings. We may suspend accounts used for spam, scraping or fake submissions.",
+    "s4t": "Submitting opportunities",
+    "s4": "Organisations may submit opportunities. Submissions must be real, free for students to apply to, and link to an official page; an admin reviews each one before publication and may refuse or remove it.",
+    "s5t": "Liability",
+    "s5": "OppRadar is provided as is. We are not responsible for decisions made by organizers, for opportunities you miss, or for content on third-party sites."
+  },
+  "privacy": {
+    "title": "Privacy policy",
+    "s1t": "What we collect",
+    "s1": "Your account (name, email), the profile you fill in (education, skills, languages, goals, links), the CV or certificates you choose to upload, your alert settings and consents, the opportunities you save or apply to, and — only if you allow it — your chat history with the agent.",
+    "s2t": "How we use it",
+    "s2": "To rank opportunities for you, check requirements against your profile, send the alerts you chose, answer your questions and run the service. We never sell your data, never show it to organizers, and never send marketing.",
+    "s3t": "AI processing",
+    "s3": "Matching and the agent use an AI model (Google Gemini API). Your profile fields are used to score opportunities only with your matching consent; your CV is read by the AI only with your CV-processing consent. You can withdraw each consent in Settings → Privacy & AI.",
+    "s4t": "Where it is stored and for how long",
+    "s4": "Data is stored with our hosting providers (Supabase for the database and files, Render and Vercel for the app, Google's Gmail for the emails we send you). CV files are in private storage only you can access. Chat history is kept 90 days; application records follow the retention you choose; everything is deleted when you delete your account.",
+    "s5t": "Your rights",
+    "s5": "Under Algerian Law 18-07 on the protection of personal data you can access, correct, export and delete your data, and object to or withdraw consent for processing. Most of this is self-service in My profile and Settings; otherwise write to us.",
+    "s6t": "Cookies",
+    "s6": "Only what the app needs: your sign-in session and your language. Your theme choice stays in your browser. No advertising or tracking cookies."
+  }
+}

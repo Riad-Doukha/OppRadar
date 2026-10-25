@@ -1,0 +1,161 @@
+{
+  "dzd": "{amount} DZD",
+  "pill": "APERÇU — Premium arrive bientôt",
+  "notice": "<strong>Premium arrive bientôt.</strong> Aucune fonction Premium ou Clubs n'est encore disponible et les paiements ne sont pas ouverts. Vous pouvez réserver un accès anticipé dès maintenant — c'est gratuit, sans carte, et annulable à tout moment. Offres et prix peuvent changer avant le lancement.",
+  "plans": {
+    "premium": "Premium",
+    "clubs": "Clubs et équipes",
+    "free": "Gratuit"
+  },
+  "hero": {
+    "title": "Plus de radar. Moins de limites.",
+    "body": "Le gratuit reste gratuit pour l'essentiel. Premium supprimera les quotas, analysera plus souvent et laissera l'agent rédiger plus de candidatures. Prix en DZD."
+  },
+  "loadError": "Impossible de charger votre offre : {error}",
+  "reservedBanner": "Vous avez réservé un accès anticipé à <strong>{plan}</strong> — vous êtes <strong>n°{position}</strong> sur la liste. <link>Voir votre réservation</link>",
+  "free": {
+    "price": "0 <muted>DZD / pour toujours</muted>",
+    "body": "Tout pour commencer — disponible dès maintenant.",
+    "current": "Votre offre actuelle"
+  },
+  "comingSoon": "BIENTÔT",
+  "comingSoonChip": "Bientôt",
+  "forStudents": "Pour les étudiants",
+  "perMonthPlanned": "{amount} <muted>DZD / mois · prévu</muted>",
+  "yearlyPlanned": "ou {price} / an — tarif étudiant prévu",
+  "clubsBody": "Pour 5 places — clubs, équipes, bootcamps.",
+  "reserved": "Accès anticipé réservé ✓",
+  "reserve": "Réserver l'accès anticipé",
+  "freeReservation": "Réservation gratuite · sans carte · aucun prélèvement",
+  "onWaitlist": "Sur la liste d'attente ✓",
+  "joinWaitlist": "Rejoindre la liste d'attente",
+  "afterPremium": "Lancement après Premium",
+  "soonSr": "(bientôt)",
+  "features": {
+    "free": {
+      "f1": "Fil d'opportunités, recherche et filtres",
+      "f2": "Enregistrement + rappels d'échéance",
+      "f3": "Suivi des candidatures",
+      "f4": "Profil, import et extraction du CV",
+      "f5": "Notifications dans l'app"
+    },
+    "premium": {
+      "f1": "Vérifications d'éligibilité illimitées",
+      "f2": "Analyses toutes les 30 min",
+      "f3": "Import du CV → extraction instantanée",
+      "f4": "Jusqu'à 5 brouillons de candidature en parallèle",
+      "f5": "Alertes prioritaires (en tête de file)",
+      "f6": "Explication détaillée des correspondances",
+      "f7": "Rappels d'échéance + export calendrier"
+    },
+    "clubs": {
+      "f1": "Tout Premium × 5 places",
+      "f2": "Opportunités enregistrées partagées",
+      "f3": "Tableau de bord du club et rôles",
+      "f4": "Brouillons de candidature d'équipe",
+      "f5": "Places supplémentaires à 700 DZD"
+    }
+  },
+  "compare": {
+    "title": "Comparer les offres",
+    "note": "Prévu au lancement — susceptible de changer",
+    "feature": "Fonction",
+    "premiumSoon": "Premium · bientôt",
+    "clubsSoon": "Clubs · bientôt",
+    "agentNote": "Aujourd'hui, chaque compte a gratuitement scores, vérification d'éligibilité et alertes ; Premium relèvera les limites.",
+    "rows": {
+      "scans": "Analyses d'opportunités",
+      "checks": "Vérifications d'éligibilité",
+      "cv": "Import et extraction du CV",
+      "drafts": "Brouillons de candidature en parallèle",
+      "explain": "Explication des correspondances",
+      "reminders": "Rappels d'échéance",
+      "shared": "Enregistrements partagés et rôles"
+    },
+    "cells": {
+      "perDay3": "3 / jour",
+      "perDay5": "5 / jour",
+      "every30": "toutes les 30 min",
+      "unlimited": "illimité",
+      "instant": "✓ instantané",
+      "perSeat": "5 / place",
+      "basic": "✓ basique",
+      "deep": "✓ détaillé",
+      "calendar": "✓ + calendrier"
+    }
+  },
+  "methods": {
+    "title": "Moyens de paiement · prévus",
+    "body": "Carte CIB / EDAHabia · virement BaridiMob · virement bancaire / CCP. En DZD, avec reçus. Pas encore disponible.",
+    "cib": "Carte bancaire CIB",
+    "cib_hint": "Société Générale, BNA, BEA…",
+    "edahabia": "Carte EDAHabia",
+    "edahabia_hint": "Carte numérique d'Algérie Poste",
+    "baridimob": "Virement BaridiMob",
+    "baridimob_hint": "Payer depuis votre compte CCP",
+    "ccp": "Virement bancaire / CCP",
+    "ccp_hint": "Vérification manuelle avec reçu"
+  },
+  "checkout": {
+    "back": "Retour aux offres",
+    "titleNew": "Réserver l'accès anticipé",
+    "titleChange": "Modifier votre réservation",
+    "pill": "Bientôt · aucun prélèvement",
+    "plan": "Offre",
+    "premium": "Premium",
+    "clubs": "Clubs (5 places)",
+    "billing": "Facturation au lancement",
+    "monthly": "Mensuelle",
+    "yearly": "Annuelle",
+    "pay": "Comment souhaitez-vous payer au lancement ? (facultatif)",
+    "payHint": "Cela nous aide seulement à prioriser les moyens de paiement. Nous ne demandons aucune donnée de carte ou de compte maintenant.",
+    "payLabel": "Moyen de paiement préféré",
+    "summary": "Récapitulatif",
+    "planned": "Prix prévu au lancement : {price} / {period}",
+    "month": "mois",
+    "year": "an",
+    "soon": "(bientôt)",
+    "total": "Total aujourd'hui",
+    "totalHint": "Vous ne confirmerez et ne paierez qu'au lancement de Premium. Annulable à tout moment.",
+    "error": "Impossible d'enregistrer votre réservation : {error}",
+    "demo": "Le compte de démo est en lecture seule — inscrivez-vous pour réserver.",
+    "save": "Enregistrer les modifications",
+    "joinFree": "Rejoindre la liste d'attente — gratuit",
+    "reserveFree": "Réserver l'accès anticipé — gratuit"
+  },
+  "reservedPage": {
+    "loadError": "Impossible de charger votre réservation : {error}",
+    "cancelled": "Réservation annulée",
+    "none": "Aucune réservation pour l'instant",
+    "noneBody": "Vous êtes sur l'offre gratuite. Premium arrive bientôt — réserver l'accès anticipé est gratuit.",
+    "seePlans": "Voir les offres",
+    "title": "Vous êtes sur la liste",
+    "body": "Nous avons enregistré votre réservation pour <strong>{plan}</strong>. Rien n'a été prélevé — Premium n'est pas encore disponible et vous restez sur l'offre gratuite.",
+    "place": "Votre place sur la liste",
+    "of": "sur {count, plural, one {# réservation} other {# réservations}} pour l'instant",
+    "plan": "Offre",
+    "billing": "Facturation au lancement",
+    "billingValue": "{period} · {price} (prévu)",
+    "preferred": "Paiement préféré",
+    "notChosen": "Non choisi",
+    "charged": "Prélevé aujourd'hui",
+    "on": "Réservé le",
+    "notify": "Au lancement de Premium, nous vous préviendrons ici en premier. Vous confirmerez et paierez seulement à ce moment-là — ou ne ferez rien.",
+    "cancelError": "Annulation impossible : {error}",
+    "toDashboard": "Retour au tableau de bord",
+    "change": "Modifier",
+    "confirmCancel": "Annuler votre réservation ? Vous perdrez votre place.",
+    "yesCancel": "Oui, annuler",
+    "keep": "Le garder",
+    "cancel": "Annuler la réservation"
+  },
+  "modal": {
+    "title": "Premium arrive",
+    "body": "Premium n'est pas encore disponible. À son lancement (prévu à {price} / mois pour les étudiants), il inclura :",
+    "free": "Réserver l'accès anticipé est gratuit — sans carte, sans prélèvement, annulable à tout moment.",
+    "mine": "Ma réservation",
+    "plans": "Voir les offres",
+    "later": "Plus tard",
+    "pill": "Bientôt"
+  }
+}

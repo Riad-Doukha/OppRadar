@@ -1,0 +1,44 @@
+{
+  "skip": "Aller au contenu",
+  "mainNav": "Principal",
+  "nav": {
+    "dashboard": "Tableau de bord",
+    "agent": "Demander à l'agent",
+    "notifications": "Notifications",
+    "profile": "Mon profil",
+    "applications": "Candidatures",
+    "premium": "Premium",
+    "settings": "Paramètres",
+    "admin": "Administration"
+  },
+  "search": "Rechercher des opportunités",
+  "account": {
+    "menu": "Menu du compte",
+    "yours": "Votre compte",
+    "logOut": "Se déconnecter",
+    "leaveDemo": "Quitter la démo",
+    "submit": "Proposer une opportunité"
+  },
+  "bell": {
+    "label": "Notifications",
+    "labelUnread": "Notifications, {count} non lues",
+    "new": "{count} nouvelles",
+    "markAll": "Tout marquer comme lu",
+    "preferences": "Préférences",
+    "empty": "Vous êtes à jour. Les nouvelles correspondances et les rappels d'échéance apparaissent ici.",
+    "openAll": "Voir toutes les notifications",
+    "delivery": "Envoi : {channels} · selon vos règles",
+    "email": "E-mail",
+    "telegram": "Telegram",
+    "inAppOnly": "dans l'app uniquement"
+  },
+  "upgrade": {
+    "eyebrow": "Premium · bientôt",
+    "pitch": "Plus d'analyses, vérifications illimitées",
+    "inLine": "Vous êtes n°{position} sur la liste",
+    "learnMore": "En savoir plus",
+    "seeComing": "Voir ce qui arrive"
+  },
+  "soon": "bientôt",
+  "readOnly": "Démo en lecture seule"
+}

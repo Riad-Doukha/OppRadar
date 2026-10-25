@@ -1,0 +1,37 @@
+{
+  "title": "Notifications",
+  "markAll": "Mark all read",
+  "preferences": "Preferences",
+  "tabsLabel": "Notification types",
+  "tabs": {
+    "all": "All",
+    "matches": "Matches",
+    "deadlines": "Deadlines",
+    "applications": "Applications",
+    "system": "System"
+  },
+  "empty": {
+    "all": "Nothing yet. New matches above your threshold and deadline reminders for saved opportunities show up here.",
+    "matches": "No match above your threshold yet. Run a scan from the dashboard, or lower the threshold in Settings.",
+    "deadlines": "Save an opportunity and you'll be reminded 3 days before it closes.",
+    "applications": "Application updates arrive with the apply assistant.",
+    "system": "Weekly summaries, profile tips and account messages show up here."
+  },
+  "loadError": "We couldn't load notifications: {error}",
+  "loading": "Loading notifications…",
+  "caughtUp": "You're all caught up",
+  "archived": "Notifications older than 30 days are archived automatically.",
+  "item": {
+    "applyNow": "Apply now",
+    "later": "Later",
+    "remindLater": "Remind me later",
+    "viewMatch": "View match",
+    "save": "Save",
+    "dismiss": "Dismiss",
+    "improveProfile": "Improve my profile",
+    "openApplications": "Open my applications",
+    "open": "Open",
+    "unread": "Unread",
+    "held": "Held — quiet hours, daily limit or digest"
+  }
+}

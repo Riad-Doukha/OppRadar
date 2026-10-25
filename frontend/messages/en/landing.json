@@ -1,0 +1,52 @@
+{
+  "meta": {
+    "title": "OppRadar — opportunities actually made for you",
+    "description": "Scholarships, internships, hackathons and camps — scanned daily, ranked by your profile."
+  },
+  "nav": {
+    "how": "How it works",
+    "privacy": "Privacy",
+    "logIn": "Log in",
+    "start": "Start your scan"
+  },
+  "deleted": "Your account and all its data have been deleted.",
+  "hero": {
+    "title": "Find opportunities<br></br>actually made <brand>for you.</brand>",
+    "lead": "Scholarships, internships, hackathons and camps — scanned daily, ranked by your profile, checked for eligibility before you ever open the page.",
+    "cta": "Start your scan — free",
+    "login": "Login"
+  },
+  "stats": {
+    "label": "OppRadar in numbers",
+    "sources": "official sources scanned daily",
+    "languagesValue": "AR·FR·EN",
+    "languages": "sources in three languages",
+    "sent": "applications ever sent without you"
+  },
+  "how": {
+    "title": "How it works",
+    "sub": "Three steps, about two minutes.",
+    "s1Title": "Tell us about you",
+    "s1": "Field, year, skills, wilaya. Stored privately — used only to rank matches. <strong>Only you can see this.</strong>",
+    "s2Title": "We scan & match",
+    "s2": "The agent reads more than 47 official sources, scores every opportunity against your profile and checks eligibility — reasons included.",
+    "s3Title": "You apply, for real",
+    "s3": "We open the <strong>official page</strong> so you can verify every detail yourself. Nothing is sent until you press Submit."
+  },
+  "privacy": {
+    "title": "Your search stays yours.",
+    "body": "We never sell your data, never email you without consent, and never submit anything on your behalf.",
+    "p1": "Only you can see this",
+    "p2": "Nothing is sent until you press Submit",
+    "p3": "Always verify on the official page"
+  },
+  "footer": "Made in Algiers · English · Français · العربية · DZD · v1.0",
+  "sample": {
+    "eligible": "Eligible",
+    "new": "New",
+    "title": "Algiers Data Sprint 2026",
+    "org": "Ministry of Higher Education",
+    "closes": "Closes Mar 12 · 8 days left"
+  },
+  "orgs": "Organisation? Submit an opportunity"
+}

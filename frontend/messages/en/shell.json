@@ -1,0 +1,44 @@
+{
+  "skip": "Skip to content",
+  "mainNav": "Main",
+  "nav": {
+    "dashboard": "Dashboard",
+    "agent": "Ask the agent",
+    "notifications": "Notifications",
+    "profile": "My profile",
+    "applications": "Applications",
+    "premium": "Premium",
+    "settings": "Settings",
+    "admin": "Admin"
+  },
+  "search": "Search opportunities",
+  "account": {
+    "menu": "Account menu",
+    "yours": "Your account",
+    "logOut": "Log out",
+    "leaveDemo": "Leave the demo",
+    "submit": "Submit an opportunity"
+  },
+  "bell": {
+    "label": "Notifications",
+    "labelUnread": "Notifications, {count} unread",
+    "new": "{count} new",
+    "markAll": "Mark all read",
+    "preferences": "Preferences",
+    "empty": "You're all caught up. New matches and deadline reminders for saved opportunities show up here.",
+    "openAll": "Open all notifications",
+    "delivery": "Delivery: {channels} · per your rules",
+    "email": "Email",
+    "telegram": "Telegram",
+    "inAppOnly": "in-app only"
+  },
+  "upgrade": {
+    "eyebrow": "Premium · coming soon",
+    "pitch": "More scans, unlimited checks",
+    "inLine": "You're #{position} in line",
+    "learnMore": "Learn more",
+    "seeComing": "See what's coming"
+  },
+  "soon": "soon",
+  "readOnly": "Read-only demo"
+}

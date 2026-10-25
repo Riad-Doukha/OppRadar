@@ -1,0 +1,48 @@
+{
+  "title": "Ask the agent",
+  "subtitle": "Ask about opportunities or paste a link — the agent searches what OppRadar has found so far.",
+  "notice": "Ask about a specific opportunity (from its page, or paste its link) for an answer grounded in the official text, with your eligibility. Open questions search what OppRadar has found.",
+  "suggestions": {
+    "scholarships": "Show scholarships closing this month",
+    "internships": "Internships in data science",
+    "hackathons": "Hackathons in Algiers",
+    "paste": "Paste a link to an opportunity"
+  },
+  "loading": "Loading your conversation…",
+  "loadError": "We couldn't load your conversation: {error}",
+  "searching": "Searching opportunities…",
+  "sendError": "Couldn't answer: {error}",
+  "placeholder": "Paste a link or ask about any opportunity…",
+  "send": "Send",
+  "mistakes": "The agent can make mistakes. <strong>Always verify on the official page.</strong>",
+  "recent": "Recent questions",
+  "recentEmpty": "Your questions will appear here.",
+  "notKept": "History isn't kept.",
+  "turnOn": "Turn it on",
+  "clear": "Clear history",
+  "howTo": "How to ask",
+  "tips": {
+    "type": "Name a type: internship, hackathon, scholarship…",
+    "field": "Add a field or a place: “data”, “Oran”, “remote”",
+    "link": "Paste an official link to find it in OppRadar"
+  },
+  "details": "View details",
+  "assistant": "Apply assistant",
+  "official": "Official page",
+  "notInSource": "Not stated in the source — check the official page",
+  "sources": "Sources",
+  "eligibility": "Your eligibility",
+  "eligible": "You look eligible",
+  "notEligible": "You don't meet everything yet",
+  "unclear": "Not enough information to tell",
+  "met": "Met",
+  "gaps": "Missing",
+  "next": "Next steps",
+  "about": "Asking about: {title}",
+  "clearAbout": "Ask about anything",
+  "aiBadge": "AI answer, grounded in the opportunity",
+  "extracted": {
+    "title": "Read from what you shared",
+    "submit": "Send it for review"
+  }
+}

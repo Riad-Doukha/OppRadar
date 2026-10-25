@@ -1,0 +1,52 @@
+{
+  "meta": {
+    "title": "OppRadar — des opportunités vraiment faites pour vous",
+    "description": "Bourses, stages, hackathons et camps — analysés chaque jour, classés selon votre profil."
+  },
+  "nav": {
+    "how": "Comment ça marche",
+    "privacy": "Confidentialité",
+    "logIn": "Se connecter",
+    "start": "Lancer mon analyse"
+  },
+  "deleted": "Votre compte et toutes ses données ont été supprimés.",
+  "hero": {
+    "title": "Trouvez des opportunités<br></br>vraiment faites <brand>pour vous.</brand>",
+    "lead": "Bourses, stages, hackathons et camps — analysés chaque jour, classés selon votre profil, avec l'éligibilité vérifiée avant même que vous ouvriez la page.",
+    "cta": "Lancer mon analyse — gratuit",
+    "login": "Connexion"
+  },
+  "stats": {
+    "label": "OppRadar en chiffres",
+    "sources": "sources officielles analysées chaque jour",
+    "languagesValue": "AR·FR·EN",
+    "languages": "sources en trois langues",
+    "sent": "candidature envoyée sans vous"
+  },
+  "how": {
+    "title": "Comment ça marche",
+    "sub": "Trois étapes, environ deux minutes.",
+    "s1Title": "Parlez-nous de vous",
+    "s1": "Filière, année, compétences, wilaya. Stocké en privé — utilisé uniquement pour classer les correspondances. <strong>Visible par vous seul.</strong>",
+    "s2Title": "Nous analysons et comparons",
+    "s2": "L'agent lit plus de 47 sources officielles, note chaque opportunité selon votre profil et vérifie l'éligibilité — avec les raisons.",
+    "s3Title": "Vous postulez, pour de vrai",
+    "s3": "Nous ouvrons la <strong>page officielle</strong> pour que vous vérifiiez chaque détail vous-même. Rien n'est envoyé tant que vous n'appuyez pas sur Envoyer."
+  },
+  "privacy": {
+    "title": "Votre recherche vous appartient.",
+    "body": "Nous ne vendons jamais vos données, ne vous écrivons jamais sans consentement et ne soumettons jamais rien en votre nom.",
+    "p1": "Visible par vous seul",
+    "p2": "Rien n'est envoyé avant que vous appuyiez sur Envoyer",
+    "p3": "Vérifiez toujours sur la page officielle"
+  },
+  "footer": "Conçu à Alger · English · Français · العربية · DZD · v1.0",
+  "sample": {
+    "eligible": "Éligible",
+    "new": "Nouveau",
+    "title": "Algiers Data Sprint 2026",
+    "org": "Ministère de l'Enseignement supérieur",
+    "closes": "Clôture le 12 mars · 8 jours restants"
+  },
+  "orgs": "Une organisation ? Proposez une opportunité"
+}

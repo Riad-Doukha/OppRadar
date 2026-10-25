@@ -1,0 +1,161 @@
+{
+  "dzd": "{amount} DZD",
+  "pill": "PREVIEW — Premium is coming soon",
+  "notice": "<strong>Premium is coming soon.</strong> None of the Premium or Clubs features are available yet and payments aren't open. You can reserve early access now — it's free, no card needed, and you can cancel anytime. Plans and prices may change before launch.",
+  "plans": {
+    "premium": "Premium",
+    "clubs": "Clubs & teams",
+    "free": "Free"
+  },
+  "hero": {
+    "title": "More radar. Fewer limits.",
+    "body": "Free stays free for what matters. Premium will remove quotas, scan more often and let the agent draft more applications. Prices in DZD."
+  },
+  "loadError": "We couldn't load your plan: {error}",
+  "reservedBanner": "You reserved early access to <strong>{plan}</strong> — you're <strong>#{position}</strong> in line. <link>See your reservation</link>",
+  "free": {
+    "price": "0 <muted>DZD / forever</muted>",
+    "body": "Everything you need to start — available now.",
+    "current": "Your current plan"
+  },
+  "comingSoon": "COMING SOON",
+  "comingSoonChip": "Coming soon",
+  "forStudents": "For students",
+  "perMonthPlanned": "{amount} <muted>DZD / month · planned</muted>",
+  "yearlyPlanned": "or {price} / year — planned student pricing",
+  "clubsBody": "For 5 seats — dev clubs, teams, bootcamps.",
+  "reserved": "Early access reserved ✓",
+  "reserve": "Reserve early access",
+  "freeReservation": "Free reservation · no card · nothing charged",
+  "onWaitlist": "On the waitlist ✓",
+  "joinWaitlist": "Join the waitlist",
+  "afterPremium": "Launching after Premium",
+  "soonSr": "(coming soon)",
+  "features": {
+    "free": {
+      "f1": "Opportunity feed, search & filters",
+      "f2": "Save opportunities + deadline reminders",
+      "f3": "Application tracking",
+      "f4": "Profile, CV upload & extraction",
+      "f5": "In-app notifications"
+    },
+    "premium": {
+      "f1": "Unlimited agent eligibility checks",
+      "f2": "Scans every 30 min",
+      "f3": "CV upload → instant extraction",
+      "f4": "Up to 5 application drafts in parallel",
+      "f5": "Priority alerts (first in queue)",
+      "f6": "Match explain — deep requirement proof",
+      "f7": "Deadline reminders + calendar export"
+    },
+    "clubs": {
+      "f1": "Everything in Premium × 5 seats",
+      "f2": "Shared saved opportunities",
+      "f3": "Club dashboard & roles",
+      "f4": "Team application drafts",
+      "f5": "Extra seats 700 DZD each"
+    }
+  },
+  "compare": {
+    "title": "Compare plans",
+    "note": "Planned at launch — may change",
+    "feature": "Feature",
+    "premiumSoon": "Premium · soon",
+    "clubsSoon": "Clubs · soon",
+    "agentNote": "Today every account gets match scores, eligibility checks and alerts for free; Premium will raise the limits.",
+    "rows": {
+      "scans": "Opportunity scans",
+      "checks": "Agent eligibility checks",
+      "cv": "CV upload & extraction",
+      "drafts": "Parallel application drafts",
+      "explain": "Match explain (requirement proof)",
+      "reminders": "Deadline reminders",
+      "shared": "Shared saves & roles"
+    },
+    "cells": {
+      "perDay3": "3 / day",
+      "perDay5": "5 / day",
+      "every30": "every 30 min",
+      "unlimited": "unlimited",
+      "instant": "✓ instant",
+      "perSeat": "5 / seat",
+      "basic": "✓ basic",
+      "deep": "✓ deep",
+      "calendar": "✓ + calendar"
+    }
+  },
+  "methods": {
+    "title": "Payment methods · planned",
+    "body": "CIB / EDAHabia card · BaridiMob transfer · bank transfer / CCP. In DZD, with receipts. Not available yet.",
+    "cib": "CIB bank card",
+    "cib_hint": "Société Générale, BNA, BEA…",
+    "edahabia": "EDAHabia card",
+    "edahabia_hint": "Algérie Poste digital card",
+    "baridimob": "BaridiMob transfer",
+    "baridimob_hint": "Pay from your CCP account",
+    "ccp": "Bank transfer / CCP",
+    "ccp_hint": "Manual verification with a receipt"
+  },
+  "checkout": {
+    "back": "Back to plans",
+    "titleNew": "Reserve early access",
+    "titleChange": "Change your reservation",
+    "pill": "Coming soon · nothing is charged",
+    "plan": "Plan",
+    "premium": "Premium",
+    "clubs": "Clubs (5 seats)",
+    "billing": "Billing at launch",
+    "monthly": "Monthly",
+    "yearly": "Yearly",
+    "pay": "How would you like to pay at launch? (optional)",
+    "payHint": "This only helps us prioritise payment methods. We won't ask for any card or account details now.",
+    "payLabel": "Preferred payment method",
+    "summary": "Summary",
+    "planned": "Planned price at launch: {price} / {period}",
+    "month": "month",
+    "year": "year",
+    "soon": "(soon)",
+    "total": "Total today",
+    "totalHint": "You'll be asked to confirm and pay only when Premium launches. Cancel anytime.",
+    "error": "We couldn't save your reservation: {error}",
+    "demo": "The demo account is read-only — sign up to reserve early access.",
+    "save": "Save changes",
+    "joinFree": "Join the waitlist — free",
+    "reserveFree": "Reserve early access — free"
+  },
+  "reservedPage": {
+    "loadError": "We couldn't load your reservation: {error}",
+    "cancelled": "Reservation cancelled",
+    "none": "No reservation yet",
+    "noneBody": "You're on the Free plan. Premium is coming soon — reserving early access is free.",
+    "seePlans": "See the plans",
+    "title": "You're on the list",
+    "body": "We saved your early-access reservation for <strong>{plan}</strong>. Nothing was charged — Premium isn't live yet, and you're still on the Free plan.",
+    "place": "Your place in line",
+    "of": "of {count, plural, one {# reservation} other {# reservations}} so far",
+    "plan": "Plan",
+    "billing": "Billing at launch",
+    "billingValue": "{period} · {price} (planned)",
+    "preferred": "Preferred payment",
+    "notChosen": "Not chosen",
+    "charged": "Charged today",
+    "on": "Reserved on",
+    "notify": "When Premium launches we'll notify you here first. You'll confirm and pay only then — or simply do nothing.",
+    "cancelError": "We couldn't cancel: {error}",
+    "toDashboard": "Back to my dashboard",
+    "change": "Change",
+    "confirmCancel": "Cancel your reservation? You'll lose your place.",
+    "yesCancel": "Yes, cancel",
+    "keep": "Keep it",
+    "cancel": "Cancel reservation"
+  },
+  "modal": {
+    "title": "Premium is on its way",
+    "body": "Premium isn't available yet. When it launches (planned {price} / month for students) it will include:",
+    "free": "Reserving early access is free — no card, nothing charged, cancel anytime.",
+    "mine": "My reservation",
+    "plans": "See plans",
+    "later": "Maybe later",
+    "pill": "Coming soon"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "nav": "Explorer",
+  "title": "Explorer les opportunités",
+  "subtitle": "Toutes les opportunités ouvertes trouvées et vérifiées par OppRadar. Créez un compte gratuit pour les enregistrer, recevoir des rappels et, bientôt, voir votre correspondance.",
+  "search": "Rechercher : un domaine, une ville, un organisateur…",
+  "searchButton": "Rechercher",
+  "allTypes": "Tous les types",
+  "anyFormat": "Tous formats",
+  "results": "{count, plural, =0 {Aucune opportunité ouverte} one {# opportunité ouverte} other {# opportunités ouvertes}}",
+  "for": "pour « {q} »",
+  "clear": "Effacer",
+  "empty": "Aucun résultat. Essayez un autre mot ou retirez un filtre.",
+  "loadError": "Impossible de charger les opportunités : {error}",
+  "loading": "Chargement des opportunités…",
+  "more": "Voir plus ({left} restantes)",
+  "details": "Voir les détails",
+  "official": "Page officielle",
+  "cta": "Être mis en relation — gratuit",
+  "ctaBody": "Indiquez une fois votre domaine, année et compétences ; OppRadar classe chaque nouvelle opportunité pour vous.",
+  "heroSearch": "Rechercher des opportunités",
+  "heroPlaceholder": "Essayez « hackathon Oran » ou « stage data »"
+}

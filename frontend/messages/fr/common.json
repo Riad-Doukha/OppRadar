@@ -1,0 +1,70 @@
+{
+  "loading": "Chargement…",
+  "home": "Accueil OppRadar",
+  "soon": "bientôt",
+  "comingSoon": "Bientôt disponible",
+  "close": "Fermer",
+  "cancel": "Annuler",
+  "save": "Enregistrer",
+  "saving": "Enregistrement…",
+  "saved": "Enregistré",
+  "edit": "Modifier",
+  "remove": "Retirer",
+  "removeItem": "Retirer {item}",
+  "back": "Retour",
+  "continue": "Continuer",
+  "retry": "Réessayer",
+  "show": "Afficher",
+  "hide": "Masquer",
+  "showPassword": "Afficher le mot de passe",
+  "hidePassword": "Masquer le mot de passe",
+  "optional": "facultatif",
+  "yes": "Oui",
+  "no": "Non",
+  "on": "Activé",
+  "off": "Désactivé",
+  "theme": {
+    "toLight": "Passer en mode clair",
+    "toDark": "Passer en mode sombre",
+    "system": "Système",
+    "light": "Clair",
+    "dark": "Sombre"
+  },
+  "language": {
+    "label": "Langue",
+    "change": "Changer de langue (actuelle : {name})"
+  },
+  "errors": {
+    "generic": "Une erreur s'est produite. Veuillez réessayer.",
+    "network": "Impossible de joindre OppRadar. Vérifiez votre connexion et réessayez."
+  },
+  "demo": {
+    "readOnly": "Démo en lecture seule"
+  },
+  "time": {
+    "yesterday": "Hier"
+  },
+  "titles": {
+    "checkEmail": "Vérifiez vos e-mails",
+    "forgotPassword": "Réinitialiser le mot de passe",
+    "login": "Connexion",
+    "resetPassword": "Choisir un nouveau mot de passe",
+    "signup": "Créer votre compte",
+    "agent": "Demander à l'agent",
+    "applications": "Candidatures",
+    "apply": "Assistant de candidature",
+    "dashboard": "Tableau de bord",
+    "notifications": "Notifications",
+    "onboarding": "Configurer votre profil",
+    "opportunity": "Opportunité",
+    "premiumCheckout": "Réserver Premium",
+    "premium": "Premium (bientôt)",
+    "premiumReserved": "Votre réservation Premium",
+    "profile": "Mon profil",
+    "scan": "Démarrage de votre agent",
+    "settings": "Paramètres",
+    "submit": "Proposer une opportunité",
+    "admin": "Administration"
+  },
+  "suggestions": "Suggestions :"
+}
