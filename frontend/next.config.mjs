@@ -14,13 +14,27 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const { combinedEnv } = nextEnv.loadEnvConfig(root, process.env.NODE_ENV !== "production", undefined, true);
 const pub = (key) => process.env[key] || combinedEnv[key] || "";
 
+// No script-src policy: the theme script and Next's own inline scripts would
+// need nonces. These directives block framing, plugins and form/base hijacks.
+const SECURITY_HEADERS = [
+  { key: "Content-Security-Policy", value: "frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'" },
+  { key: "X-Frame-Options", value: "DENY" },
+  { key: "X-Content-Type-Options", value: "nosniff" },
+  { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+  { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), payment=()" },
+  ...(process.env.NODE_ENV === "production" ? [{ key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains" }] : []),
+];
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  poweredByHeader: false,
+  headers: async () => [{ source: "/:path*", headers: SECURITY_HEADERS }],
   env: {
     NEXT_PUBLIC_API_URL: pub("NEXT_PUBLIC_API_URL") || "http://localhost:8000",
     NEXT_PUBLIC_SUPABASE_URL: pub("NEXT_PUBLIC_SUPABASE_URL"),
     NEXT_PUBLIC_SUPABASE_ANON_KEY: pub("NEXT_PUBLIC_SUPABASE_ANON_KEY"),
+    NEXT_PUBLIC_CONTACT_EMAIL: pub("NEXT_PUBLIC_CONTACT_EMAIL"),
   },
 };
 

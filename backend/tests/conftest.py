@@ -24,6 +24,7 @@ import jwt  # noqa: E402
 import pytest  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
 
+from app import ratelimit  # noqa: E402
 from app.main import app  # noqa: E402
 from app.repositories import get_repository  # noqa: E402
 from app.repositories.memory import MemoryRepository  # noqa: E402
@@ -70,6 +71,7 @@ def repo() -> MemoryRepository:
 @pytest.fixture
 def client(repo: MemoryRepository):
     app.dependency_overrides[get_repository] = lambda: repo
+    ratelimit.reset()
     with TestClient(app) as test_client:
         yield test_client
     app.dependency_overrides.clear()

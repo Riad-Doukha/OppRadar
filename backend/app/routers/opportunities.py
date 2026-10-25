@@ -20,9 +20,10 @@ from app.models import (
     OpportunityTypeName,
     TrustLevelName,
 )
+from app.ratelimit import limit
 from app.repositories import NotFoundError, Repository, get_repository
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(limit("opportunities", 120))])
 Repo = Annotated[Repository, Depends(get_repository)]
 
 

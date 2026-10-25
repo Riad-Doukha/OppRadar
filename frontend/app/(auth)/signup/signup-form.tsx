@@ -117,7 +117,10 @@ export function SignupForm() {
 
         <div className="pt-1">
           <Checkbox checked={terms} onChange={(e) => setTerms(e.target.checked)}>
-            {t.rich("signup.agree", { strong: (c) => <strong className="text-ink">{c}</strong> })}
+            {t.rich("signup.agree", {
+              terms: (c) => <Link href="/terms" target="_blank" className="font-bold text-ink underline underline-offset-2">{c}</Link>,
+              privacy: (c) => <Link href="/privacy" target="_blank" className="font-bold text-ink underline underline-offset-2">{c}</Link>,
+            })}
           </Checkbox>
           {show("terms") && <p className="pt-1.5 text-xs text-danger">{problems.terms}</p>}
         </div>

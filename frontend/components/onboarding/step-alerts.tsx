@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 
@@ -157,7 +158,10 @@ export function StepAlerts() {
           <div className="flex flex-col gap-3 pt-2.5">
             <ConsentRow error={show ? errors.terms_privacy : null}>
               <Checkbox checked={consents.terms_privacy} onChange={consent("terms_privacy")}>
-                <span className="text-sm text-ink">{t.rich("terms", { strong: (c) => <strong>{c}</strong> })}</span>
+                <span className="text-sm text-ink">{t.rich("terms", {
+                    terms: (c) => <Link href="/terms" target="_blank" className="font-bold underline underline-offset-2">{c}</Link>,
+                    privacy: (c) => <Link href="/privacy" target="_blank" className="font-bold underline underline-offset-2">{c}</Link>,
+                  })}</span>
               </Checkbox>
             </ConsentRow>
             <ConsentRow error={show ? errors.agent_matching : null}>

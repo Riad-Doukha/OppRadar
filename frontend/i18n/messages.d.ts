@@ -20,6 +20,7 @@ type Messages = {
   submit: typeof import("../messages/en/submit.json");
   admin: typeof import("../messages/en/admin.json");
   explore: typeof import("../messages/en/explore.json");
+  legal: typeof import("../messages/en/legal.json");
 };
 
 declare module "next-intl" {

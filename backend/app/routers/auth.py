@@ -7,10 +7,11 @@ from __future__ import annotations
 
 import logging
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.config import get_settings
 from app.models import DemoSession
+from app.ratelimit import limit
 from app.services.db import get_anon_client
 
 logger = logging.getLogger(__name__)
@@ -18,7 +19,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-@router.post("/demo", response_model=DemoSession)
+@router.post("/demo", response_model=DemoSession, dependencies=[Depends(limit("demo", 10))])
 def demo_login() -> DemoSession:
     """'Try the demo instead': a session for the shared read-only demo account.
 

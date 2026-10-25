@@ -27,6 +27,7 @@ const strong = (chunks: React.ReactNode) => <strong className="text-ink">{chunks
 export default async function LandingPage({ searchParams }: { searchParams: Promise<{ deleted?: string }> }) {
   const { deleted } = await searchParams;
   const t = await getTranslations("landing");
+  const tl = await getTranslations("legal");
   const te = await getTranslations("explore");
   return (
     <div className="min-h-dvh bg-page">
@@ -134,6 +135,10 @@ export default async function LandingPage({ searchParams }: { searchParams: Prom
               {t("orgs")} <span className="inline-block rtl:-scale-x-100">→</span>
             </Link>
             <p className="text-[13px] text-on-night">{t("footer")}</p>
+            <p className="flex gap-4 text-[13px]">
+              <Link href="/terms" className="text-on-night underline-offset-4 hover:underline">{tl("terms.title")}</Link>
+              <Link href="/privacy" className="text-on-night underline-offset-4 hover:underline">{tl("privacy.title")}</Link>
+            </p>
           </div>
         </div>
       </footer>

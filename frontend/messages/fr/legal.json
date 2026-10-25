@@ -1,0 +1,33 @@
+{
+  "updated": "Dernière mise à jour : {date}",
+  "draft": "Brouillon — à faire valider avant le lancement.",
+  "contact": "Questions : {email}",
+  "terms": {
+    "title": "Conditions d'utilisation",
+    "s1t": "Ce qu'est OppRadar",
+    "s1": "OppRadar collecte des opportunités publiques (bourses, stages, hackathons, concours…) depuis des sources officielles, les classe selon votre profil et vous aide à préparer vos candidatures. C'est gratuit ; Premium est une option prévue qui n'est ni disponible ni facturée pour l'instant.",
+    "s2t": "Vérifiez toujours sur la page officielle",
+    "s2": "Les annonces, scores, vérifications d'éligibilité et réponses de l'agent sont produits automatiquement et peuvent être erronés ou dépassés. Seule la page officielle de l'organisateur fait foi pour les dates, conditions et exigences. OppRadar ne soumet jamais de candidature à votre place et ne demande jamais de paiement.",
+    "s3t": "Votre compte",
+    "s3": "Donnez des informations exactes et gardez votre mot de passe privé. Vous pouvez exporter vos données ou supprimer votre compte à tout moment depuis les Paramètres. Nous pouvons suspendre les comptes utilisés pour du spam, de l'aspiration de données ou de fausses propositions.",
+    "s4t": "Proposer des opportunités",
+    "s4": "Les organisations peuvent proposer des opportunités. Elles doivent être réelles, gratuites pour les étudiants et renvoyer vers une page officielle ; un administrateur les vérifie avant publication et peut les refuser ou les retirer.",
+    "s5t": "Responsabilité",
+    "s5": "OppRadar est fourni en l'état. Nous ne sommes pas responsables des décisions des organisateurs, des opportunités manquées ni du contenu des sites tiers."
+  },
+  "privacy": {
+    "title": "Politique de confidentialité",
+    "s1t": "Ce que nous collectons",
+    "s1": "Votre compte (nom, e-mail), le profil que vous remplissez (études, compétences, langues, objectifs, liens), les CV ou certificats que vous choisissez d'importer, vos réglages d'alertes et consentements, les opportunités enregistrées ou candidatures, et — seulement si vous l'autorisez — l'historique de vos échanges avec l'agent.",
+    "s2t": "Comment nous l'utilisons",
+    "s2": "Pour classer les opportunités pour vous, vérifier les conditions par rapport à votre profil, envoyer les alertes choisies, répondre à vos questions et faire fonctionner le service. Nous ne vendons jamais vos données, ne les montrons jamais aux organisateurs et n'envoyons jamais de publicité.",
+    "s3t": "Traitement par IA",
+    "s3": "Les correspondances et l'agent utilisent un modèle d'IA (API Google Gemini). Les champs de votre profil servent à noter les opportunités seulement avec votre consentement ; votre CV n'est lu par l'IA qu'avec votre consentement au traitement du CV. Vous pouvez retirer chaque consentement dans Paramètres → Confidentialité et IA.",
+    "s4t": "Où et combien de temps",
+    "s4": "Les données sont stockées chez nos hébergeurs (Supabase pour la base de données et les fichiers, Render et Vercel pour l'application). Les CV sont dans un espace privé accessible à vous seul. L'historique de discussion est conservé 90 jours ; les candidatures suivent la durée que vous choisissez ; tout est supprimé à la suppression du compte.",
+    "s5t": "Vos droits",
+    "s5": "Conformément à la loi algérienne 18-07 relative à la protection des données personnelles, vous pouvez accéder à vos données, les rectifier, les exporter, les supprimer, et vous opposer au traitement ou retirer votre consentement. La plupart se fait depuis Mon profil et les Paramètres ; sinon, écrivez-nous.",
+    "s6t": "Cookies",
+    "s6": "Uniquement ce dont l'application a besoin : votre session de connexion et votre langue. Votre choix de thème reste dans votre navigateur. Aucun cookie publicitaire ou de pistage."
+  }
+}

@@ -45,4 +45,5 @@ export const NAMESPACES = [
   "submit",
   "admin",
   "explore",
+  "legal",
 ] as const;

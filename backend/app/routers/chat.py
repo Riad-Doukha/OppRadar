@@ -9,6 +9,7 @@ from fastapi import APIRouter, Depends, Response, status
 
 from app.auth import User, Writer
 from app.models import ChatHistory, ChatRequest
+from app.ratelimit import limit
 from app.repositories import Repository, get_repository
 from app.services import chat
 
@@ -22,7 +23,7 @@ def get_history(user: User, repo: Repo) -> ChatHistory:
     return chat.history(repo, user)
 
 
-@router.post("", response_model=ChatHistory)
+@router.post("", response_model=ChatHistory, dependencies=[Depends(limit("chat", 20))])
 def ask(user: User, repo: Repo, body: ChatRequest) -> ChatHistory:
     """One question -> the new user + assistant turns. Read-only for the demo:
     it answers but stores nothing."""

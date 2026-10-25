@@ -156,7 +156,7 @@
     "quietEnd": "Quiet hours end",
     "to": "to",
     "consent": "Consent *",
-    "terms": "I agree to the <strong>Terms</strong> and <strong>Privacy Policy</strong>",
+    "terms": "I agree to the <terms>Terms</terms> and <privacy>Privacy Policy</privacy>",
     "matching": "The agent uses my profile to find matches",
     "matchingRequired": "Required so the agent can match you.",
     "cv": "My CV is processed by an AI service to pre-fill my profile",

@@ -156,7 +156,7 @@
     "quietEnd": "Fin des heures calmes",
     "to": "à",
     "consent": "Consentement *",
-    "terms": "J'accepte les <strong>Conditions</strong> et la <strong>Politique de confidentialité</strong>",
+    "terms": "J'accepte les <terms>Conditions</terms> et la <privacy>Politique de confidentialité</privacy>",
     "matching": "L'agent utilise mon profil pour trouver des correspondances",
     "matchingRequired": "Obligatoire pour que l'agent puisse vous proposer des correspondances.",
     "cv": "Mon CV est traité par un service d'IA pour pré-remplir mon profil",
