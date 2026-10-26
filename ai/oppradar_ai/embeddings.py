@@ -1,7 +1,9 @@
-# Local text embeddings: sentence-transformers (free, runs on your machine) or a
+# Text embeddings: sentence-transformers (free, runs on your machine), Google's
+# Gemini embedding API (free tier, no local model: for small servers), or a
 # deterministic hashing encoder for tests and offline work. Called by:
 # matching/ (profile vs opportunity similarity) and later chat/retrieval.
-# No API key and no network at run time: the model comes from the local cache.
+# Local model: no API key and no network at run time (local HuggingFace cache).
+# Gemini: GEMINI_API_KEY + RUN_LIVE_LLM=1; vectors are cached on disk like the rest.
 
 from __future__ import annotations
 
@@ -10,9 +12,10 @@ import logging
 import re
 
 import numpy as np
+from tenacity import Retrying, stop_after_attempt, wait_exponential_jitter
 
 from oppradar_ai.config import Settings, get_settings
-from oppradar_ai.llm import DiskCache
+from oppradar_ai.llm import DiskCache, QuotaExhausted, _classify_gemini_error
 
 logger = logging.getLogger(__name__)
 
@@ -43,6 +46,8 @@ class Embedder:
         self.provider = provider or settings.embedding_provider
         if self.provider == "sentence_transformers":
             self.model_id = settings.embedding_model
+        elif self.provider == "gemini":
+            self.model_id = f"{settings.gemini_embedding_model}-{settings.gemini_embedding_dim}"
         else:
             self.model_id = f"hash-{_FAKE_DIM}"
         self._model = None
@@ -56,6 +61,8 @@ class Embedder:
         """Vector size of the configured model (loads it on first use)."""
         if self.provider == "fake":
             return _FAKE_DIM
+        if self.provider == "gemini":
+            return self.settings.gemini_embedding_dim
         self._ensure_model()
         return self._dimension
 
@@ -121,6 +128,8 @@ class Embedder:
     def _encode_batch(self, texts: list[str]) -> list[np.ndarray]:
         if self.provider == "fake":
             return [_normalize(_hash_encode(text, _FAKE_DIM)) for text in texts]
+        if self.provider == "gemini":
+            return self._gemini_batch(texts)
         model = self._ensure_model()
         raw = model.encode(
             list(texts),
@@ -129,6 +138,66 @@ class Embedder:
             show_progress_bar=False,
         )
         return [row for row in _normalize(np.asarray(raw, dtype=np.float32))]
+
+    def _gemini_batch(self, texts: list[str]) -> list[np.ndarray]:
+        """One embed_content call per batch (at most `embedding_batch_size`
+        texts). Transient errors are retried with backoff; a used-up quota is
+        not (EmbeddingError). Empty texts get a zero vector without a call."""
+        dim = self.settings.gemini_embedding_dim
+        out = [np.zeros(dim, dtype=np.float32) for _ in texts]
+        todo = [i for i, text in enumerate(texts) if text.strip()]
+        if not todo:
+            return out
+        client, types = self._gemini_client()
+        config = types.EmbedContentConfig(
+            task_type="SEMANTIC_SIMILARITY", output_dimensionality=dim
+        )
+
+        def call():
+            try:
+                return client.models.embed_content(
+                    model=self.settings.gemini_embedding_model,
+                    contents=[texts[i] for i in todo],
+                    config=config,
+                )
+            except Exception as exc:
+                raise _classify_gemini_error(exc) from exc
+
+        retrying = Retrying(
+            wait=wait_exponential_jitter(initial=1, max=30, jitter=1),
+            stop=stop_after_attempt(4),
+            retry=lambda state: bool(state.outcome and state.outcome.failed
+                                     and getattr(state.outcome.exception(), "retryable", False)),
+            reraise=True,
+        )  # fmt: skip
+        try:
+            response = retrying(call)
+        except QuotaExhausted as exc:
+            raise EmbeddingError(f"gemini embedding quota used up: {exc}") from exc
+        except Exception as exc:
+            raise EmbeddingError(f"gemini embedding failed: {exc}") from exc
+        vectors = [np.asarray(e.values, dtype=np.float32) for e in response.embeddings]
+        if len(vectors) != len(todo):
+            raise EmbeddingError(f"gemini returned {len(vectors)} vectors for {len(todo)} texts")
+        for i, vector in zip(todo, _normalize(np.vstack(vectors)), strict=True):
+            out[i] = vector
+        return out
+
+    def _gemini_client(self):
+        """The google-genai client, built once (same SDK and key as the LLM)."""
+        if self._model is not None:
+            return self._model
+        if not self.settings.run_live_llm:
+            raise EmbeddingError("gemini embeddings are live calls: set RUN_LIVE_LLM=1")
+        if not self.settings.gemini_key_value:
+            raise EmbeddingError("GEMINI_API_KEY is empty: set it or use EMBEDDING_PROVIDER=fake")
+        try:
+            from google import genai
+            from google.genai import types
+        except ImportError as exc:  # pragma: no cover - dependency is declared
+            raise EmbeddingError("google-genai is not installed") from exc
+        self._model = (genai.Client(api_key=self.settings.gemini_key_value), types)
+        return self._model
 
     def _ensure_model(self):
         """Load the primary model, falling back to `embedding_fallback_model`."""

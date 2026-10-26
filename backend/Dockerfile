@@ -27,8 +27,9 @@ COPY ai/data ai/data
 COPY backend/app backend/app
 COPY backend/scripts backend/scripts
 
-# uid 1000: what Hugging Face Spaces runs containers as (works everywhere else too).
-RUN useradd --create-home --uid 1000 oppradar && chown -R oppradar /app/ai/data
+# Cache folders exist up front so volumes mounted there (deploy/oracle) keep
+# the right owner: the downloaded embedding model and the AI's disk cache.
+RUN useradd --create-home --uid 1000 oppradar     && mkdir -p /home/oppradar/.cache /app/ai/data/cache     && chown -R oppradar /app/ai/data /home/oppradar/.cache
 USER oppradar
 WORKDIR /app/backend
 EXPOSE 8000

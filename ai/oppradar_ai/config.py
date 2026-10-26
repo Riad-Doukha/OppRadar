@@ -78,10 +78,14 @@ class Settings(BaseSettings):
     # --- Embeddings ---------------------------------------------------------
     # `fake` = deterministic local hashing encoder (tests/offline, no model
     # download); `sentence_transformers` = the real local model below.
-    embedding_provider: Literal["sentence_transformers", "fake"] = "sentence_transformers"
+    embedding_provider: Literal["sentence_transformers", "gemini", "fake"] = "sentence_transformers"
     embedding_model: str = "BAAI/bge-m3"
     embedding_fallback_model: str = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
     embedding_batch_size: int = 32
+    # `gemini` = Google's embedding API with GEMINI_API_KEY (free tier, network,
+    # needs RUN_LIVE_LLM=1): no local model, so the server needs little memory.
+    gemini_embedding_model: str = "gemini-embedding-001"
+    gemini_embedding_dim: int = 768  # 768/1536/3072 (Matryoshka); we normalize
 
     # --- OCR (documents/reader.py) -------------------------------------------
     ocr_dpi: int = 220  # page render resolution for rapidocr (higher = better, slower)

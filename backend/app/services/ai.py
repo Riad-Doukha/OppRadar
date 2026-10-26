@@ -362,7 +362,7 @@ def warm_up() -> None:
         from oppradar_ai.embeddings import get_embedder
 
         embedder = get_embedder()
-        if embedder.provider != "fake":
+        if embedder.provider == "sentence_transformers":  # gemini/fake: nothing to load
             started = datetime.now()
             embedder.encode_one("warm-up")
             logging.getLogger(__name__).info(
