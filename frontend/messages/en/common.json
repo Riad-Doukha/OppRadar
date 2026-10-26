@@ -66,5 +66,7 @@
     "submit": "Submit an opportunity",
     "admin": "Admin"
   },
-  "suggestions": "Suggestions:"
+  "suggestions": "Suggestions:",
+  "openMenu": "Open menu",
+  "menu": "Menu"
 }

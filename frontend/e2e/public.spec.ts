@@ -134,6 +134,17 @@ test("sign-up checks the form before calling the server", async ({ page }) => {
   expect(authCalls).toBe(0);
 });
 
+test("phone: the navbar is in a drawer @phone", async ({ page }) => {
+  await mockOpportunities(page);
+  await page.goto("/");
+  await page.getByRole("button", { name: "Open menu" }).click();
+  const drawer = page.getByRole("dialog", { name: "Menu" });
+  await expect(drawer.getByRole("link", { name: "Explore" })).toBeVisible();
+  await expect(drawer.getByRole("link", { name: "Log in" })).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(drawer).toBeHidden();
+});
+
 test("phone: landing and Explore fit the screen @phone", async ({ page }) => {
   await mockOpportunities(page);
   for (const path of ["/", "/explore", "/login", "/signup"]) {

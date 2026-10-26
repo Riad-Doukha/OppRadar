@@ -12,6 +12,7 @@ import { LanguageMenu } from "@/components/app/language-menu";
 import { ThemeToggle } from "@/components/app/theme-toggle";
 import { NotificationBell } from "@/components/notifications/bell";
 import { UpgradeCard } from "@/components/premium/upgrade-card";
+import { Drawer, MenuButton } from "@/components/ui/drawer";
 import { useLiveUpdates } from "@/lib/live";
 import { useNotificationSummary } from "@/lib/notifications";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -37,7 +38,8 @@ const ADMIN: NavItem = { key: "admin", icon: "nav-admin", href: "/admin" };
 export const initialsOf = (name: string) =>
   name.split(/\s+/).filter(Boolean).map((w) => w[0]).slice(0, 2).join("").toUpperCase() || "?";
 
-/** Signed-in layout from the Figma dashboard: top bar + left nav (desktop). */
+/** Signed-in layout from the Figma dashboard: top bar + left nav (desktop);
+ *  below lg the whole navbar is in a drawer (MobileMenu). */
 export function AppShell({ children }: { children: ReactNode }) {
   const t = useTranslations("shell");
   const me = useQuery({ queryKey: ["me"], queryFn: () => api<Me>("/me") });
@@ -66,7 +68,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   );
 }
 
-function Nav({ items }: { items: NavItem[] }) {
+function Nav({ items, onNavigate }: { items: NavItem[]; onNavigate?: () => void }) {
   const t = useTranslations("shell");
   const pathname = usePathname();
   const unread = useNotificationSummary().data?.unread ?? 0;
@@ -87,7 +89,7 @@ function Nav({ items }: { items: NavItem[] }) {
         );
         const cls = cn("flex h-11 items-center gap-3 rounded-field px-3.5", active ? "bg-brand-soft" : item.href && "hover:bg-surface");
         return item.href ? (
-          <Link key={item.key} href={item.href} className={cls} aria-current={active ? "page" : undefined}>
+          <Link key={item.key} href={item.href} className={cls} aria-current={active ? "page" : undefined} onClick={onNavigate}>
             {body}
           </Link>
         ) : (
@@ -116,7 +118,8 @@ function NavIcon({ name, className }: { name: string; className?: string }) {
   );
 }
 
-function TopBar({ me }: { me?: Me }) {
+/** Opportunity search (dashboard). `onDone` closes the drawer it sits in. */
+function SearchForm({ className, onDone }: { className?: string; onDone?: () => void }) {
   const t = useTranslations("shell");
   const router = useRouter();
   const params = useSearchParams();
@@ -126,31 +129,90 @@ function TopBar({ me }: { me?: Me }) {
     e.preventDefault();
     const query = q.trim();
     router.push(query ? `/dashboard?q=${encodeURIComponent(query)}` : "/dashboard");
+    onDone?.();
   }
 
   return (
+    <form onSubmit={search} role="search" className={cn("items-center gap-2.5 rounded-field bg-page px-3.5 focus-within:shadow-focus", className)}>
+      <Image src="/icons/search.svg" alt="" width={16} height={16} />
+      <input
+        value={q}
+        onChange={(e) => setQ(e.target.value)}
+        placeholder={t("search")}
+        aria-label={t("search")}
+        className="h-10 min-w-0 flex-1 bg-transparent text-sm text-ink outline-none placeholder:text-faint"
+      />
+    </form>
+  );
+}
+
+function TopBar({ me }: { me?: Me }) {
+  const t = useTranslations("shell");
+  return (
     <header className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-line bg-surface px-4 sm:gap-6 sm:px-8">
       <Logo href="/dashboard" />
-      <form onSubmit={search} role="search" className="hidden max-w-[420px] flex-1 items-center gap-2.5 rounded-field bg-page px-3.5 focus-within:shadow-focus sm:flex">
-        <Image src="/icons/search.svg" alt="" width={16} height={16} />
-        <input
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder={t("search")}
-          aria-label={t("search")}
-          className="h-10 min-w-0 flex-1 bg-transparent text-sm text-ink outline-none placeholder:text-faint"
-        />
-      </form>
-      <div className="ms-auto flex items-center gap-2">
-        <LanguageMenu className="hidden sm:block" />
+      <SearchForm className="hidden max-w-[420px] flex-1 lg:flex" />
+      <div className="ms-auto hidden items-center gap-2 lg:flex">
+        <LanguageMenu />
         <ThemeToggle />
         <NotificationBell me={me} />
-        <Link href="/settings" className="hidden size-10 items-center justify-center rounded-field hover:bg-page sm:flex" aria-label={t("nav.settings")}>
+        <Link href="/settings" className="flex size-10 items-center justify-center rounded-field hover:bg-page" aria-label={t("nav.settings")}>
           <Image src="/icons/gear.svg" alt="" width={20} height={20} className="icon-adapt" />
         </Link>
         <AccountMenu me={me} />
       </div>
+      <MobileMenu me={me} />
     </header>
+  );
+}
+
+/** Below lg: the whole navbar — account, search, every page, language, theme,
+ *  log out — in a drawer. */
+function MobileMenu({ me }: { me?: Me }) {
+  const t = useTranslations("shell");
+  const tc = useTranslations("common");
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const close = () => setOpen(false);
+
+  async function logOut() {
+    close();
+    await createClient().auth.signOut();
+    router.push("/");
+    router.refresh();
+  }
+
+  return (
+    <div className="ms-auto lg:hidden">
+      <MenuButton open={open} onClick={() => setOpen(true)} />
+      <Drawer open={open} onClose={close} label={tc("menu")}>
+        {me && (
+          <div className="flex items-center gap-3">
+            <span className="flex size-[38px] shrink-0 items-center justify-center rounded-full bg-brand-soft text-sm font-bold text-brand-strong">
+              {initialsOf(me.full_name || me.email)}
+            </span>
+            <div className="min-w-0">
+              <p className="truncate text-sm font-bold text-ink">{me.full_name || t("account.yours")}</p>
+              <p className="truncate text-xs text-muted">{me.is_demo ? t("readOnly") : me.email}</p>
+            </div>
+          </div>
+        )}
+        <SearchForm className="flex" onDone={close} />
+        <Nav items={NAV} onNavigate={close} />
+        <div className="h-px bg-line" />
+        <Nav items={me?.is_admin ? [...NAV_MORE, ADMIN] : NAV_MORE} onNavigate={close} />
+        <Link href="/submit" onClick={close} className="flex h-11 items-center rounded-field px-3.5 text-[15px] font-medium text-body hover:bg-page">
+          {t("account.submit")}
+        </Link>
+        <div className="flex items-center gap-2 border-y border-line py-3">
+          <LanguageMenu />
+          <ThemeToggle />
+        </div>
+        <button type="button" onClick={logOut} className="flex h-11 items-center rounded-field px-3.5 text-start text-[15px] font-medium text-body hover:bg-page">
+          {me?.is_demo ? t("account.leaveDemo") : t("account.logOut")}
+        </button>
+      </Drawer>
+    </div>
   );
 }
 
@@ -198,9 +260,6 @@ function AccountMenu({ me }: { me?: Me }) {
               <p className="truncate text-xs text-muted">{me.is_demo ? t("readOnly") : me.email}</p>
             </div>
           )}
-          <Link role="menuitem" href="/dashboard" className="block rounded-lg px-3 py-2 text-sm text-body hover:bg-page lg:hidden" onClick={() => setOpen(false)}>
-            {t("nav.dashboard")}
-          </Link>
           <Link role="menuitem" href="/profile" className="block rounded-lg px-3 py-2 text-sm text-body hover:bg-page" onClick={() => setOpen(false)}>
             {t("nav.profile")}
           </Link>
@@ -210,11 +269,6 @@ function AccountMenu({ me }: { me?: Me }) {
           <Link role="menuitem" href="/submit" className="block rounded-lg px-3 py-2 text-sm text-body hover:bg-page" onClick={() => setOpen(false)}>
             {t("account.submit")}
           </Link>
-          {me?.is_admin && (
-            <Link role="menuitem" href="/admin" className="block rounded-lg px-3 py-2 text-sm text-body hover:bg-page lg:hidden" onClick={() => setOpen(false)}>
-              {t("nav.admin")}
-            </Link>
-          )}
           <button role="menuitem" type="button" onClick={logOut} className="block w-full rounded-lg px-3 py-2 text-start text-sm text-body hover:bg-page">
             {me?.is_demo ? t("account.leaveDemo") : t("account.logOut")}
           </button>
