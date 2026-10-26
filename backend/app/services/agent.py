@@ -205,7 +205,7 @@ def _scan_summary(
             "body": f"Best match: {round(best.score)}% — {best.opportunity.title}.",
             "score": round(best.score, 2),
             "status": "pending" if quiet else "sent",
-            "action_url": "/opportunities",
+            "action_url": "/dashboard",  # its default tab is the "For you" feed
             "dedupe_key": f"scan:{now.isoformat()}",
         }
     )
