@@ -28,7 +28,8 @@ export default defineConfig({
     screenshot: "only-on-failure",
   },
   projects: [
-    { name: "public", testMatch: /public\.spec\.ts/, use: { ...devices["Desktop Chrome"], channel } },
+    // @phone tests need a phone screen (e.g. the navbar drawer): only the phone project runs them.
+    { name: "public", testMatch: /public\.spec\.ts/, grepInvert: /@phone/, use: { ...devices["Desktop Chrome"], channel } },
     { name: "phone", testMatch: /public\.spec\.ts/, grep: /@phone/, use: { ...devices["Pixel 7"], channel } },
     { name: "a11y-public", testMatch: /a11y\.spec\.ts/, grep: /@public/, use: { ...devices["Desktop Chrome"], channel } },
     { name: "journey", testMatch: /journey\.spec\.ts/, use: { ...devices["Desktop Chrome"], channel } },
