@@ -93,6 +93,7 @@
     "error": "Impossible de démarrer votre agent : {error}",
     "toDashboard": "Aller au tableau de bord",
     "taking": "Direction votre tableau de bord…",
-    "starting": "Démarrage…"
+    "starting": "Démarrage…",
+    "background": "Aller au tableau de bord — l'analyse continue"
   }
 }

@@ -93,6 +93,7 @@
     "error": "We couldn't start your agent: {error}",
     "toDashboard": "Go to the dashboard",
     "taking": "Taking you to your Dashboard…",
-    "starting": "Starting…"
+    "starting": "Starting…",
+    "background": "Go to the dashboard — the scan keeps running"
   }
 }
