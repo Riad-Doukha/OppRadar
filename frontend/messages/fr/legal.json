@@ -28,6 +28,8 @@
     "s5t": "Vos droits",
     "s5": "Conformément à la loi algérienne 18-07 relative à la protection des données personnelles, vous pouvez accéder à vos données, les rectifier, les exporter, les supprimer, et vous opposer au traitement ou retirer votre consentement. La plupart se fait depuis Mon profil et les Paramètres ; sinon, écrivez-nous.",
     "s6t": "Cookies",
-    "s6": "Uniquement ce dont l'application a besoin : votre session de connexion et votre langue. Votre choix de thème reste dans votre navigateur. Aucun cookie publicitaire ou de pistage."
+    "s6": "Uniquement ce dont l'application a besoin : votre session de connexion et votre langue. Votre choix de thème reste dans votre navigateur. Aucun cookie publicitaire ou de pistage.",
+    "s7t": "Connexion avec Google",
+    "s7": "Si vous choisissez « Continuer avec Google », Google nous transmet votre nom, votre adresse e-mail et votre photo de profil. Nous utilisons votre nom et votre e-mail uniquement pour créer votre compte et vous connecter. Nous ne recevons jamais votre mot de passe Google et n'accédons ni à votre Gmail, ni à vos contacts, ni à vos fichiers, ni à aucune autre donnée Google. Vous pouvez retirer l'accès d'OppRadar à tout moment dans votre compte Google (Sécurité → Applications et services tiers). Notre utilisation des informations reçues des API Google respecte le Règlement sur les données utilisateur des services API Google, y compris les exigences d'utilisation limitée."
   }
 }

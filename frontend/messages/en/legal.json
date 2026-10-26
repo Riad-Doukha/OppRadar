@@ -28,6 +28,8 @@
     "s5t": "Your rights",
     "s5": "Under Algerian Law 18-07 on the protection of personal data you can access, correct, export and delete your data, and object to or withdraw consent for processing. Most of this is self-service in My profile and Settings; otherwise write to us.",
     "s6t": "Cookies",
-    "s6": "Only what the app needs: your sign-in session and your language. Your theme choice stays in your browser. No advertising or tracking cookies."
+    "s6": "Only what the app needs: your sign-in session and your language. Your theme choice stays in your browser. No advertising or tracking cookies.",
+    "s7t": "Signing in with Google",
+    "s7": "If you choose \"Continue with Google\", Google shares your name, email address and profile picture with us. We use your name and email only to create your account and sign you in. We never receive your Google password, and we do not access your Gmail, contacts, files or any other Google data. You can remove OppRadar's access at any time in your Google Account (Security → Third-party apps and services). Our use of information received from Google APIs follows the Google API Services User Data Policy, including the Limited Use requirements."
   }
 }

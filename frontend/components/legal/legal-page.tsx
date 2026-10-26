@@ -5,8 +5,8 @@ import { PublicHeader } from "@/components/brand/public-header";
 import { intlLocale, type Locale } from "@/i18n/config";
 import { env } from "@/lib/env";
 
-const SECTIONS = { terms: 5, privacy: 6 } as const;
-const UPDATED = new Date("2026-10-25");
+const SECTIONS = { terms: 5, privacy: 7 } as const;
+const UPDATED = new Date("2026-10-26");
 
 /** Terms / privacy text (EN/FR/AR), marked as a draft until it has been reviewed. */
 export async function LegalPage({ doc }: { doc: keyof typeof SECTIONS }) {

@@ -6,4 +6,6 @@ export const env = {
   supabaseAnonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "",
   // Shown on the legal pages only when set (no made-up address).
   contactEmail: process.env.NEXT_PUBLIC_CONTACT_EMAIL ?? "",
+  // Google Search Console "HTML tag" value: proves we own the site (meta tag in app/layout.tsx).
+  googleSiteVerification: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION ?? "",
 };

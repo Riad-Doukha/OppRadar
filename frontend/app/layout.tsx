@@ -5,6 +5,7 @@ import { getLocale, getTranslations } from "next-intl/server";
 
 import { dirOf, type Locale } from "@/i18n/config";
 
+import { env } from "@/lib/env";
 import { THEME_SCRIPT } from "@/lib/theme-script";
 
 import { Providers } from "./providers";
@@ -49,7 +50,12 @@ const arabic = localFont({
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("landing.meta");
-  return { title: { default: "OppRadar", template: "%s · OppRadar" }, description: t("description") };
+  return {
+    title: { default: "OppRadar", template: "%s · OppRadar" },
+    description: t("description"),
+    // Google Search Console ownership tag (Google sign-in branding needs it).
+    ...(env.googleSiteVerification && { verification: { google: env.googleSiteVerification } }),
+  };
 }
 
 export const viewport: Viewport = {
