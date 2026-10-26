@@ -9,6 +9,7 @@ import { Logo } from "@/components/brand/logo";
 import { PublicHeader } from "@/components/brand/public-header";
 import { RadarParallax } from "@/components/brand/radar-parallax";
 import { ButtonLink } from "@/components/ui/button";
+import { env } from "@/lib/env";
 
 // Words come from the messages (translated); null shows a plain 0.
 const STATS = [
@@ -264,20 +265,62 @@ export default async function LandingPage({ searchParams }: { searchParams: Prom
             ))}
           </ul>
         </section>
-        <div className="mx-auto flex max-w-[1440px] items-center justify-center px-4 py-8 md:justify-between md:px-16">
-          <span className="hidden md:inline-flex">
+        <div className="mx-auto grid max-w-[1440px] gap-9 border-t border-night-raised px-4 py-10 md:grid-cols-[1.4fr_1fr_1fr] md:gap-12 md:px-16">
+          {/* Brand */}
+          <div className="flex flex-col gap-3">
             <Logo tone="yellow" />
-          </span>
-          <div className="flex flex-col items-center gap-1.5 md:items-end">
-            <Link href="/submit" className="text-[13px] font-bold text-on-night-strong underline-offset-4 hover:underline">
-              {t("orgs")} <span className="inline-block rtl:-scale-x-100">→</span>
-            </Link>
-            <p className="text-[13px] text-on-night">{t("footer")}</p>
-            <p className="flex gap-4 text-[13px]">
-              <Link href="/terms" className="text-on-night underline-offset-4 hover:underline">{tl("terms.title")}</Link>
-              <Link href="/privacy" className="text-on-night underline-offset-4 hover:underline">{tl("privacy.title")}</Link>
-            </p>
+            <p className="max-w-sm text-[13px] leading-relaxed text-on-night">{t("foot.about")}</p>
+            <p className="text-xs text-on-night">{t("footer")}</p>
           </div>
+
+          {/* Short links */}
+          <nav aria-label={t("foot.links")}>
+            <h2 className="text-xs font-bold tracking-wider text-on-night-strong uppercase">{t("foot.links")}</h2>
+            <ul className="grid grid-cols-2 gap-x-6 gap-y-2 pt-3 text-[13px] md:grid-cols-1">
+              {[
+                { href: "/explore", label: te("nav") },
+                { href: "/#how-it-works", label: t("nav.how") },
+                { href: "/#faq", label: t("nav.faq") },
+                { href: "/submit", label: t("orgs2.cta") },
+                { href: "/privacy", label: tl("privacy.title") },
+                { href: "/terms", label: tl("terms.title") },
+              ].map((l) => (
+                <li key={l.href}>
+                  <Link href={l.href} className="text-on-night underline-offset-4 hover:text-white hover:underline">
+                    {l.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
+
+          {/* Contact: the address is shown only when configured (no made-up email). */}
+          <div>
+            <h2 className="text-xs font-bold tracking-wider text-on-night-strong uppercase">{t("foot.contact")}</h2>
+            <ul className="flex flex-col gap-2 pt-3 text-[13px] text-on-night">
+              {env.contactEmail && (
+                <li>
+                  <span className="text-on-night-strong">{t("foot.email")}: </span>
+                  <a href={`mailto:${env.contactEmail}`} dir="ltr" className="underline-offset-4 hover:text-white hover:underline">
+                    {env.contactEmail}
+                  </a>
+                </li>
+              )}
+              <li>
+                <Link href="/submit" className="font-bold text-on-night-strong underline-offset-4 hover:underline">
+                  {t("orgs")} <span className="inline-block rtl:-scale-x-100">→</span>
+                </Link>
+              </li>
+              <li>{t("foot.location")}</li>
+            </ul>
+          </div>
+        </div>
+
+        {/* Copyright */}
+        <div className="border-t border-night-raised">
+          <p className="mx-auto max-w-[1440px] px-4 py-5 text-center text-xs text-on-night md:px-16">
+            {t("foot.copyright", { year: new Date().getFullYear() })}
+          </p>
         </div>
       </footer>
     </div>

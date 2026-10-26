@@ -118,5 +118,13 @@
     "title": "Votre prochaine opportunité existe déjà.",
     "body": "Créez votre profil en deux minutes environ et laissez le radar veiller pour vous.",
     "demo": "Essayer d'abord la démo"
+  },
+  "foot": {
+    "about": "Bourses, stages, hackathons et plus — classés selon votre profil, éligibilité vérifiée, sans jamais postuler à votre place.",
+    "links": "Liens",
+    "contact": "Contact",
+    "email": "E-mail",
+    "location": "Alger, Algérie",
+    "copyright": "© {year} OppRadar App Team. Tous droits réservés."
   }
 }

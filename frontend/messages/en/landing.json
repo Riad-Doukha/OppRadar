@@ -118,5 +118,13 @@
     "title": "Your next opportunity is already out there.",
     "body": "Set up your profile in about two minutes and let the radar do the watching.",
     "demo": "Try the demo first"
+  },
+  "foot": {
+    "about": "Scholarships, internships, hackathons and more — ranked for your profile, checked for eligibility, never applied to without you.",
+    "links": "Links",
+    "contact": "Contact",
+    "email": "Email",
+    "location": "Algiers, Algeria",
+    "copyright": "© {year} OppRadar App Team. All rights reserved."
   }
 }
