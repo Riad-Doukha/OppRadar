@@ -67,12 +67,11 @@ export function SignupForm() {
     router.push(`/check-email?email=${encodeURIComponent(email)}`);
   }
 
+  /** Google needs none of the fields above: the terms consent is asked during
+   *  setup (the checkbox here only travels with the e-mail sign-up). */
   async function google() {
-    if (!terms) {
-      setTouched(true);
-      return;
-    }
     setLoading("google");
+    setError(null);
     const { error } = await createClient().auth.signInWithOAuth({
       provider: "google",
       options: { redirectTo: `${window.location.origin}/auth/callback?next=/onboarding` },
@@ -146,8 +145,12 @@ export function SignupForm() {
       </div>
 
       <Button type="button" variant="neutral" size="md" block onClick={google} disabled={loading !== null}>
-        {/* eslint-disable-next-line @next/next/no-img-element -- fixed-size brand mark */}
-        <img src="/icons/google.svg" alt="" width={18} height={18} />
+        {loading === "google" ? (
+          <Spinner />
+        ) : (
+          // eslint-disable-next-line @next/next/no-img-element -- fixed-size brand mark
+          <img src="/icons/google.svg" alt="" width={18} height={18} />
+        )}
         {t("signup.google")}
       </Button>
 
