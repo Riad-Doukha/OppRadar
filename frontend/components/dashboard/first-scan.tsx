@@ -1,5 +1,6 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -11,17 +12,30 @@ import { intlLocale, type Locale } from "@/i18n/config";
 import { api, type Me, type Schemas } from "@/lib/api/client";
 
 type Line = { at: string; text: string };
+
+// One scan per visit, shared by React's dev double-mount; cleared once it ends
+// so a later visit to /scan starts a new one.
+let running: Promise<unknown> | null = null;
+function startScan(onDone: () => void) {
+  running ??= api("/me/agent/start", { method: "POST" }).finally(() => {
+    running = null;
+    onDone(); // the dashboard may already be open: refresh it with the results
+  });
+  return running;
+}
 const clock = (locale: string) => new Date().toLocaleTimeString(locale, { hour12: false });
 
 /**
  * "Your agent is starting its first scan" (Figma). Every line is a real step:
  * start the agent, load the profile, count what fits — then go to the
- * dashboard. Match scores join once the AI matcher ships.
+ * dashboard.
+ * The user can leave for the dashboard at any time: the scan carries on.
  */
 export function FirstScan() {
   const t = useTranslations("dashboard.scan");
   const locale = intlLocale(useLocale() as Locale);
   const router = useRouter();
+  const qc = useQueryClient();
   const [lines, setLines] = useState<Line[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
@@ -36,9 +50,13 @@ export function FirstScan() {
     (async () => {
       try {
         const me = await api<Me>("/me");
+        // Start right away, even if the user has already left for the dashboard:
+        // the scan runs on the server; the log below only narrates it.
+        const scan = me.is_demo ? Promise.resolve() : startScan(() => {
+          for (const key of ["dashboard", "feed", "notifications"]) qc.invalidateQueries({ queryKey: [key] });
+        });
         await say(t("loaded", { name: me.full_name || me.email }));
-        if (cancelled) return; // a cancelled run (React dev double-mount) must not start a second scan
-        if (!me.is_demo) await api("/me/agent/start", { method: "POST" });
+        await scan;
         await say(t("started"));
         const stats = await api<Schemas["DashboardStats"]>("/me/dashboard");
         await say(t("fit", { count: stats.for_you }));
@@ -102,10 +120,17 @@ export function FirstScan() {
             </ButtonLink>
           </div>
         ) : (
-          <p className="flex items-center gap-3 pt-6 text-sm text-body">
-            <span className="size-5 animate-spin rounded-full border-2 border-brand-soft border-t-brand" aria-hidden />
-            {done ? t("taking") : t("starting")}
-          </p>
+          <>
+            <p className="flex items-center gap-3 pt-6 text-sm text-body">
+              <span className="size-5 animate-spin rounded-full border-2 border-brand-soft border-t-brand" aria-hidden />
+              {done ? t("taking") : t("starting")}
+            </p>
+            {!done && (
+              <ButtonLink href="/dashboard" variant="outline" size="md" className="mt-5">
+                {t("background")}
+              </ButtonLink>
+            )}
+          </>
         )}
       </main>
     </div>
