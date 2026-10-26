@@ -22,16 +22,16 @@ export function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<AuthError | "badLink" | null>(params.get("error") === "link" ? "badLink" : null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState<"email" | "google" | null>(null);
   const credentialsError = error === "invalidCredentials";
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
-    setLoading(true);
+    setLoading("email");
     setError(null);
     const { error } = await createClient().auth.signInWithPassword({ email: email.trim(), password });
     if (error) {
-      setLoading(false);
+      setLoading(null);
       if (error.code === "email_not_confirmed") {
         router.push(`/check-email?email=${encodeURIComponent(email.trim())}`);
         return;
@@ -41,6 +41,22 @@ export function LoginForm() {
     }
     router.push(safeNext(params.get("next")));
     router.refresh();
+  }
+
+  /** Google sign-in: an existing account logs in; a new one is created and
+   *  goes through setup, where the terms consent is required. */
+  async function google() {
+    setLoading("google");
+    setError(null);
+    const next = encodeURIComponent(safeNext(params.get("next")));
+    const { error } = await createClient().auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: `${window.location.origin}/auth/callback?next=${next}` },
+    });
+    if (error) {
+      setLoading(null);
+      setError(authError(error));
+    }
   }
 
   return (
@@ -83,8 +99,8 @@ export function LoginForm() {
             />
           )}
         </Field>
-        <Button type="submit" block className="mt-2" disabled={loading || !email || !password}>
-          {loading ? (
+        <Button type="submit" block className="mt-2" disabled={loading !== null || !email || !password}>
+          {loading === "email" ? (
             <>
               <Spinner /> {t("login.loggingIn")}
             </>
@@ -93,6 +109,22 @@ export function LoginForm() {
           )}
         </Button>
       </form>
+
+      <div className="flex items-center gap-3 py-5 text-xs text-muted">
+        <span className="h-px flex-1 bg-line" />
+        {t("signup.or")}
+        <span className="h-px flex-1 bg-line" />
+      </div>
+
+      <Button type="button" variant="neutral" size="md" block onClick={google} disabled={loading !== null}>
+        {loading === "google" ? (
+          <Spinner />
+        ) : (
+          // eslint-disable-next-line @next/next/no-img-element -- fixed-size brand mark
+          <img src="/icons/google.svg" alt="" width={18} height={18} />
+        )}
+        {t("signup.google")}
+      </Button>
 
       <p className="pt-5 text-center text-sm text-muted">
         {t("login.newHere")}{" "}
