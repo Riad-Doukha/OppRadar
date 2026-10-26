@@ -7,7 +7,9 @@
     "how": "How it works",
     "privacy": "Privacy",
     "logIn": "Log in",
-    "start": "Start your scan"
+    "start": "Start your scan",
+    "features": "Features",
+    "faq": "FAQ"
   },
   "deleted": "Your account and all its data have been deleted.",
   "hero": {
@@ -18,10 +20,11 @@
   },
   "stats": {
     "label": "OppRadar in numbers",
-    "sources": "official sources scanned daily",
+    "sources": "between two scans of our sources",
     "languagesValue": "AR·FR·EN",
-    "languages": "sources in three languages",
-    "sent": "applications ever sent without you"
+    "languages": "the whole app, in three languages",
+    "sent": "applications ever sent without you",
+    "hourValue": "1 h"
   },
   "how": {
     "title": "How it works",
@@ -29,7 +32,7 @@
     "s1Title": "Tell us about you",
     "s1": "Field, year, skills, wilaya. Stored privately — used only to rank matches. <strong>Only you can see this.</strong>",
     "s2Title": "We scan & match",
-    "s2": "The agent reads more than 47 official sources, scores every opportunity against your profile and checks eligibility — reasons included.",
+    "s2": "Every hour, the agent reads public opportunity feeds and pages, scores each opportunity against your profile and checks eligibility — reasons included.",
     "s3Title": "You apply, for real",
     "s3": "We open the <strong>official page</strong> so you can verify every detail yourself. Nothing is sent until you press Submit."
   },
@@ -48,5 +51,72 @@
     "org": "Ministry of Higher Education",
     "closes": "Closes Mar 12 · 8 days left"
   },
-  "orgs": "Organisation? Submit an opportunity"
+  "orgs": "Organisation? Submit an opportunity",
+  "features": {
+    "title": "Everything your search needs",
+    "sub": "Built around one rule: you stay in control, and every detail points back to the official page.",
+    "matchTitle": "A score with its reasons",
+    "match": "Every opportunity gets a 0–100 match against your profile, the reasons behind it and what you're still missing.",
+    "eligibilityTitle": "Eligibility, checked",
+    "eligibility": "Each requirement is checked against your profile: met, not met or unknown — never guessed.",
+    "scamTitle": "Scam and fee warnings",
+    "scam": "Listings that ask for an application fee or look suspicious are labelled before you click.",
+    "alertsTitle": "Alerts on your terms",
+    "alerts": "Email and in-app alerts above your own match threshold, with quiet hours and daily or weekly digests. Telegram is coming soon.",
+    "agentTitle": "Ask the agent",
+    "agent": "Ask about deadlines or requirements and get answers from the opportunity's own page — and it tells you when the page doesn't say.",
+    "cvTitle": "Start from your CV",
+    "cv": "Upload a PDF CV — even a scanned one — to pre-fill your profile. Only with your consent, and you review every field.",
+    "trackerTitle": "Track your applications",
+    "tracker": "Save opportunities, keep notes and references, and see every deadline in one place.",
+    "languagesTitle": "Arabic, French, English",
+    "languages": "The whole app — and your alert emails — in your language, right-to-left included, with a dark mode."
+  },
+  "types": {
+    "title": "What the radar picks up",
+    "sub": "Opportunities for students and young graduates, in Algeria, abroad and online."
+  },
+  "orgs2": {
+    "title": "Running a program? Put it on the radar.",
+    "body": "Clubs, universities and companies can submit an opportunity for free. An admin checks it against the official page before it's published, and you're told the outcome either way.",
+    "r1": "Real, and free for students to apply to",
+    "r2": "Linked to an official page",
+    "r3": "Reviewed before it's published",
+    "cta": "Submit an opportunity"
+  },
+  "pricing": {
+    "title": "Free. Really.",
+    "sub": "Everything on this page is free. Premium is planned — nothing is charged today.",
+    "free": "Free",
+    "freePrice": "0 DZD",
+    "f1": "Matches with reasons and eligibility checks",
+    "f2": "Email and in-app alerts",
+    "f3": "Ask the agent — 20 answers a day",
+    "f4": "Application tracker",
+    "premium": "Premium",
+    "soon": "Coming soon",
+    "premiumBody": "Higher limits, more frequent scans and more help drafting applications. You can reserve early access — free, no card.",
+    "learnMore": "See what's planned"
+  },
+  "faq": {
+    "title": "Questions",
+    "q1": "Is OppRadar free?",
+    "a1": "Yes. Everything on this page is free. Premium is a planned option; it isn't available or charged yet.",
+    "q2": "Does OppRadar apply for me?",
+    "a2": "No. OppRadar never submits anything on your behalf and never asks for payment. It opens the official page so you apply yourself.",
+    "q3": "Where do the opportunities come from?",
+    "a3": "From public opportunity feeds and pages checked every hour, and from organizations whose submissions were reviewed by an admin. Always confirm the details on the official page.",
+    "q4": "What happens to my data?",
+    "a4": "It's used only to rank opportunities and send the alerts you chose. It's never sold or shown to organizers, the AI reads your CV only with your consent, and you can export or delete everything at any time.",
+    "q5": "How do alerts work?",
+    "a5": "When a new opportunity scores above your threshold, you get an email and an in-app alert — held during your quiet hours, or grouped into a daily or weekly digest if you prefer. Telegram alerts are coming soon.",
+    "q6": "Is it only for Algeria?",
+    "a6": "It's built for students in Algeria — wilayas, DZD, Algiers time and three languages — and it also covers opportunities abroad and online.",
+    "more": "More in the <privacy>privacy policy</privacy> and the <terms>terms of use</terms>."
+  },
+  "final": {
+    "title": "Your next opportunity is already out there.",
+    "body": "Set up your profile in about two minutes and let the radar do the watching.",
+    "demo": "Try the demo first"
+  }
 }

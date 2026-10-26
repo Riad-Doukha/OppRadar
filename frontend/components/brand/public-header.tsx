@@ -22,6 +22,12 @@ export async function PublicHeader({ active }: { active: "home" | "explore" }) {
         <Link href="/#how-it-works" className={link(false)}>
           {t("nav.how")}
         </Link>
+        <Link href="/#features" className={link(false)}>
+          {t("nav.features")}
+        </Link>
+        <Link href="/#faq" className={link(false)}>
+          {t("nav.faq")}
+        </Link>
         <Link href="/#privacy" className={link(false)}>
           {t("nav.privacy")}
         </Link>

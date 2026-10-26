@@ -10,11 +10,29 @@ import { PublicHeader } from "@/components/brand/public-header";
 import { RadarParallax } from "@/components/brand/radar-parallax";
 import { ButtonLink } from "@/components/ui/button";
 
+// Words come from the messages (translated); null shows a plain 0.
 const STATS = [
-  { value: "+47", label: "sources" },
-  { value: null, label: "languages" },
-  { value: "0", label: "sent" },
+  { value: "hourValue", label: "sources" },
+  { value: "languagesValue", label: "languages" },
+  { value: null, label: "sent" },
 ] as const;
+
+// Each card: an existing icon and its message key; grey line icons get the
+// dark-mode tint.
+const FEATURES = [
+  { key: "match", icon: "/icons/notif-match.svg" },
+  { key: "eligibility", icon: "/icons/check-circle-green.svg" },
+  { key: "scam", icon: "/icons/alert-circle-red.svg" },
+  { key: "alerts", icon: "/icons/bell.svg", adapt: true },
+  { key: "agent", icon: "/icons/ask-sparkle.svg" },
+  { key: "cv", icon: "/icons/upload-purple.svg" },
+  { key: "tracker", icon: "/icons/nav-applications.svg", adapt: true },
+  { key: "languages", icon: "/icons/info-purple.svg" },
+] as const;
+
+const TYPES = ["scholarship", "internship", "job", "fellowship", "hackathon", "competition", "datathon", "bootcamp", "research", "volunteer", "course", "grant"] as const;
+
+const FAQ = [1, 2, 3, 4, 5, 6] as const;
 
 const PROMISES = [
   { icon: "/icons/lock-light.svg", text: "p1" },
@@ -29,6 +47,7 @@ export default async function LandingPage({ searchParams }: { searchParams: Prom
   const t = await getTranslations("landing");
   const tl = await getTranslations("legal");
   const te = await getTranslations("explore");
+  const to = await getTranslations("options.type");
   return (
     <div className="min-h-dvh bg-page">
       <PublicHeader active="home" />
@@ -79,7 +98,7 @@ export default async function LandingPage({ searchParams }: { searchParams: Prom
         <section className="flex justify-center gap-6 px-4 pb-14 md:gap-12 md:px-16" aria-label={t("stats.label")}>
           {STATS.map((s) => (
             <div key={s.label} className="flex flex-col items-center text-center">
-              <p dir="ltr" className="pt-1.5 font-mono text-xl font-semibold text-ink md:text-[28px]">{s.value ?? t("stats.languagesValue")}</p>
+              <p dir="ltr" className="pt-1.5 font-mono text-xl font-semibold text-ink md:text-[28px]">{s.value ? t(`stats.${s.value}`) : "0"}</p>
               <p className="max-w-[110px] text-xs text-muted md:max-w-none">{t(`stats.${s.label}`)}</p>
             </div>
           ))}
@@ -100,6 +119,125 @@ export default async function LandingPage({ searchParams }: { searchParams: Prom
               {t.rich("how.s3", { strong })}
             </Step>
           </ol>
+        </section>
+
+        {/* Features */}
+        <section id="features" className="mx-auto max-w-[1440px] scroll-mt-20 px-4 pb-16 md:px-16">
+          <h2 className="font-display text-[26px] font-bold text-ink">{t("features.title")}</h2>
+          <p className="max-w-2xl pt-1.5 text-sm text-muted">{t("features.sub")}</p>
+          <ul className="grid gap-4 pt-5 sm:grid-cols-2 lg:grid-cols-4">
+            {FEATURES.map((f) => (
+              <li key={f.key} className="flex flex-col rounded-card border border-line bg-surface p-5">
+                <span className="flex size-10 items-center justify-center rounded-field bg-brand-soft">
+                  <Image src={f.icon} alt="" width={20} height={20} className={"adapt" in f ? "icon-adapt" : undefined} />
+                </span>
+                <h3 className="pt-3 text-base font-bold text-ink">{t(`features.${f.key}Title`)}</h3>
+                <p className="pt-1 text-sm text-body">{t(`features.${f.key}`)}</p>
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        {/* Opportunity types */}
+        <section className="mx-auto max-w-[1440px] px-4 pb-16 md:px-16">
+          <h2 className="font-display text-[26px] font-bold text-ink">{t("types.title")}</h2>
+          <p className="pt-1.5 text-sm text-muted">{t("types.sub")}</p>
+          <ul className="flex flex-wrap gap-2 pt-5">
+            {TYPES.map((type) => (
+              <li key={type} className="rounded-full border border-line bg-surface px-4 py-2 text-sm font-bold text-ink">
+                {to(type)}
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        {/* Organizations */}
+        <section className="mx-auto max-w-[1440px] px-4 pb-16 md:px-16">
+          <div className="flex flex-col gap-6 rounded-card border border-brand-soft bg-surface p-6 md:flex-row md:items-center md:justify-between md:p-8">
+            <div className="max-w-2xl">
+              <h2 className="font-display text-[22px] font-bold text-ink md:text-[26px]">{t("orgs2.title")}</h2>
+              <p className="pt-2 text-sm text-body">{t("orgs2.body")}</p>
+              <ul className="flex flex-col gap-1.5 pt-4 text-sm text-ink sm:flex-row sm:flex-wrap sm:gap-x-5">
+                {(["r1", "r2", "r3"] as const).map((rule) => (
+                  <li key={rule} className="flex items-center gap-1.5">
+                    <Image src="/icons/check-green.svg" alt="" width={14} height={14} />
+                    {t(`orgs2.${rule}`)}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <ButtonLink href="/submit" variant="outline" size="hero" className="shrink-0 px-[22px]">
+              {t("orgs2.cta")}
+            </ButtonLink>
+          </div>
+        </section>
+
+        {/* Pricing */}
+        <section id="pricing" className="mx-auto max-w-[1440px] scroll-mt-20 px-4 pb-16 md:px-16">
+          <h2 className="font-display text-[26px] font-bold text-ink">{t("pricing.title")}</h2>
+          <p className="pt-1.5 text-sm text-muted">{t("pricing.sub")}</p>
+          <div className="grid gap-4 pt-5 md:grid-cols-2">
+            <div className="rounded-card border-2 border-brand bg-surface p-6">
+              <p className="text-base font-bold text-ink">{t("pricing.free")}</p>
+              <p className="pt-1 font-mono text-[28px] font-semibold text-ink">{t("pricing.freePrice")}</p>
+              <ul className="flex flex-col gap-2 pt-4 text-sm text-body">
+                {(["f1", "f2", "f3", "f4"] as const).map((item) => (
+                  <li key={item} className="flex items-start gap-2">
+                    <Image src="/icons/check-green.svg" alt="" width={14} height={14} className="mt-[3px] shrink-0" />
+                    {t(`pricing.${item}`)}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="rounded-card border border-line bg-surface p-6">
+              <p className="flex items-center gap-2 text-base font-bold text-ink">
+                {t("pricing.premium")}
+                <span className="rounded-full bg-signal px-2.5 py-0.5 text-xs font-bold text-on-signal">{t("pricing.soon")}</span>
+              </p>
+              <p className="pt-3 text-sm text-body">{t("pricing.premiumBody")}</p>
+              <Link href="/premium" className="mt-4 inline-flex items-center gap-1.5 text-sm font-bold text-brand hover:text-brand-strong">
+                {t("pricing.learnMore")} <span className="inline-block rtl:-scale-x-100">→</span>
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        {/* FAQ: <details> works without JavaScript and with the keyboard. */}
+        <section id="faq" className="mx-auto max-w-3xl scroll-mt-20 px-4 pb-16">
+          <h2 className="font-display text-[26px] font-bold text-ink">{t("faq.title")}</h2>
+          <div className="mt-5 divide-y divide-line rounded-card border border-line bg-surface">
+            {FAQ.map((n) => (
+              <details key={n} className="group px-5 py-4">
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-base font-bold text-ink [&::-webkit-details-marker]:hidden">
+                  {t(`faq.q${n}`)}
+                  <span aria-hidden className="text-xl leading-none text-brand transition-transform group-open:rotate-45">+</span>
+                </summary>
+                <p className="pt-2 text-sm text-body">{t(`faq.a${n}`)}</p>
+              </details>
+            ))}
+          </div>
+          <p className="pt-4 text-sm text-muted">
+            {t.rich("faq.more", {
+              privacy: (c) => <Link href="/privacy" className="font-bold text-brand underline-offset-2 hover:underline">{c}</Link>,
+              terms: (c) => <Link href="/terms" className="font-bold text-brand underline-offset-2 hover:underline">{c}</Link>,
+            })}
+          </p>
+        </section>
+
+        {/* Final call to action */}
+        <section className="mx-auto max-w-[1440px] px-4 pb-16 md:px-16">
+          <div className="flex flex-col items-center rounded-card bg-brand-soft px-6 py-10 text-center md:py-14">
+            <h2 className="max-w-2xl font-display text-[26px] leading-tight font-extrabold text-ink md:text-[34px]">{t("final.title")}</h2>
+            <p className="max-w-xl pt-3 text-base text-body">{t("final.body")}</p>
+            <div className="flex flex-col gap-3 pt-6 sm:flex-row">
+              <ButtonLink href="/signup" size="hero">
+                {t("hero.cta")}
+              </ButtonLink>
+              <ButtonLink href="/login" variant="outline" size="hero" className="px-[22px]">
+                {t("final.demo")}
+              </ButtonLink>
+            </div>
+          </div>
         </section>
       </main>
 

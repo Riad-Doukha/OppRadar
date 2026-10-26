@@ -7,7 +7,9 @@
     "how": "Comment ça marche",
     "privacy": "Confidentialité",
     "logIn": "Se connecter",
-    "start": "Lancer mon analyse"
+    "start": "Lancer mon analyse",
+    "features": "Fonctionnalités",
+    "faq": "FAQ"
   },
   "deleted": "Votre compte et toutes ses données ont été supprimés.",
   "hero": {
@@ -18,10 +20,11 @@
   },
   "stats": {
     "label": "OppRadar en chiffres",
-    "sources": "sources officielles analysées chaque jour",
+    "sources": "entre deux analyses de nos sources",
     "languagesValue": "AR·FR·EN",
-    "languages": "sources en trois langues",
-    "sent": "candidature envoyée sans vous"
+    "languages": "toute l'application, en trois langues",
+    "sent": "candidature envoyée sans vous",
+    "hourValue": "1 h"
   },
   "how": {
     "title": "Comment ça marche",
@@ -29,7 +32,7 @@
     "s1Title": "Parlez-nous de vous",
     "s1": "Filière, année, compétences, wilaya. Stocké en privé — utilisé uniquement pour classer les correspondances. <strong>Visible par vous seul.</strong>",
     "s2Title": "Nous analysons et comparons",
-    "s2": "L'agent lit plus de 47 sources officielles, note chaque opportunité selon votre profil et vérifie l'éligibilité — avec les raisons.",
+    "s2": "Chaque heure, l'agent lit des flux et pages d'opportunités publics, note chaque opportunité selon votre profil et vérifie l'éligibilité — avec les raisons.",
     "s3Title": "Vous postulez, pour de vrai",
     "s3": "Nous ouvrons la <strong>page officielle</strong> pour que vous vérifiiez chaque détail vous-même. Rien n'est envoyé tant que vous n'appuyez pas sur Envoyer."
   },
@@ -48,5 +51,72 @@
     "org": "Ministère de l'Enseignement supérieur",
     "closes": "Clôture le 12 mars · 8 jours restants"
   },
-  "orgs": "Une organisation ? Proposez une opportunité"
+  "orgs": "Une organisation ? Proposez une opportunité",
+  "features": {
+    "title": "Tout ce dont votre recherche a besoin",
+    "sub": "Conçu autour d'une règle : vous gardez le contrôle, et chaque détail renvoie à la page officielle.",
+    "matchTitle": "Un score avec ses raisons",
+    "match": "Chaque opportunité reçoit un score de 0 à 100 selon votre profil, avec ses raisons et ce qu'il vous manque encore.",
+    "eligibilityTitle": "L'éligibilité, vérifiée",
+    "eligibility": "Chaque condition est comparée à votre profil : remplie, non remplie ou inconnue — jamais devinée.",
+    "scamTitle": "Alertes arnaques et frais",
+    "scam": "Les annonces qui demandent des frais de candidature ou semblent suspectes sont signalées avant que vous cliquiez.",
+    "alertsTitle": "Des alertes à vos conditions",
+    "alerts": "Alertes par e-mail et dans l'application au-dessus de votre propre seuil, avec heures de silence et résumés quotidiens ou hebdomadaires. Telegram arrive bientôt.",
+    "agentTitle": "Demandez à l'agent",
+    "agent": "Posez vos questions sur les dates ou les conditions : les réponses viennent de la page de l'opportunité — et l'agent vous dit quand elle ne le précise pas.",
+    "cvTitle": "Partez de votre CV",
+    "cv": "Importez un CV en PDF — même scanné — pour pré-remplir votre profil. Uniquement avec votre accord, et vous vérifiez chaque champ.",
+    "trackerTitle": "Suivez vos candidatures",
+    "tracker": "Enregistrez des opportunités, gardez vos notes et références, et retrouvez toutes vos échéances au même endroit.",
+    "languagesTitle": "Arabe, français, anglais",
+    "languages": "Toute l'application — et vos e-mails d'alerte — dans votre langue, de droite à gauche compris, avec un mode sombre."
+  },
+  "types": {
+    "title": "Ce que le radar détecte",
+    "sub": "Des opportunités pour étudiants et jeunes diplômés, en Algérie, à l'étranger et en ligne."
+  },
+  "orgs2": {
+    "title": "Vous organisez un programme ? Mettez-le sur le radar.",
+    "body": "Clubs, universités et entreprises peuvent proposer une opportunité gratuitement. Un administrateur la vérifie avec la page officielle avant publication, et vous êtes informé du résultat dans tous les cas.",
+    "r1": "Réelle et gratuite pour les étudiants",
+    "r2": "Avec un lien vers une page officielle",
+    "r3": "Vérifiée avant publication",
+    "cta": "Proposer une opportunité"
+  },
+  "pricing": {
+    "title": "Gratuit. Vraiment.",
+    "sub": "Tout ce qui figure sur cette page est gratuit. Premium est prévu — rien n'est facturé aujourd'hui.",
+    "free": "Gratuit",
+    "freePrice": "0 DA",
+    "f1": "Correspondances avec raisons et vérification d'éligibilité",
+    "f2": "Alertes par e-mail et dans l'application",
+    "f3": "Questions à l'agent — 20 réponses par jour",
+    "f4": "Suivi des candidatures",
+    "premium": "Premium",
+    "soon": "Bientôt",
+    "premiumBody": "Des limites plus élevées, des analyses plus fréquentes et plus d'aide pour rédiger vos candidatures. Vous pouvez réserver l'accès anticipé — gratuit, sans carte.",
+    "learnMore": "Voir ce qui est prévu"
+  },
+  "faq": {
+    "title": "Questions fréquentes",
+    "q1": "OppRadar est-il gratuit ?",
+    "a1": "Oui. Tout ce qui figure sur cette page est gratuit. Premium est une option prévue, ni disponible ni facturée pour l'instant.",
+    "q2": "OppRadar postule-t-il à ma place ?",
+    "a2": "Non. OppRadar ne soumet jamais rien à votre place et ne demande jamais de paiement. Il ouvre la page officielle pour que vous postuliez vous-même.",
+    "q3": "D'où viennent les opportunités ?",
+    "a3": "De flux et pages d'opportunités publics analysés chaque heure, et d'organisations dont les propositions ont été vérifiées par un administrateur. Confirmez toujours les détails sur la page officielle.",
+    "q4": "Que deviennent mes données ?",
+    "a4": "Elles servent uniquement à classer les opportunités et à envoyer les alertes choisies. Elles ne sont jamais vendues ni montrées aux organisateurs, l'IA ne lit votre CV qu'avec votre accord, et vous pouvez tout exporter ou supprimer à tout moment.",
+    "q5": "Comment fonctionnent les alertes ?",
+    "a5": "Quand une nouvelle opportunité dépasse votre seuil, vous recevez un e-mail et une alerte dans l'application — retenus pendant vos heures de silence, ou regroupés en résumé quotidien ou hebdomadaire si vous préférez. Les alertes Telegram arrivent bientôt.",
+    "q6": "Est-ce uniquement pour l'Algérie ?",
+    "a6": "Il est conçu pour les étudiants en Algérie — wilayas, dinar, heure d'Alger et trois langues — et couvre aussi les opportunités à l'étranger et en ligne.",
+    "more": "Plus de détails dans la <privacy>politique de confidentialité</privacy> et les <terms>conditions d'utilisation</terms>."
+  },
+  "final": {
+    "title": "Votre prochaine opportunité existe déjà.",
+    "body": "Créez votre profil en deux minutes environ et laissez le radar veiller pour vous.",
+    "demo": "Essayer d'abord la démo"
+  }
 }
