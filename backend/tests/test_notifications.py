@@ -122,7 +122,8 @@ def test_actions_bypass_the_sync_throttle(client, auth, opportunities, monkeypat
     assert listing(client, auth)["items"] == []  # starts the 5-minute window
     client.put(f"/me/opportunities/{opportunities['t0']}/saved", headers=auth)
     client.post("/me/agent/start", headers=auth)
-    assert sorted(i["kind"] for i in listing(client, auth)["items"]) == ["deadline", "system"]
+    kinds = sorted(i["kind"] for i in listing(client, auth)["items"])
+    assert kinds == ["deadline", "digest", "system"]  # digest: the first scan's summary
 
 
 def test_first_sync_is_not_throttled_right_after_boot(client, auth, opportunities, monkeypatch):

@@ -26,6 +26,7 @@ TEXT = {
     "en": {
         "subject_one": "New match: {title}",
         "subject_many": "{count} new opportunities for you",
+        "subject_scan": "Your OppRadar agent found new opportunities",
         "intro": "Here is what OppRadar found for you:",
         "deadline": "Deadline reminder",
         "open": "Open in OppRadar",
@@ -38,6 +39,7 @@ TEXT = {
     "fr": {
         "subject_one": "Nouvelle correspondance : {title}",
         "subject_many": "{count} nouvelles opportunités pour vous",
+        "subject_scan": "Votre agent OppRadar a trouvé de nouvelles opportunités",
         "intro": "Voici ce qu'OppRadar a trouvé pour vous :",
         "deadline": "Rappel d'échéance",
         "open": "Ouvrir dans OppRadar",
@@ -50,6 +52,7 @@ TEXT = {
     "ar": {
         "subject_one": "فرصة مطابقة جديدة: {title}",
         "subject_many": "{count} فرص جديدة لك",
+        "subject_scan": "وجد وكيل OppRadar فرصًا جديدة لك",
         "intro": "إليك ما وجده OppRadar لك:",
         "deadline": "تذكير بالموعد النهائي",
         "open": "افتح في OppRadar",
@@ -103,11 +106,14 @@ def alert_email(locale: str, user_id: str, items: list[dict[str, Any]]) -> tuple
     """(subject, html) for one or more alerts. All AI/user text is escaped."""
     t = TEXT.get(locale, TEXT["en"])
     app = get_settings().app_url.rstrip("/")
-    subject = (
-        t["subject_one"].format(title=items[0]["title"])
-        if len(items) == 1
-        else t["subject_many"].format(count=len(items))
-    )
+    # The scan summary leads the email and names it; the matches follow.
+    items = sorted(items, key=lambda n: n.get("kind") != "digest")
+    if items[0].get("kind") == "digest":
+        subject = t["subject_scan"]
+    elif len(items) == 1:
+        subject = t["subject_one"].format(title=items[0]["title"])
+    else:
+        subject = t["subject_many"].format(count=len(items))
     rows = []
     for n in items:
         label = (

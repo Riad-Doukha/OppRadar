@@ -17,6 +17,7 @@ from datetime import date, datetime, timedelta, timezone
 from typing import Any
 from zoneinfo import ZoneInfo
 
+from oppradar_ai.schemas import MatchResult, NotificationPrefs
 from oppradar_ai.schemas import Notification as AINotification
 
 from app.auth import CurrentUser
@@ -171,6 +172,46 @@ def _release(
     return len(ids)
 
 
+def _scan_summary(
+    repo: Repository,
+    user_id: str,
+    new: list[MatchResult],
+    prefs: NotificationPrefs,
+    now: datetime,
+) -> int:
+    """One "found N new opportunities" alert per scan that found new matches,
+    whatever their score (the threshold only decides the per-match alerts).
+    Held in quiet hours and released by the next scan after them."""
+    quiet = _quiet(now, prefs.quiet_hours_start, prefs.quiet_hours_end)
+    released = 0
+    if not quiet:
+        since = now - timedelta(days=7)
+        held = [
+            str(r["id"])
+            for r in repo.list_notifications(user_id, ["digest"], since, 50)
+            if r.get("status") == "pending"
+        ]
+        repo.update_notifications(user_id, held, {"status": "sent", "created_at": now})
+        released = len(held)
+    if not new:
+        return released
+    best = new[0]  # results come best first
+    found = f"{len(new)} new opportunit{'y' if len(new) == 1 else 'ies'}"
+    added = repo.add_notification(
+        {
+            "user_id": user_id,
+            "kind": "digest",
+            "title": f"Your agent found {found}",
+            "body": f"Best match: {round(best.score)}% — {best.opportunity.title}.",
+            "score": round(best.score, 2),
+            "status": "pending" if quiet else "sent",
+            "action_url": "/opportunities",
+            "dedupe_key": f"scan:{now.isoformat()}",
+        }
+    )
+    return released + (added is not None and not quiet)
+
+
 def match_user(
     repo: Repository, user: CurrentUser, rows: list[dict[str, Any]] | None = None
 ) -> ScanResult:
@@ -186,6 +227,7 @@ def _match_user(
     me = profiles.load_me(repo, user)
     rows = _open_opportunities(repo) if rows is None else rows
     by_id = {str(r["id"]): r for r in rows}
+    before = {str(m["opportunity_id"]) for m in repo.get_matches(user.id)}
     results = ai.score(ai.to_ai_profile(me), [ai.opportunity_from_row(r) for r in rows])
     repo.replace_matches(
         user.id,
@@ -234,8 +276,10 @@ def _match_user(
                 }
             )
             sent += added is not None and added.get("status") == "sent"
+        new = [m for m in results if m.opportunity.id in by_id and m.opportunity.id not in before]
+        summary = _scan_summary(repo, user.id, new, prefs, now)
         notifications.invalidate(user.id)
-        if sent:
+        if sent or summary:
             push(user.id, "notification:new", {"kind": "match", "count": sent})
         email_alerts.deliver(repo, user, me)
     return ScanResult(

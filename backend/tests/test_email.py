@@ -1,5 +1,6 @@
 # Email alerts: sent match alerts go out once (one email per batch) in the
 # user's language with AI text escaped, never for the demo or with email off;
+# every scan that finds new opportunities sends a summary, whatever the threshold;
 # the signed unsubscribe link turns email off; the test email works.
 
 import uuid
@@ -31,11 +32,30 @@ def test_match_alerts_are_emailed_once(client, auth, outbox):
     assert len(outbox) == 1
     to, subject, html = outbox[0]
     assert to == "amine.benali@ensia.edu.dz"
-    assert subject.startswith("Nouvelle correspondance")  # French, from the saved locale
+    assert subject == "Votre agent OppRadar a trouvé de nouvelles opportunités"  # saved locale
+    assert "Nouvelle correspondance" not in html and html.count("ENSIA") == 2  # summary + match
     assert "&lt;b&gt;AI&lt;/b&gt;" in html and "<b>AI</b>" not in html  # escaped
     assert "/email/unsubscribe?" in html
     client.post("/me/agent/scan", headers=auth)
     assert len(outbox) == 1  # already emailed
+
+
+def test_each_scan_that_finds_opportunities_is_summarised(client, auth, outbox):
+    publish(client, title="ENSIA AI Hackathon", type="hackathon", deadline="2099-05-01")
+    complete_profile(client, auth, threshold=100)  # no match reaches it: no match alert
+    client.patch("/me/onboarding/alerts", json={"clear_quiet_hours": True}, headers=auth)
+    client.post("/me/agent/start", headers=auth)
+    notes = client.get("/me/notifications", headers=auth).json()["items"]
+    assert [n["title"] for n in notes if n["kind"] == "digest"] == [
+        "Your agent found 1 new opportunity"
+    ]
+    assert not [n for n in notes if n["kind"] == "match"]
+    assert [s for _, s, _ in outbox] == ["Your OppRadar agent found new opportunities"]
+    client.post("/me/agent/scan", headers=auth)  # nothing new: no second summary
+    assert len(outbox) == 1
+    publish(client, title="Data Science Internship", type="internship", deadline="2099-06-01")
+    client.post("/me/agent/scan", headers=auth)
+    assert len(outbox) == 2
 
 
 def test_no_email_when_off_or_demo(client, auth, outbox):

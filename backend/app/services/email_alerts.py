@@ -1,6 +1,7 @@
-"""Email delivery of in-app alerts: match alerts and deadline reminders that are
-"sent" in the app and not emailed yet go out in one email (so a released digest
-batch becomes one digest email). Honours the email channel and the alert rules."""
+"""Email delivery of in-app alerts: scan summaries, match alerts and deadline
+reminders that are "sent" in the app and not emailed yet go out in one email (so
+a released digest batch becomes one digest email). Honours the email channel and
+the alert rules."""
 
 from __future__ import annotations
 
@@ -19,9 +20,12 @@ def deliver(repo: Repository, user: CurrentUser, me: Me) -> int:
     n = me.notifications
     if me.is_demo or not n.email_enabled:
         return 0
-    kinds = [
-        k for k, on in (("match", n.rule_new_match), ("deadline", n.rule_deadline_reminders)) if on
-    ]
+    rules = (
+        ("digest", n.rule_new_match),  # the agent's "found N new opportunities" summary
+        ("match", n.rule_new_match),
+        ("deadline", n.rule_deadline_reminders),
+    )
+    kinds = [k for k, on in rules if on]
     if not kinds:
         return 0
     since = datetime.now(timezone.utc) - LOOKBACK
