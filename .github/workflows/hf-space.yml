@@ -1,0 +1,50 @@
+name: Deploy API to Hugging Face
+
+# Pushes the API (backend/ + ai/, built with backend/Dockerfile) to a Hugging
+# Face Docker Space on every push to develop. Inactive until the repo has the
+# HF_SPACE variable (e.g. "riad-doukha/oppradar-api") and the HF_TOKEN secret.
+on:
+  push:
+    branches: [develop]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: ${{ vars.HF_SPACE != '' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build the Space bundle
+        run: |
+          mkdir space
+          cp -r ai backend space/
+          # Not needed at runtime; Hugging Face also refuses PDF/DOCX without LFS.
+          rm -rf space/ai/data/samples space/ai/data/eval space/ai/tests space/ai/notebooks \
+                 space/backend/tests
+          cp .dockerignore space/ 2>/dev/null || true
+          cp backend/Dockerfile space/Dockerfile
+          {
+            echo "---"
+            echo "title: OppRadar API"
+            echo "sdk: docker"
+            echo "app_port: 8000"
+            echo "pinned: false"
+            echo "---"
+            echo
+            echo "OppRadar's API, deployed from GitHub (Riad-Doukha/OppRadar, develop)."
+            echo "Do not edit here: every push to develop replaces this Space's files."
+          } > space/README.md
+
+      - name: Push to the Space
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          HF_SPACE: ${{ vars.HF_SPACE }}
+        run: |
+          cd space
+          git init -q -b main
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Deploy ${GITHUB_SHA::7} from GitHub"
+          git push --force "https://user:${HF_TOKEN}@huggingface.co/spaces/${HF_SPACE}" main

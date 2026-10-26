@@ -27,7 +27,8 @@ COPY ai/data ai/data
 COPY backend/app backend/app
 COPY backend/scripts backend/scripts
 
-RUN useradd --create-home --uid 10001 oppradar && chown -R oppradar /app/ai/data
+# uid 1000: what Hugging Face Spaces runs containers as (works everywhere else too).
+RUN useradd --create-home --uid 1000 oppradar && chown -R oppradar /app/ai/data
 USER oppradar
 WORKDIR /app/backend
 EXPOSE 8000
