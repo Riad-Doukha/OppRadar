@@ -13,6 +13,7 @@ import { Button, Spinner } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Field, Input, PasswordInput } from "@/components/ui/field";
 import { authError, passwordProblem, passwordStrength, type AuthError } from "@/lib/auth";
+import { rememberSignup } from "@/lib/pending-signup";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 
@@ -62,6 +63,7 @@ export function SignupForm() {
     // empty identities list instead of an error.
     if (data.user && data.user.identities?.length === 0)
       return setError("exists");
+    rememberSignup(email, form.password); // lets /check-email continue once the link is clicked
     router.push(`/check-email?email=${encodeURIComponent(email)}`);
   }
 

@@ -19,7 +19,7 @@ export function LoginForm() {
   const t = useTranslations("auth");
   const router = useRouter();
   const params = useSearchParams();
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(params.get("email") ?? "");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<AuthError | "badLink" | null>(params.get("error") === "link" ? "badLink" : null);
   const [loading, setLoading] = useState<"email" | "google" | null>(null);
