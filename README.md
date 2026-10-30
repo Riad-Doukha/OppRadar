@@ -6,7 +6,7 @@
 
 Scholarships · Jobs · Internships · Hackathons · Funded conferences · International volunteering
 
-[Demo video](https://shorturl.at/atkAI) · [Documentation](docs/) · [Security review](docs/OppRadar_Security_Review_STRIDE.pdf) · [Technical datasheet](docs/OppRadar_Datasheet.pdf)
+[Demo video](https://drive.google.com/file/d/1RvIOs0k2GaWfSor1w4duTqVc0bwel89m/view?usp=sharing) · [App walkthrough](https://shorturl.at/atkAI) · [Documentation](docs/) · [Security review](docs/OppRadar_Security_Review_STRIDE.pdf) · [Technical datasheet](docs/OppRadar_Datasheet.pdf)
 
 </div>
 
