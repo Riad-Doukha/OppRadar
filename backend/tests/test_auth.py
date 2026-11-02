@@ -5,6 +5,7 @@ from conftest import bearer, make_token
 
 def test_health_is_public(client):
     assert client.get("/health").json()["status"] == "ok"
+    assert client.head("/health").status_code == 200  # uptime monitors
 
 
 def test_me_requires_a_token(client):
